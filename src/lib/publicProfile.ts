@@ -162,39 +162,26 @@ export async function getPublicProfile(
 	const sb = getSupabase();
 	if (!sb) return null;
 
-	const { data: profileData } = await sb
-		.from("user_profiles")
-		.select(
-			"user_id, github_id, github_login, display_name, avatar_url, bio, github_starred",
-		)
-		.eq("github_id", githubId)
-		.single();
+	const { data, error } = await sb.rpc("resolve_public_profile", {
+		p_github_id: githubId,
+	});
 
-	if (profileData) {
-		return { banned: false, profile: profileData as UserProfile };
-	}
+	if (error) console.error("[profile] getPublicProfile:", error.message);
 
-	// Profile hidden by RLS — check if user is banned by github_id
-	const { data: banData } = await sb
-		.from("bans")
-		.select("user_id")
-		.eq("github_id", githubId)
-		.maybeSingle();
+	const row = Array.isArray(data) ? data[0] : data;
+	if (!row) return null;
 
-	if (!banData) return null;
-
-	return {
-		banned: true,
-		profile: {
-			user_id: banData.user_id as string,
-			github_id: githubId,
-			github_login: null,
-			display_name: null,
-			avatar_url: null,
-			bio: null,
-			github_starred: false,
-		},
+	const profile: UserProfile = {
+		user_id: row.user_id,
+		github_id: row.github_id,
+		github_login: row.github_login,
+		display_name: row.display_name,
+		avatar_url: row.avatar_url,
+		bio: row.bio,
+		github_starred: row.github_starred,
 	};
+
+	return { profile, banned: row.is_banned };
 }
 
 // Called when viewing any public profile — syncs github_starred for that github_id via Edge Function.
