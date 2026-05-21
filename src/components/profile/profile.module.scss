@@ -54,15 +54,17 @@
 	line-height: 0;
 
 	&[data-inactive] {
-		opacity: 0.3;
+		color: #82692e;
 	}
 
 	&[href] {
+		color: #82692e;
 		cursor: pointer;
 		text-decoration: none;
+		transition: color 0.15s;
 
 		&:hover {
-			opacity: 1;
+			color: #e3b341;
 		}
 	}
 }

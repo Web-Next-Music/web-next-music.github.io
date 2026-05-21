@@ -217,26 +217,47 @@ export default function PublicProfileClient({
 								</div>
 							)}
 							{!banned && (
-								<span
-									className={styles.starBadge}
-									title={
-										starred ? "Starred Next Music" : "Hasn't starred Next Music"
-									}
-									data-inactive={!starred || undefined}
-								>
-									<svg
-										width="17"
-										height="17"
-										viewBox="0 0 24 24"
-										fill={starred ? "currentColor" : "none"}
-										stroke="currentColor"
-										strokeWidth="1.5"
-										strokeLinecap="round"
-										strokeLinejoin="round"
+								starred ? (
+									<span
+										className={styles.starBadge}
+										title="Starred Next Music"
 									>
-										<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-									</svg>
-								</span>
+										<svg
+											width="17"
+											height="17"
+											viewBox="0 0 24 24"
+											fill="currentColor"
+											stroke="currentColor"
+											strokeWidth="1.5"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										>
+											<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+										</svg>
+									</span>
+								) : (
+									<a
+										href="https://github.com/Web-Next-Music/Next-Music-Client"
+										target="_blank"
+										rel="noopener noreferrer"
+										className={styles.starBadge}
+										title="Star Web-Next-Music/Next-Music-Client on GitHub"
+										data-inactive
+									>
+										<svg
+											width="17"
+											height="17"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											strokeWidth="1.5"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										>
+											<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+										</svg>
+									</a>
+								)
 							)}
 						</div>
 						<h1 className={styles.username}>{displayName}</h1>
