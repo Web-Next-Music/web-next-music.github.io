@@ -1,4 +1,5 @@
 import { getSupabase } from "./supabase";
+import { config } from "./config";
 import type { Playlist } from "./playlists";
 
 export interface UserProfile {
@@ -8,6 +9,7 @@ export interface UserProfile {
 	display_name: string | null;
 	avatar_url: string | null;
 	bio: string | null;
+	github_starred: boolean;
 }
 
 export async function getProfileByGithubId(
@@ -17,7 +19,9 @@ export async function getProfileByGithubId(
 	if (!sb) return null;
 	const { data } = await sb
 		.from("user_profiles")
-		.select("user_id, github_id, github_login, display_name, avatar_url, bio")
+		.select(
+			"user_id, github_id, github_login, display_name, avatar_url, bio, github_starred",
+		)
 		.eq("github_id", githubId)
 		.single();
 	return (data as UserProfile) ?? null;
@@ -30,7 +34,9 @@ export async function getProfileByUsername(
 	if (!sb) return null;
 	const { data } = await sb
 		.from("user_profiles")
-		.select("user_id, github_id, github_login, display_name, avatar_url, bio")
+		.select(
+			"user_id, github_id, github_login, display_name, avatar_url, bio, github_starred",
+		)
 		.eq("github_login", githubLogin)
 		.single();
 	return (data as UserProfile) ?? null;
@@ -43,7 +49,9 @@ export async function getOwnProfile(
 	if (!sb) return null;
 	const { data } = await sb
 		.from("user_profiles")
-		.select("user_id, github_login, display_name, avatar_url, bio")
+		.select(
+			"user_id, github_login, display_name, avatar_url, bio, github_starred",
+		)
 		.eq("user_id", userId)
 		.single();
 	return (data as UserProfile) ?? null;
@@ -156,7 +164,9 @@ export async function getPublicProfile(
 
 	const { data: profileData } = await sb
 		.from("user_profiles")
-		.select("user_id, github_id, github_login, display_name, avatar_url, bio")
+		.select(
+			"user_id, github_id, github_login, display_name, avatar_url, bio, github_starred",
+		)
 		.eq("github_id", githubId)
 		.single();
 
@@ -182,8 +192,63 @@ export async function getPublicProfile(
 			display_name: null,
 			avatar_url: null,
 			bio: null,
+			github_starred: false,
 		},
 	};
+}
+
+// Called when viewing any public profile — syncs github_starred for that github_id via Edge Function.
+export async function syncGithubStarForProfile(
+	githubId: string,
+): Promise<boolean | null> {
+	if (!config.supabase.url) return null;
+	try {
+		const res = await fetch(
+			`${config.supabase.url}/functions/v1/sync-github-star?github_id=${encodeURIComponent(githubId)}`,
+			{
+				headers: {
+					apikey: config.supabase.anonKey ?? "",
+					Authorization: `Bearer ${config.supabase.anonKey ?? ""}`,
+				},
+			},
+		);
+		if (!res.ok) return null;
+		const json = await res.json();
+		return typeof json.starred === "boolean" ? json.starred : null;
+	} catch {
+		return null;
+	}
+}
+
+// Calls the Edge Function to verify the GitHub star server-side and update the DB.
+// No user token needed — the function reads the github_login from the DB and
+// checks the public stargazers list using an optional server-side PAT.
+export async function syncGithubStar(): Promise<boolean | null> {
+	const sb = getSupabase();
+	if (!sb || !config.supabase.url) return null;
+
+	const {
+		data: { session },
+	} = await sb.auth.getSession();
+	if (!session) return null;
+
+	try {
+		const res = await fetch(
+			`${config.supabase.url}/functions/v1/sync-github-star`,
+			{
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${session.access_token}`,
+					apikey: config.supabase.anonKey ?? "",
+				},
+			},
+		);
+		if (!res.ok) return null;
+		const json = await res.json();
+		return typeof json.starred === "boolean" ? json.starred : null;
+	} catch {
+		return null;
+	}
 }
 
 export async function unpinPlaylist(

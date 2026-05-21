@@ -35,7 +35,7 @@ export default function RootLayout({
 					<LikesProvider>
 						<ThemeProvider>
 							<BanBanner />
-				<Suspense fallback={<>{children}</>}>
+							<Suspense fallback={<>{children}</>}>
 								<PlayerProvider>{children}</PlayerProvider>
 							</Suspense>
 						</ThemeProvider>

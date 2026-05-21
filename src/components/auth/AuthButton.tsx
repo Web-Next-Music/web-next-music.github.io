@@ -3,11 +3,17 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
+import { syncGithubStar } from "@/lib/publicProfile";
 import styles from "./AuthButton.module.scss";
+
+const starredCache = new Map<string, boolean>();
 
 export default function AuthButton() {
 	const { user, loading, signOut, openAuthModal, isBanned } = useAuth();
 	const [dropdownOpen, setDropdownOpen] = useState(false);
+	const [githubStarred, setGithubStarred] = useState(() =>
+		user?.id ? (starredCache.get(user.id) ?? false) : false,
+	);
 	const ref = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
@@ -18,6 +24,16 @@ export default function AuthButton() {
 		document.addEventListener("mousedown", handler);
 		return () => document.removeEventListener("mousedown", handler);
 	}, [dropdownOpen]);
+
+	useEffect(() => {
+		if (!user) return;
+		syncGithubStar().then((starred) => {
+			if (starred !== null) {
+				starredCache.set(user.id, starred);
+				setGithubStarred(starred);
+			}
+		});
+	}, [user?.id]);
 
 	if (loading) return null;
 
@@ -39,7 +55,7 @@ export default function AuthButton() {
 	return (
 		<div ref={ref} className={styles.wrap}>
 			<button
-				className={styles.avatarBtn}
+				className={`${styles.avatarBtn}${githubStarred ? ` ${styles.avatarBtnStarred}` : ""}`}
 				onClick={() => setDropdownOpen((v) => !v)}
 				aria-label="Account menu"
 				title={user.user_metadata?.user_name ?? user.email}
@@ -50,6 +66,13 @@ export default function AuthButton() {
 					initial
 				)}
 			</button>
+			{githubStarred && (
+				<span className={styles.avatarStar} aria-hidden="true">
+					<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+						<polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+					</svg>
+				</span>
+			)}
 
 			{dropdownOpen && (
 				<div className={styles.dropdown}>

@@ -33,6 +33,7 @@ import {
 } from "@/lib/playlists";
 import {
 	syncGitHubMeta,
+	syncGithubStar,
 	getOwnProfile,
 	saveBio,
 	getPinnedPlaylistIds,
@@ -631,6 +632,7 @@ export default function ProfileClient() {
 	const [playlistContents, setPlaylistContents] = useState<
 		Record<string, Set<string>>
 	>({});
+	const [githubStarred, setGithubStarred] = useState<boolean | null>(null);
 
 	// Bio
 	const [bio, setBio] = useState<string>("");
@@ -672,6 +674,14 @@ export default function ProfileClient() {
 			if (p?.bio) setBio(p.bio);
 		});
 		getPinnedPlaylistIds(user.id).then(setPinnedIds);
+	}, [user?.id]);
+
+	// Verify GitHub star status on every profile open (server-side check, no user token needed)
+	useEffect(() => {
+		if (!user) return;
+		syncGithubStar().then((starred) => {
+			if (starred !== null) setGithubStarred(starred);
+		});
 	}, [user?.id]);
 
 	useEffect(() => {
@@ -863,13 +873,53 @@ export default function ProfileClient() {
 			<div className={styles.layout}>
 				<aside className={styles.sidebar}>
 					<div className={styles.userCard}>
-						{avatarUrl ? (
-							<img src={avatarUrl} alt={username} className={styles.avatar} />
-						) : (
-							<div className={styles.avatarPlaceholder}>
-								{(username ?? "?")[0].toUpperCase()}
-							</div>
-						)}
+						<div className={styles.avatarWrap}>
+							{avatarUrl ? (
+								<img src={avatarUrl} alt={username} className={styles.avatar} />
+							) : (
+								<div className={styles.avatarPlaceholder}>
+									{(username ?? "?")[0].toUpperCase()}
+								</div>
+							)}
+							{githubStarred !== null &&
+								(githubStarred ? (
+									<span className={styles.starBadge} title="Starred Next Music">
+										<svg
+											width="17"
+											height="17"
+											viewBox="0 0 24 24"
+											fill="currentColor"
+											stroke="currentColor"
+											strokeWidth="1.5"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										>
+											<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+										</svg>
+									</span>
+								) : (
+									<a
+										href="https://github.com/Web-Next-Music/Next-Music-Client"
+										target="_blank"
+										rel="noopener noreferrer"
+										className={styles.starBadge}
+										title="Star Web-Next-Music/Next-Music-Client on GitHub"
+									>
+										<svg
+											width="17"
+											height="17"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											strokeWidth="1.5"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										>
+											<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+										</svg>
+									</a>
+								))}
+						</div>
 						<h1 className={styles.username}>{displayName || username}</h1>
 					</div>
 

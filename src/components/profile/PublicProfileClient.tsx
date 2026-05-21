@@ -5,6 +5,7 @@ import {
 	getPublicProfile,
 	getUserPinnedPlaylists,
 	getUserStats,
+	syncGithubStarForProfile,
 	type UserProfile,
 } from "@/lib/publicProfile";
 import {
@@ -130,6 +131,7 @@ export default function PublicProfileClient({
 		playlists: number;
 	} | null>(null);
 	const [banned, setBanned] = useState(false);
+	const [starred, setStarred] = useState(false);
 
 	useEffect(() => {
 		getPublicProfile(githubId).then((result) => {
@@ -155,6 +157,10 @@ export default function PublicProfileClient({
 				]).then(([stats, playlists]) => {
 					setStats(stats);
 					setPlaylists(playlists);
+				});
+
+				syncGithubStarForProfile(githubId).then((s) => {
+					if (s !== null) setStarred(s);
 				});
 			}
 		});
@@ -192,23 +198,47 @@ export default function PublicProfileClient({
 			<div className={styles.layout}>
 				<aside className={styles.sidebar}>
 					<div className={styles.userCard}>
-						{banned ? (
-							<img
-								src="/avatars/avatar-fallback.png"
-								alt="Banned"
-								className={styles.avatar}
-							/>
-						) : profile.avatar_url ? (
-							<img
-								src={profile.avatar_url}
-								alt={displayName}
-								className={styles.avatar}
-							/>
-						) : (
-							<div className={styles.avatarPlaceholder}>
-								{displayName[0].toUpperCase()}
-							</div>
-						)}
+						<div className={styles.avatarWrap}>
+							{banned ? (
+								<img
+									src="/avatars/avatar-fallback.png"
+									alt="Banned"
+									className={styles.avatar}
+								/>
+							) : profile.avatar_url ? (
+								<img
+									src={profile.avatar_url}
+									alt={displayName}
+									className={styles.avatar}
+								/>
+							) : (
+								<div className={styles.avatarPlaceholder}>
+									{displayName[0].toUpperCase()}
+								</div>
+							)}
+							{!banned && (
+								<span
+									className={styles.starBadge}
+									title={
+										starred ? "Starred Next Music" : "Hasn't starred Next Music"
+									}
+									data-inactive={!starred || undefined}
+								>
+									<svg
+										width="12"
+										height="12"
+										viewBox="0 0 24 24"
+										fill={starred ? "currentColor" : "none"}
+										stroke="currentColor"
+										strokeWidth="1.5"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									>
+										<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+									</svg>
+								</span>
+							)}
+						</div>
 						<h1 className={styles.username}>{displayName}</h1>
 					</div>
 

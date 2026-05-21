@@ -29,7 +29,10 @@ function readBanCache(userId: string): boolean | null {
 
 function writeBanCache(userId: string, banned: boolean) {
 	try {
-		sessionStorage.setItem(BAN_CACHE_KEY, JSON.stringify({ uid: userId, banned }));
+		sessionStorage.setItem(
+			BAN_CACHE_KEY,
+			JSON.stringify({ uid: userId, banned }),
+		);
 	} catch {}
 }
 
@@ -114,50 +117,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			setLoading(false);
 		});
 
-		const { data: listener } = sb.auth.onAuthStateChange(async (event, session) => {
-			setSession(session);
-			setUser(session?.user ?? null);
+		const { data: listener } = sb.auth.onAuthStateChange(
+			async (event, session) => {
+				setSession(session);
+				setUser(session?.user ?? null);
 
-			if (session?.provider_token) {
-				localStorage.setItem(GH_TOKEN_KEY, session.provider_token);
-				setGithubToken(session.provider_token);
-			} else if (!session) {
-				localStorage.removeItem(GH_TOKEN_KEY);
-				sessionStorage.removeItem(BAN_CACHE_KEY);
-				setGithubToken(null);
-				setIsBanned(false);
-				setBanInfo(null);
-			}
-
-			// Only check ban on actual new sign-in (OAuth callback).
-			// getSession() handles the check on every page load.
-			// TOKEN_REFRESHED and INITIAL_SESSION must not override the result.
-			if (event === "SIGNED_IN" && session?.user) {
-				const u = session.user;
-				const login = u.user_metadata?.user_name as string | undefined;
-				const githubId = (u.user_metadata?.provider_id ??
-					u.user_metadata?.sub) as string | undefined;
-				if (login && githubId) {
-					syncGitHubMeta(
-						u.id,
-						githubId,
-						login,
-						(u.user_metadata?.full_name as string | undefined) ?? null,
-						(u.user_metadata?.avatar_url as string | undefined) ?? null,
-					);
+				if (session?.provider_token) {
+					localStorage.setItem(GH_TOKEN_KEY, session.provider_token);
+					setGithubToken(session.provider_token);
+				} else if (!session) {
+					localStorage.removeItem(GH_TOKEN_KEY);
+					sessionStorage.removeItem(BAN_CACHE_KEY);
+					setGithubToken(null);
+					setIsBanned(false);
+					setBanInfo(null);
 				}
-				setBanChecking(true);
-				getBanInfo(u.id)
-					.then((ban) => {
-						const banned = ban !== null;
-						setIsBanned(banned);
-						setBanInfo(ban);
-						writeBanCache(u.id, banned);
-					})
-					.catch(() => {})
-					.finally(() => setBanChecking(false));
-			}
-		});
+
+				// Only check ban on actual new sign-in (OAuth callback).
+				// getSession() handles the check on every page load.
+				// TOKEN_REFRESHED and INITIAL_SESSION must not override the result.
+				if (event === "SIGNED_IN" && session?.user) {
+					const u = session.user;
+					const login = u.user_metadata?.user_name as string | undefined;
+					const githubId = (u.user_metadata?.provider_id ??
+						u.user_metadata?.sub) as string | undefined;
+					if (login && githubId) {
+						syncGitHubMeta(
+							u.id,
+							githubId,
+							login,
+							(u.user_metadata?.full_name as string | undefined) ?? null,
+							(u.user_metadata?.avatar_url as string | undefined) ?? null,
+						);
+					}
+					setBanChecking(true);
+					getBanInfo(u.id)
+						.then((ban) => {
+							const banned = ban !== null;
+							setIsBanned(banned);
+							setBanInfo(ban);
+							writeBanCache(u.id, banned);
+						})
+						.catch(() => {})
+						.finally(() => setBanChecking(false));
+				}
+			},
+		);
 
 		return () => listener.subscription.unsubscribe();
 	}, []);
