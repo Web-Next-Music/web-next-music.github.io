@@ -225,8 +225,8 @@ export default function PublicProfileClient({
 									data-inactive={!starred || undefined}
 								>
 									<svg
-										width="12"
-										height="12"
+										width="17"
+										height="17"
 										viewBox="0 0 24 24"
 										fill={starred ? "currentColor" : "none"}
 										stroke="currentColor"
