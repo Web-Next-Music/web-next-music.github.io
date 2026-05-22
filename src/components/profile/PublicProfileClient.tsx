@@ -94,7 +94,7 @@ function PublicPlaylistSection({ playlist }: { playlist: Playlist }) {
 							const artist = meta?.artist ?? "";
 							const cover = meta?.cover;
 							const mp3_url =
-								(!pt.track_id.startsWith("http")
+								(!pt.track_id.startsWith("http") && !pt.track_id.endsWith("-e")
 									? decodeTrackKey(pt.track_id)?.url
 									: undefined) ?? findTrackById(pt.track_id)?.url;
 							return (

@@ -128,11 +128,11 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 
 	const id = searchParams.get("id") ?? "";
 
-	// Single encoded key
-	const keyData = (() => {
-		const k = searchParams.get("key");
-		return k ? decodeTrackKey(k) : null;
-	})();
+	// Single encoded key. A "-e" suffix marks exclusive (no-download) mode.
+	const rawKey = searchParams.get("key") ?? "";
+	const isExclusive = rawKey.endsWith("-e");
+	const keyParam = isExclusive ? rawKey.slice(0, -2) : rawKey;
+	const keyData = keyParam ? decodeTrackKey(keyParam) : null;
 
 	const directUrl = keyData?.url ?? searchParams.get("url") ?? "";
 	const paramCover = keyData?.cover ?? searchParams.get("cover") ?? undefined;
@@ -174,6 +174,10 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 	const [ugcState, setUgcState] = useState<
 		"idle" | "loading" | "playing" | "error"
 	>("idle");
+
+	const [exclusiveBlobUrl, setExclusiveBlobUrl] = useState<string | null>(null);
+	const [exclusiveLoading, setExclusiveLoading] = useState(false);
+	const blobUrlRef = useRef<string | null>(null);
 
 	const [showDownloadError, setShowDownloadError] = useState(false);
 	const [isDownloading, setIsDownloading] = useState(false);
@@ -223,6 +227,35 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 
 	const playedRef = useRef(false);
 
+	const getExclusivePlaybackUrl = useCallback(async () => {
+		if (!isExclusive) return directUrl;
+		if (blobUrlRef.current) return blobUrlRef.current;
+
+		setExclusiveLoading(true);
+		try {
+			const res = await fetch(
+				`https://proxy.nm.diram1x.ru/?url=${encodeURIComponent(directUrl)}`,
+			);
+			if (!res.ok) throw new Error("Failed to load exclusive audio");
+			const blob = await res.blob();
+			const objectUrl = URL.createObjectURL(blob);
+			blobUrlRef.current = objectUrl;
+			setExclusiveBlobUrl(objectUrl);
+			return objectUrl;
+		} finally {
+			setExclusiveLoading(false);
+		}
+	}, [directUrl, isExclusive]);
+
+	useEffect(() => {
+		return () => {
+			if (blobUrlRef.current) {
+				URL.revokeObjectURL(blobUrlRef.current);
+				blobUrlRef.current = null;
+			}
+		};
+	}, []);
+
 	useEffect(() => {
 		if (!directUrl || !player || playedRef.current) return;
 		playedRef.current = true;
@@ -259,7 +292,10 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 
 	const isThisLoaded = id
 		? player?.nowPlaying?.id === id
-		: player?.nowPlaying?.url === directUrl;
+		: isExclusive
+			? player?.nowPlaying?.id === rawKey ||
+				player?.nowPlaying?.url === exclusiveBlobUrl
+			: player?.nowPlaying?.url === directUrl;
 
 	useEffect(() => {
 		if (!lyrics?.synced) return;
@@ -327,18 +363,34 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 		}, 3000);
 	}, []);
 
-	const handlePlay = useCallback(() => {
+	const handlePlay = useCallback(async () => {
 		if (!displayTrack || !player) return;
+		let playbackUrl = displayTrack.url;
+		try {
+			playbackUrl = await getExclusivePlaybackUrl();
+		} catch (error) {
+			console.error("Failed to prepare playback:", error);
+			setUgcState("error");
+			return;
+		}
+
 		player.play({
-			id: displayTrack.id,
-			url: displayTrack.url,
-			directUrl: directUrl ? displayTrack.url : undefined,
+			id: isExclusive ? rawKey : displayTrack.id,
+			url: playbackUrl,
+			directUrl: directUrl && !isExclusive ? displayTrack.url : undefined,
 			title: displayTrack.title,
 			artist: displayTrack.artist,
 			cover: displayTrack.cover,
 			yandexUrl: displayTrack.yandexUrl,
 		});
-	}, [displayTrack, player, directUrl]);
+	}, [
+		displayTrack,
+		player,
+		getExclusivePlaybackUrl,
+		isExclusive,
+		rawKey,
+		directUrl,
+	]);
 
 	const handleCopyKey = useCallback(async () => {
 		if (!displayTrack) return;
@@ -349,14 +401,15 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 			cover: displayTrack.cover,
 			token: paramToken || undefined,
 		});
+		const copiedKey = isExclusive ? `${key}-e` : key;
 		try {
-			await navigator.clipboard.writeText(key);
+			await navigator.clipboard.writeText(copiedKey);
 			setCopyKeyFeedback("copied");
 			setTimeout(() => setCopyKeyFeedback("idle"), 2000);
 		} catch (error) {
 			console.error("Failed to copy key:", error);
 		}
-	}, [displayTrack, paramToken]);
+	}, [displayTrack, isExclusive, paramToken]);
 
 	useEffect(() => {
 		window.dispatchEvent(
@@ -426,6 +479,9 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 
 	const hasLyrics = lyrics?.found;
 	const isSynced = !!lyrics?.synced;
+	const directTrackId = isExclusive
+		? rawKey
+		: stableTrackKey(directUrl, paramTitle, paramArtist, paramCover);
 
 	return (
 		<div className={styles.page}>
@@ -497,9 +553,16 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 											? player?.resume
 											: handlePlay
 								}
+								disabled={exclusiveLoading}
 								aria-label={isThisPlaying ? "Pause" : "Play"}
 							>
-								{isThisPlaying ? (
+								{exclusiveLoading ? (
+									<div className={styles.miniDots}>
+										<span />
+										<span />
+										<span />
+									</div>
+								) : isThisPlaying ? (
 									<svg
 										width="28"
 										height="28"
@@ -548,19 +611,14 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 											type: "track",
 											trackId:
 												displayTrack?.id ||
-												stableTrackKey(
-													directUrl,
-													paramTitle,
-													paramArtist,
-													paramCover,
-												),
+												directTrackId,
 											meta:
 												!displayTrack?.id && directUrl
 													? {
 															title: displayTrack?.title,
 															artist: displayTrack?.artist,
 															cover: displayTrack?.cover,
-															mp3_url: directUrl,
+															mp3_url: isExclusive ? undefined : directUrl,
 														}
 													: undefined,
 										}}
@@ -573,7 +631,7 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 						</div>
 
 						<div className={styles.heroActions}>
-							{directUrl && !id && (
+							{directUrl && !id && !isExclusive && (
 								<button
 									onClick={async () => {
 										setIsDownloading(true);
@@ -949,7 +1007,9 @@ export default function TrackPage() {
 	// Token can come from the encoded key OR as a plain ?token= param (old clients)
 	const keyToken = (() => {
 		const k = searchParams.get("key");
-		return k ? (decodeTrackKey(k)?.token ?? "") : "";
+		if (!k) return "";
+		const keyParam = k.endsWith("-e") ? k.slice(0, -2) : k;
+		return decodeTrackKey(keyParam)?.token ?? "";
 	})();
 	const paramToken = keyToken || searchParams.get("token") || "";
 	const isHiddenMode = paramToken === process.env.NEXT_PUBLIC_HIDDEN_MODE_TOKEN;

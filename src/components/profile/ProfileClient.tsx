@@ -44,6 +44,8 @@ import TrackRow from "@/components/ui/TrackRow";
 import styles from "./profile.module.scss";
 
 function trackHref(trackId: string, dbMeta?: TrackLikeMeta): string {
+	if (trackId.endsWith("-e")) return `/track?key=${trackId}`;
+
 	const mp3_url = dbMeta?.mp3_url;
 	const title = dbMeta?.title;
 	const artist = dbMeta?.artist;

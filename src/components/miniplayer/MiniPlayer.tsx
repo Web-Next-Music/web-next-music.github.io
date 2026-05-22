@@ -106,6 +106,8 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 									cover: nowPlaying.cover,
 								});
 								router.push(`/track?key=${key}`);
+							} else if (trackId?.endsWith("-e")) {
+								router.push(`/track?key=${trackId}`);
 							} else if (
 								trackId &&
 								!trackId.startsWith("http") &&

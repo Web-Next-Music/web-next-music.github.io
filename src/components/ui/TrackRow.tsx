@@ -17,6 +17,8 @@ import LikeButton from "./LikeButton";
 import styles from "./TrackRow.module.scss";
 
 function buildHref(trackId: string, dbMeta?: TrackLikeMeta): string {
+	if (trackId.endsWith("-e")) return `/track?key=${trackId}`;
+
 	const mp3_url = dbMeta?.mp3_url;
 	if (mp3_url) {
 		return `/track?key=${encodeTrackKey({

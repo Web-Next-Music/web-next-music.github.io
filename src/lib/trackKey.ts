@@ -38,8 +38,9 @@ export function stableTrackKey(
 
 export function decodeTrackKey(key: string): TrackKeyData | null {
 	try {
+		const keyParam = key.endsWith("-e") ? key.slice(0, -2) : key;
 		const raw = Buffer.from(
-			key.replace(/-/g, "+").replace(/_/g, "/"),
+			keyParam.replace(/-/g, "+").replace(/_/g, "/"),
 			"base64",
 		);
 		const compact = JSON.parse(
