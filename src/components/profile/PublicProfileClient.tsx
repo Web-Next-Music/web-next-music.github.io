@@ -216,9 +216,12 @@ export default function PublicProfileClient({
 									{displayName[0].toUpperCase()}
 								</div>
 							)}
-							{!banned &&
-								(starred ? (
-									<span className={styles.starBadge} title="Starred Next Music">
+							{!banned && (
+								starred ? (
+									<span
+										className={styles.starBadge}
+										title="Starred Next Music"
+									>
 										<svg
 											width="17"
 											height="17"
@@ -254,7 +257,8 @@ export default function PublicProfileClient({
 											<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
 										</svg>
 									</a>
-								))}
+								)
+							)}
 						</div>
 						<h1 className={styles.username}>{displayName}</h1>
 					</div>
@@ -317,7 +321,7 @@ export default function PublicProfileClient({
 								<circle cx="12" cy="12" r="10" />
 								<line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
 							</svg>
-							This user has been banned
+							This user has been banned.
 						</div>
 					)}
 					{!banned && profile.bio && (
