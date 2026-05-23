@@ -35,7 +35,7 @@ export default function AuthButton() {
 		});
 	}, [user?.id]);
 
-	if (loading) return null;
+	if (loading) return <div className={styles.avatarSkeleton} />;
 
 	if (!user) {
 		return (

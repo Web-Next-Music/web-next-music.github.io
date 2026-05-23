@@ -39,6 +39,75 @@
 	display: inline-flex;
 }
 
+
+.skeletonLine {
+	display: block;
+	height: 12px;
+	border-radius: 6px;
+	background: var(--surface2);
+	animation: skeletonPulse 1.4s ease-in-out infinite;
+}
+
+.skeletonBlock {
+	display: block;
+	flex-shrink: 0;
+	width: 32px;
+	height: 32px;
+	border-radius: 4px;
+	background: var(--surface2);
+	animation: skeletonPulse 1.4s ease-in-out infinite;
+}
+
+.bioSkeleton {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 4px 0;
+}
+
+.playlistSkeleton {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.playlistSkeletonRow {
+	display: flex;
+	align-items: center;
+	padding: 10px 12px;
+	border-radius: 8px;
+	background: var(--surface);
+}
+
+.tracksSkeleton {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 4px 0;
+}
+
+.tracksSkeletonRow {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 12px;
+	border-radius: 6px;
+}
+
+@keyframes skeletonPulse {
+	0%, 100% { opacity: 0.6; }
+	50% { opacity: 0.25; }
+}
+
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+
+.starSpinner {
+	animation: spin 0.9s linear infinite;
+	color: rgba(227, 179, 65, 0.6);
+}
+
 .starBadge {
 	position: absolute;
 	bottom: 2px;

@@ -590,7 +590,14 @@ function PlaylistSection({
 			{open && (
 				<div className={styles.playlistTracks}>
 					{loadingTracks ? (
-						<div className={styles.loadingSmall}>Loading…</div>
+						<div className={styles.tracksSkeleton}>
+							{[68, 52, 75].map((w, i) => (
+								<div key={i} className={styles.tracksSkeletonRow}>
+									<span className={styles.skeletonBlock} />
+									<span className={styles.skeletonLine} style={{ width: `${w}%` }} />
+								</div>
+							))}
+						</div>
 					) : tracks.length === 0 ? (
 						<div className={styles.emptySmall}>No tracks yet</div>
 					) : (
@@ -635,9 +642,11 @@ export default function ProfileClient() {
 		Record<string, Set<string>>
 	>({});
 	const [githubStarred, setGithubStarred] = useState<boolean | null>(null);
+	const [starLoading, setStarLoading] = useState(false);
 
 	// Bio
 	const [bio, setBio] = useState<string>("");
+	const [bioLoading, setBioLoading] = useState(false);
 	const [editingBio, setEditingBio] = useState(false);
 	const [bioInput, setBioInput] = useState("");
 	const [bioSaving, setBioSaving] = useState(false);
@@ -672,8 +681,10 @@ export default function ProfileClient() {
 		const avatar = user.user_metadata?.avatar_url as string | undefined;
 		if (githubId && login)
 			syncGitHubMeta(user.id, githubId, login, name ?? null, avatar ?? null);
+		setBioLoading(true);
 		getOwnProfile(user.id).then((p) => {
 			if (p?.bio) setBio(p.bio);
+			setBioLoading(false);
 		});
 		getPinnedPlaylistIds(user.id).then(setPinnedIds);
 	}, [user?.id]);
@@ -681,7 +692,9 @@ export default function ProfileClient() {
 	// Verify GitHub star status on every profile open (server-side check, no user token needed)
 	useEffect(() => {
 		if (!user) return;
+		setStarLoading(true);
 		syncGithubStar().then((starred) => {
+			setStarLoading(false);
 			if (starred !== null) setGithubStarred(starred);
 		});
 	}, [user?.id]);
@@ -883,44 +896,26 @@ export default function ProfileClient() {
 									{(username ?? "?")[0].toUpperCase()}
 								</div>
 							)}
-							{githubStarred !== null &&
-								(githubStarred ? (
-									<span className={styles.starBadge} title="Starred Next Music">
-										<svg
-											width="17"
-											height="17"
-											viewBox="0 0 24 24"
-											fill="currentColor"
-											stroke="currentColor"
-											strokeWidth="1.5"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-										>
+							{(starLoading || githubStarred !== null) && (
+								<span className={styles.starBadge} aria-hidden="true">
+									{starLoading ? (
+										<svg width="15" height="15" viewBox="0 0 24 24" fill="none" className={styles.starSpinner}>
+											<circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25" />
+											<path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+										</svg>
+									) : githubStarred ? (
+										<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
 											<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
 										</svg>
-									</span>
-								) : (
-									<a
-										href="https://github.com/Web-Next-Music/Next-Music-Client"
-										target="_blank"
-										rel="noopener noreferrer"
-										className={styles.starBadge}
-										title="Star Web-Next-Music/Next-Music-Client on GitHub"
-									>
-										<svg
-											width="17"
-											height="17"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											strokeWidth="1.5"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-										>
-											<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-										</svg>
-									</a>
-								))}
+									) : (
+										<a href="https://github.com/Web-Next-Music/Next-Music-Client" target="_blank" rel="noopener noreferrer" title="Star Web-Next-Music/Next-Music-Client on GitHub">
+											<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+												<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+											</svg>
+										</a>
+									)}
+								</span>
+							)}
 						</div>
 						<h1 className={styles.username}>{displayName || username}</h1>
 					</div>
@@ -1051,6 +1046,12 @@ export default function ProfileClient() {
 														{bioSaving ? "Saving…" : "Save"}
 													</button>
 												</div>
+											</div>
+										) : bioLoading ? (
+											<div className={styles.bioSkeleton}>
+												<span className={styles.skeletonLine} style={{ width: "72%" }} />
+												<span className={styles.skeletonLine} style={{ width: "55%" }} />
+												<span className={styles.skeletonLine} style={{ width: "64%" }} />
 											</div>
 										) : bio ? (
 											<div
@@ -1223,7 +1224,13 @@ export default function ProfileClient() {
 							)}
 
 							{playlistsLoading ? (
-								<div className={styles.empty}>Loading…</div>
+								<div className={styles.playlistSkeleton}>
+									{[72, 58, 65].map((w, i) => (
+										<div key={i} className={styles.playlistSkeletonRow}>
+											<span className={styles.skeletonLine} style={{ width: `${w}%` }} />
+										</div>
+									))}
+								</div>
 							) : playlists.length === 0 && !creating ? (
 								<div className={styles.empty}>No playlists yet</div>
 							) : (
