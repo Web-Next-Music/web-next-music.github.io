@@ -609,9 +609,7 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 										className={styles.trackLikeBtn}
 										target={{
 											type: "track",
-											trackId:
-												displayTrack?.id ||
-												directTrackId,
+											trackId: displayTrack?.id || directTrackId,
 											meta:
 												!displayTrack?.id && directUrl
 													? {

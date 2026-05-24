@@ -1,6 +1,11 @@
 @keyframes pulse {
-	0%, 100% { opacity: 1; }
-	50% { opacity: 0.4; }
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.4;
+	}
 }
 
 .avatarSkeleton {
@@ -11,7 +16,6 @@
 	border: 1px solid rgba(43, 254, 245, 0.15);
 	animation: pulse 1.4s ease-in-out infinite;
 }
-
 
 .signInBtn {
 	font-family: var(--font-heading-large);

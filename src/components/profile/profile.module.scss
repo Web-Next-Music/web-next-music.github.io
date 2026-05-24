@@ -39,7 +39,6 @@
 	display: inline-flex;
 }
 
-
 .skeletonLine {
 	display: block;
 	height: 12px;
@@ -95,12 +94,19 @@
 }
 
 @keyframes skeletonPulse {
-	0%, 100% { opacity: 0.6; }
-	50% { opacity: 0.25; }
+	0%,
+	100% {
+		opacity: 0.6;
+	}
+	50% {
+		opacity: 0.25;
+	}
 }
 
 @keyframes spin {
-	to { transform: rotate(360deg); }
+	to {
+		transform: rotate(360deg);
+	}
 }
 
 .starSpinner {

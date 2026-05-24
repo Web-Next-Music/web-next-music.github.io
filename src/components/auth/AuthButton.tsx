@@ -4,15 +4,20 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { syncGithubStar } from "@/lib/publicProfile";
+import { checkDDetectorAccess } from "@/lib/ddetector";
 import styles from "./AuthButton.module.scss";
 
 const starredCache = new Map<string, boolean>();
+const ddetectorCache = new Map<string, boolean>();
 
 export default function AuthButton() {
 	const { user, loading, signOut, openAuthModal, isBanned } = useAuth();
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const [githubStarred, setGithubStarred] = useState(() =>
 		user?.id ? (starredCache.get(user.id) ?? false) : false,
+	);
+	const [isDDetector, setIsDDetector] = useState(() =>
+		user?.id ? (ddetectorCache.get(user.id) ?? false) : false,
 	);
 	const ref = useRef<HTMLDivElement>(null);
 
@@ -32,6 +37,18 @@ export default function AuthButton() {
 				starredCache.set(user.id, starred);
 				setGithubStarred(starred);
 			}
+		});
+	}, [user?.id]);
+
+	useEffect(() => {
+		if (!user) return;
+		if (ddetectorCache.has(user.id)) {
+			setIsDDetector(ddetectorCache.get(user.id)!);
+			return;
+		}
+		checkDDetectorAccess(user.id).then((ok) => {
+			ddetectorCache.set(user.id, ok);
+			setIsDDetector(ok);
 		});
 	}, [user?.id]);
 
@@ -99,6 +116,29 @@ export default function AuthButton() {
 						</svg>
 						Profile
 					</Link>
+					{isDDetector && (
+						<Link
+							href="/ddetector"
+							className={styles.dropdownLink}
+							onClick={() => setDropdownOpen(false)}
+						>
+							<svg
+								width="13"
+								height="13"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							>
+								<circle cx="11" cy="11" r="8" />
+								<path d="M21 21l-4.35-4.35" />
+								<path d="M11 8v6M8 11h6" />
+							</svg>
+							DDetector
+						</Link>
+					)}
 					<button
 						className={styles.signOutBtn}
 						onClick={async () => {
