@@ -9,6 +9,17 @@ marked.use({ breaks: true, gfm: true } as Parameters<typeof marked.use>[0]);
 function renderBio(text: string): string {
 	return marked.parse(text) as string;
 }
+
+function formatJoinDate(iso: string, exact: boolean): string {
+	const d = new Date(iso);
+	if (exact) {
+		const dd = String(d.getDate()).padStart(2, "0");
+		const mm = String(d.getMonth() + 1).padStart(2, "0");
+		const yyyy = d.getFullYear();
+		return `${mm}/${dd}/${yyyy}`;
+	}
+	return `Joined ${d.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`;
+}
 import { useAuth } from "@/lib/auth";
 import { useLikes, type TrackLikeMeta } from "@/lib/likesContext";
 import { usePlayer } from "@/lib/miniplayer/context";
@@ -594,7 +605,10 @@ function PlaylistSection({
 							{[68, 52, 75].map((w, i) => (
 								<div key={i} className={styles.tracksSkeletonRow}>
 									<span className={styles.skeletonBlock} />
-									<span className={styles.skeletonLine} style={{ width: `${w}%` }} />
+									<span
+										className={styles.skeletonLine}
+										style={{ width: `${w}%` }}
+									/>
 								</div>
 							))}
 						</div>
@@ -643,6 +657,7 @@ export default function ProfileClient() {
 	>({});
 	const [githubStarred, setGithubStarred] = useState<boolean | null>(null);
 	const [starLoading, setStarLoading] = useState(false);
+	const [exactDate, setExactDate] = useState(false);
 
 	// Bio
 	const [bio, setBio] = useState<string>("");
@@ -899,17 +914,58 @@ export default function ProfileClient() {
 							{(starLoading || githubStarred !== null) && (
 								<span className={styles.starBadge} aria-hidden="true">
 									{starLoading ? (
-										<svg width="15" height="15" viewBox="0 0 24 24" fill="none" className={styles.starSpinner}>
-											<circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.25" />
-											<path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+										<svg
+											width="15"
+											height="15"
+											viewBox="0 0 24 24"
+											fill="none"
+											className={styles.starSpinner}
+										>
+											<circle
+												cx="12"
+												cy="12"
+												r="9"
+												stroke="currentColor"
+												strokeWidth="2.5"
+												strokeOpacity="0.25"
+											/>
+											<path
+												d="M21 12a9 9 0 0 0-9-9"
+												stroke="currentColor"
+												strokeWidth="2.5"
+												strokeLinecap="round"
+											/>
 										</svg>
 									) : githubStarred ? (
-										<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+										<svg
+											width="17"
+											height="17"
+											viewBox="0 0 24 24"
+											fill="currentColor"
+											stroke="currentColor"
+											strokeWidth="1.5"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										>
 											<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
 										</svg>
 									) : (
-										<a href="https://github.com/Web-Next-Music/Next-Music-Client" target="_blank" rel="noopener noreferrer" title="Star Web-Next-Music/Next-Music-Client on GitHub">
-											<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+										<a
+											href="https://github.com/Web-Next-Music/Next-Music-Client"
+											target="_blank"
+											rel="noopener noreferrer"
+											title="Star Web-Next-Music/Next-Music-Client on GitHub"
+										>
+											<svg
+												width="17"
+												height="17"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												strokeWidth="1.5"
+												strokeLinecap="round"
+												strokeLinejoin="round"
+											>
 												<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
 											</svg>
 										</a>
@@ -918,6 +974,14 @@ export default function ProfileClient() {
 							)}
 						</div>
 						<h1 className={styles.username}>{displayName || username}</h1>
+						{user.created_at && (
+							<p
+								className={styles.joinDate}
+								onClick={() => setExactDate((v) => !v)}
+							>
+								{formatJoinDate(user.created_at, exactDate)}
+							</p>
+						)}
 					</div>
 
 					<div className={styles.statsCard}>
@@ -1049,9 +1113,18 @@ export default function ProfileClient() {
 											</div>
 										) : bioLoading ? (
 											<div className={styles.bioSkeleton}>
-												<span className={styles.skeletonLine} style={{ width: "72%" }} />
-												<span className={styles.skeletonLine} style={{ width: "55%" }} />
-												<span className={styles.skeletonLine} style={{ width: "64%" }} />
+												<span
+													className={styles.skeletonLine}
+													style={{ width: "72%" }}
+												/>
+												<span
+													className={styles.skeletonLine}
+													style={{ width: "55%" }}
+												/>
+												<span
+													className={styles.skeletonLine}
+													style={{ width: "64%" }}
+												/>
 											</div>
 										) : bio ? (
 											<div
@@ -1227,7 +1300,10 @@ export default function ProfileClient() {
 								<div className={styles.playlistSkeleton}>
 									{[72, 58, 65].map((w, i) => (
 										<div key={i} className={styles.playlistSkeletonRow}>
-											<span className={styles.skeletonLine} style={{ width: `${w}%` }} />
+											<span
+												className={styles.skeletonLine}
+												style={{ width: `${w}%` }}
+											/>
 										</div>
 									))}
 								</div>

@@ -168,6 +168,14 @@
 	font-family: var(--font-heading-large);
 }
 
+.joinDate {
+	font-size: 12px;
+	color: var(--muted);
+	margin: 3px 0 0;
+	cursor: pointer;
+	user-select: none;
+}
+
 .statsCard {
 	background: var(--surface);
 	border: 1px solid var(--border);

@@ -26,6 +26,17 @@ function renderBio(text: string): string {
 	return marked.parse(text) as string;
 }
 
+function formatJoinDate(iso: string, exact: boolean): string {
+	const d = new Date(iso);
+	if (exact) {
+		const dd = String(d.getDate()).padStart(2, "0");
+		const mm = String(d.getMonth() + 1).padStart(2, "0");
+		const yyyy = d.getFullYear();
+		return `${mm}/${dd}/${yyyy}`;
+	}
+	return `Joined ${d.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`;
+}
+
 function resolveTrackMeta(trackId: string) {
 	const meta = TRACK_META[trackId];
 	if (meta) return meta;
@@ -132,6 +143,7 @@ export default function PublicProfileClient({
 	} | null>(null);
 	const [banned, setBanned] = useState(false);
 	const [starred, setStarred] = useState(false);
+	const [exactDate, setExactDate] = useState(false);
 
 	useEffect(() => {
 		getPublicProfile(githubId).then((result) => {
@@ -216,12 +228,9 @@ export default function PublicProfileClient({
 									{displayName[0].toUpperCase()}
 								</div>
 							)}
-							{!banned && (
-								starred ? (
-									<span
-										className={styles.starBadge}
-										title="Starred Next Music"
-									>
+							{!banned &&
+								(starred ? (
+									<span className={styles.starBadge} title="Starred Next Music">
 										<svg
 											width="17"
 											height="17"
@@ -257,10 +266,17 @@ export default function PublicProfileClient({
 											<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
 										</svg>
 									</a>
-								)
-							)}
+								))}
 						</div>
 						<h1 className={styles.username}>{displayName}</h1>
+						{!banned && profile.created_at && (
+							<p
+								className={styles.joinDate}
+								onClick={() => setExactDate((v) => !v)}
+							>
+								{formatJoinDate(profile.created_at, exactDate)}
+							</p>
+						)}
 					</div>
 
 					{stats && (

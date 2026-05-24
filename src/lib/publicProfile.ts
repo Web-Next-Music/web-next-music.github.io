@@ -10,6 +10,7 @@ export interface UserProfile {
 	avatar_url: string | null;
 	bio: string | null;
 	github_starred: boolean;
+	created_at?: string | null;
 }
 
 export async function getProfileByGithubId(
@@ -179,6 +180,7 @@ export async function getPublicProfile(
 		avatar_url: row.avatar_url,
 		bio: row.bio,
 		github_starred: row.github_starred,
+		created_at: row.created_at ?? null,
 	};
 
 	return { profile, banned: row.is_banned };
