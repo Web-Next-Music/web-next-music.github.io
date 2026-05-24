@@ -96,9 +96,7 @@ export async function fetchDDetectorLyrics(): Promise<
 	}
 }
 
-export async function triggerDDetectorFetch(
-	accessToken: string,
-): Promise<{
+export async function triggerDDetectorFetch(accessToken: string): Promise<{
 	ok: boolean;
 	total?: number;
 	added?: number;
