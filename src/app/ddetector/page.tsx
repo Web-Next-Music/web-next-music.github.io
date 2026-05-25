@@ -3,6 +3,7 @@
 import {
 	useState,
 	useEffect,
+	useLayoutEffect,
 	useRef,
 	useCallback,
 	useMemo,
@@ -248,6 +249,12 @@ function handleCoverError(e: React.SyntheticEvent<HTMLImageElement>) {
 		`<div class="${styles.coverPh}">♪</div>`;
 }
 
+interface ContextMenuState {
+	x: number;
+	y: number;
+	track: DDetectorTrack;
+}
+
 interface TrackRowProps {
 	track: DDetectorTrack;
 	index: number;
@@ -255,6 +262,7 @@ interface TrackRowProps {
 	date: string | undefined;
 	isActive: boolean;
 	onClick: (track: DDetectorTrack) => void;
+	onContextMenu: (e: React.MouseEvent, track: DDetectorTrack) => void;
 }
 
 const TrackRow = memo(function TrackRow({
@@ -264,12 +272,14 @@ const TrackRow = memo(function TrackRow({
 	date,
 	isActive,
 	onClick,
+	onContextMenu,
 }: TrackRowProps) {
 	const badge = BADGE_CFG[status];
 	return (
 		<div
 			className={`${styles.track}${isActive ? ` ${styles.trackActive}` : ""}`}
 			onClick={() => onClick(track)}
+			onContextMenu={(e) => onContextMenu(e, track)}
 		>
 			<span className={styles.trackNum}>{index + 1}</span>
 			<div className={styles.cover}>
@@ -290,16 +300,6 @@ const TrackRow = memo(function TrackRow({
 					{track.artist && <span>{track.artist}</span>}
 				</div>
 			</div>
-			<a
-				className={styles.trackYandex}
-				href={`https://yandex.ru/search/?text=${encodeURIComponent(`${track.title} ${track.artist} скачать mp3`)}`}
-				target="_blank"
-				rel="noopener noreferrer"
-				onClick={(e) => e.stopPropagation()}
-				title="Search on Yandex"
-			>
-				Y
-			</a>
 			{date && <span className={styles.trackDateBadge}>{date}</span>}
 			<span className={`${styles.badge} ${badge.cls}`}>{badge.label}</span>
 		</div>
@@ -349,6 +349,21 @@ export default function DDetectorPage() {
 	const [activeId, setActiveId] = useState<number | null>(null);
 	const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
+	// Context menu
+	const [ctxMenu, setCtxMenu] = useState<ContextMenuState | null>(null);
+	const ctxMenuRef = useRef<HTMLDivElement>(null);
+
+	useLayoutEffect(() => {
+		if (!ctxMenu || !ctxMenuRef.current) return;
+		const el = ctxMenuRef.current;
+		const rect = el.getBoundingClientRect();
+		let { x, y } = ctxMenu;
+		if (x + rect.width > window.innerWidth) x = window.innerWidth - rect.width - 8;
+		if (y + rect.height > window.innerHeight) y = window.innerHeight - rect.height - 8;
+		el.style.left = `${x}px`;
+		el.style.top = `${y}px`;
+	}, [ctxMenu]);
+
 	// Expanded full-lyrics cards (for unsynced tracks)
 	const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 
@@ -370,6 +385,33 @@ export default function DDetectorPage() {
 		document.addEventListener("mousedown", handler);
 		return () => document.removeEventListener("mousedown", handler);
 	}, [sortOpen]);
+
+	// Close context menu on outside click / scroll / Escape
+	useEffect(() => {
+		if (!ctxMenu) return;
+		const close = (e: MouseEvent) => {
+			if (!ctxMenuRef.current?.contains(e.target as Node)) setCtxMenu(null);
+		};
+		const closeKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape") setCtxMenu(null);
+		};
+		document.addEventListener("mousedown", close);
+		document.addEventListener("scroll", () => setCtxMenu(null), true);
+		document.addEventListener("keydown", closeKey);
+		return () => {
+			document.removeEventListener("mousedown", close);
+			document.removeEventListener("scroll", () => setCtxMenu(null), true);
+			document.removeEventListener("keydown", closeKey);
+		};
+	}, [ctxMenu]);
+
+	const handleTrackContextMenu = useCallback(
+		(e: React.MouseEvent, track: DDetectorTrack) => {
+			e.preventDefault();
+			setCtxMenu({ x: e.clientX, y: e.clientY, track });
+		},
+		[],
+	);
 
 	// Check access
 	useEffect(() => {
@@ -709,6 +751,7 @@ export default function DDetectorPage() {
 								date={trackDates.get(track.id)}
 								isActive={activeId === track.id}
 								onClick={handleTrackClick}
+								onContextMenu={handleTrackContextMenu}
 							/>
 						))}
 					</div>
@@ -833,6 +876,48 @@ export default function DDetectorPage() {
 							})}
 						</div>
 					</div>
+				</div>
+			)}
+
+			{/* Context menu */}
+			{ctxMenu && (
+				<div
+					ref={ctxMenuRef}
+					className={styles.ctxMenu}
+					style={{ top: ctxMenu.y, left: ctxMenu.x }}
+				>
+					<div className={styles.ctxMenuTrack}>
+						<span className={styles.ctxMenuTitle}>{ctxMenu.track.title}</span>
+						<span className={styles.ctxMenuArtist}>{ctxMenu.track.artist}</span>
+					</div>
+					<div className={styles.ctxMenuDivider} />
+					<a
+						className={styles.ctxMenuItem}
+						href={`https://yandex.ru/search/?text=${encodeURIComponent(`${ctxMenu.track.title} ${ctxMenu.track.artist} скачать mp3`)}`}
+						target="_blank"
+						rel="noopener noreferrer"
+						onClick={() => setCtxMenu(null)}
+					>
+						<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+							<circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/>
+							<path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+						</svg>
+						Search on Yandex
+					</a>
+					<button
+						className={styles.ctxMenuItem}
+						onClick={() => {
+							navigator.clipboard?.writeText(String(ctxMenu.track.id));
+							showToast(`ID copied: ${ctxMenu.track.id}`);
+							setCtxMenu(null);
+						}}
+					>
+						<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+							<rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2"/>
+							<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="2"/>
+						</svg>
+						Copy track ID
+					</button>
 				</div>
 			)}
 
