@@ -48,11 +48,16 @@ export function LikesProvider({ children }: { children: ReactNode }) {
 		}
 		const sb = getSupabase();
 		if (!sb) return;
+		const controller = new AbortController();
 		sb.from("track_likes")
 			.select("track_id, title, artist, cover, mp3_url")
 			.eq("user_id", user.id)
+			.abortSignal(controller.signal)
 			.then(({ data, error }) => {
-				if (error) console.error("[likes] load error:", error.message);
+				if (error) {
+					if (controller.signal.aborted) return;
+					console.error("[likes] load error:", error.message);
+				}
 				if (data) {
 					setLikedTrackIds(new Set(data.map((r) => r.track_id as string)));
 					const meta = new Map<string, TrackLikeMeta>();
@@ -79,6 +84,7 @@ export function LikesProvider({ children }: { children: ReactNode }) {
 					setLikedMeta(meta);
 				}
 			});
+		return () => controller.abort();
 	}, [user?.id]);
 
 	const toggle = useCallback(

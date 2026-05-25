@@ -290,6 +290,16 @@ const TrackRow = memo(function TrackRow({
 					{track.artist && <span>{track.artist}</span>}
 				</div>
 			</div>
+			<a
+				className={styles.trackYandex}
+				href={`https://yandex.ru/search/?text=${encodeURIComponent(`${track.title} ${track.artist} скачать mp3`)}`}
+				target="_blank"
+				rel="noopener noreferrer"
+				onClick={(e) => e.stopPropagation()}
+				title="Search on Yandex"
+			>
+				Y
+			</a>
 			{date && <span className={styles.trackDateBadge}>{date}</span>}
 			<span className={`${styles.badge} ${badge.cls}`}>{badge.label}</span>
 		</div>
@@ -756,7 +766,9 @@ export default function DDetectorPage() {
 												)}
 											</div>
 											<div className={styles.drugCardInfo}>
-												<div className={styles.drugCardTitle}>{track.title}</div>
+												<div className={styles.drugCardTitle}>
+													{track.title}
+												</div>
 												<div className={styles.drugCardArtist}>
 													{track.artist}
 												</div>
@@ -794,7 +806,9 @@ export default function DDetectorPage() {
 											</div>
 										</div>
 
-										<div className={`${styles.drugLines}${allLines ? ` ${styles.drugLinesNoTs}` : ""}`}>
+										<div
+											className={`${styles.drugLines}${allLines ? ` ${styles.drugLinesNoTs}` : ""}`}
+										>
 											{displayLines.map((line, li) => {
 												const isContext =
 													"isDrug" in line && line.isDrug === false;
