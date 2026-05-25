@@ -96,6 +96,47 @@ export async function fetchDDetectorLyrics(): Promise<
 	}
 }
 
+export async function fetchIgnoredTrackIds(): Promise<Set<number>> {
+	try {
+		const sb = getSupabase();
+		if (!sb) return new Set();
+		const { data, error } = await sb
+			.from("ddetector_ignored_tracks")
+			.select("track_id");
+		if (error) return new Set();
+		return new Set((data ?? []).map((r: { track_id: number }) => r.track_id));
+	} catch {
+		return new Set();
+	}
+}
+
+export async function addIgnoredTrack(trackId: number): Promise<boolean> {
+	try {
+		const sb = getSupabase();
+		if (!sb) return false;
+		const { error } = await sb
+			.from("ddetector_ignored_tracks")
+			.insert({ track_id: trackId });
+		return !error;
+	} catch {
+		return false;
+	}
+}
+
+export async function removeIgnoredTrack(trackId: number): Promise<boolean> {
+	try {
+		const sb = getSupabase();
+		if (!sb) return false;
+		const { error } = await sb
+			.from("ddetector_ignored_tracks")
+			.delete()
+			.eq("track_id", trackId);
+		return !error;
+	} catch {
+		return false;
+	}
+}
+
 export async function triggerDDetectorFetch(accessToken: string): Promise<{
 	ok: boolean;
 	total?: number;

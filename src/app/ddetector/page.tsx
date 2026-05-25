@@ -19,6 +19,9 @@ import {
 	checkDDetectorAccess,
 	fetchDDetectorTracks,
 	fetchDDetectorLyrics,
+	fetchIgnoredTrackIds,
+	addIgnoredTrack,
+	removeIgnoredTrack,
 	triggerDDetectorFetch,
 	type DDetectorTrack,
 	type LyricLine,
@@ -253,6 +256,7 @@ interface ContextMenuState {
 	x: number;
 	y: number;
 	track: DDetectorTrack;
+	hasAllLines?: boolean;
 }
 
 interface TrackRowProps {
@@ -261,6 +265,7 @@ interface TrackRowProps {
 	status: TrackStatus;
 	date: string | undefined;
 	isActive: boolean;
+	isIgnored: boolean;
 	onClick: (track: DDetectorTrack) => void;
 	onContextMenu: (e: React.MouseEvent, track: DDetectorTrack) => void;
 }
@@ -271,13 +276,14 @@ const TrackRow = memo(function TrackRow({
 	status,
 	date,
 	isActive,
+	isIgnored,
 	onClick,
 	onContextMenu,
 }: TrackRowProps) {
 	const badge = BADGE_CFG[status];
 	return (
 		<div
-			className={`${styles.track}${isActive ? ` ${styles.trackActive}` : ""}`}
+			className={`${styles.track}${isActive ? ` ${styles.trackActive}` : ""}${isIgnored ? ` ${styles.trackIgnored}` : ""}`}
 			onClick={() => onClick(track)}
 			onContextMenu={(e) => onContextMenu(e, track)}
 		>
@@ -344,6 +350,9 @@ export default function DDetectorPage() {
 	const [toast, setToast] = useState("");
 	const [toastVisible, setToastVisible] = useState(false);
 	const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	// Ignored tracks
+	const [ignoredIds, setIgnoredIds] = useState<Set<number>>(new Set());
 
 	// Active track
 	const [activeId, setActiveId] = useState<number | null>(null);
@@ -413,6 +422,33 @@ export default function DDetectorPage() {
 		[],
 	);
 
+	const handleCardContextMenu = useCallback(
+		(e: React.MouseEvent, track: DDetectorTrack, hasAllLines: boolean) => {
+			e.preventDefault();
+			setCtxMenu({ x: e.clientX, y: e.clientY, track, hasAllLines });
+		},
+		[],
+	);
+
+	const handleToggleIgnore = useCallback(
+		async (track: DDetectorTrack) => {
+			setCtxMenu(null);
+			const isIgnored = ignoredIds.has(track.id);
+			if (isIgnored) {
+				setIgnoredIds((prev) => {
+					const next = new Set(prev);
+					next.delete(track.id);
+					return next;
+				});
+				await removeIgnoredTrack(track.id);
+			} else {
+				setIgnoredIds((prev) => new Set(prev).add(track.id));
+				await addIgnoredTrack(track.id);
+			}
+		},
+		[ignoredIds],
+	);
+
 	// Check access
 	useEffect(() => {
 		if (authLoading) return;
@@ -437,10 +473,11 @@ export default function DDetectorPage() {
 	useEffect(() => {
 		if (!hasAccess) return;
 		setDataLoading(true);
-		Promise.all([fetchDDetectorTracks(), fetchDDetectorLyrics()])
-			.then(([t, l]) => {
+		Promise.all([fetchDDetectorTracks(), fetchDDetectorLyrics(), fetchIgnoredTrackIds()])
+			.then(([t, l, ignored]) => {
 				setTracks(t);
 				setLyricsMap(l);
+				setIgnoredIds(ignored);
 				setTrackStatus(new Map(t.map((tr) => [tr.id, "pending"])));
 			})
 			.catch((e) => console.error("DDetector data load:", e))
@@ -750,6 +787,7 @@ export default function DDetectorPage() {
 								status={trackStatus.get(track.id) ?? "pending"}
 								date={trackDates.get(track.id)}
 								isActive={activeId === track.id}
+								isIgnored={ignoredIds.has(track.id)}
 								onClick={handleTrackClick}
 								onContextMenu={handleTrackContextMenu}
 							/>
@@ -790,15 +828,17 @@ export default function DDetectorPage() {
 
 							{drugCards.map(({ track, lines, allLines }) => {
 								const isExpanded = expandedCards.has(track.id);
+								const isIgnored = ignoredIds.has(track.id);
 								const displayLines = isExpanded && allLines ? allLines : lines;
 								return (
 									<div
 										key={track.id}
-										className={styles.drugCard}
+										className={`${styles.drugCard}${isIgnored ? ` ${styles.drugCardIgnored}` : ""}`}
 										ref={(el) => {
 											if (el) cardRefs.current.set(track.id, el);
 											else cardRefs.current.delete(track.id);
 										}}
+										onContextMenu={(e) => handleCardContextMenu(e, track, !!allLines)}
 									>
 										<div className={styles.drugCardHead}>
 											<div className={styles.drugCardCover}>
@@ -917,6 +957,33 @@ export default function DDetectorPage() {
 							<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="2"/>
 						</svg>
 						Copy track ID
+					</button>
+					<div className={styles.ctxMenuDivider} />
+					{ctxMenu.hasAllLines && (
+						<button
+							className={styles.ctxMenuItem}
+							onClick={() => {
+								toggleExpanded(ctxMenu.track.id);
+								setCtxMenu(null);
+							}}
+						>
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+								<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+							</svg>
+							{expandedCards.has(ctxMenu.track.id) ? "Collapse" : "Full lyrics"}
+						</button>
+					)}
+					<button
+						className={`${styles.ctxMenuItem} ${ignoredIds.has(ctxMenu.track.id) ? styles.ctxMenuItemUnignore : styles.ctxMenuItemIgnore}`}
+						onClick={() => handleToggleIgnore(ctxMenu.track)}
+					>
+						<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+							<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+							{ignoredIds.has(ctxMenu.track.id) && (
+								<path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+							)}
+						</svg>
+						{ignoredIds.has(ctxMenu.track.id) ? "Unignore" : "Ignore"}
 					</button>
 				</div>
 			)}
