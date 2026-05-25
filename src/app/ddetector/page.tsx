@@ -240,6 +240,7 @@ const BADGE_CFG: Record<TrackStatus, { cls: string; label: string }> = {
 interface DrugCard {
 	track: DDetectorTrack;
 	lines: Array<{ ts: string | null; html: string }>;
+	allLines?: Array<{ ts: string | null; html: string; isDrug: boolean }>;
 }
 
 function handleCoverError(e: React.SyntheticEvent<HTMLImageElement>) {
@@ -338,6 +339,18 @@ export default function DDetectorPage() {
 	const [activeId, setActiveId] = useState<number | null>(null);
 	const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
+	// Expanded full-lyrics cards (for unsynced tracks)
+	const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
+
+	const toggleExpanded = useCallback((id: number) => {
+		setExpandedCards((prev) => {
+			const next = new Set(prev);
+			if (next.has(id)) next.delete(id);
+			else next.add(id);
+			return next;
+		});
+	}, []);
+
 	// Close sort dropdown on outside click
 	useEffect(() => {
 		if (!sortOpen) return;
@@ -416,7 +429,18 @@ export default function DDetectorPage() {
 					if (drugLines.length > 0) {
 						status = "found";
 						found++;
-						accumCards.push({ track, lines: drugLines });
+						const isUnsynced = lyrics.every((l) => l.ts === null);
+						const card: DrugCard = { track, lines: drugLines };
+						if (isUnsynced) {
+							card.allLines = lyrics.map((l) => ({
+								ts: l.ts,
+								html: hasDrugWord(l.text)
+									? highlightDrugs(l.text)
+									: escHtml(l.text),
+								isDrug: hasDrugWord(l.text),
+							}));
+						}
+						accumCards.push(card);
 					} else {
 						status = "none";
 					}
@@ -711,66 +735,88 @@ export default function DDetectorPage() {
 								</div>
 							)}
 
-							{drugCards.map(({ track, lines }) => (
-								<div
-									key={track.id}
-									className={styles.drugCard}
-									ref={(el) => {
-										if (el) cardRefs.current.set(track.id, el);
-										else cardRefs.current.delete(track.id);
-									}}
-								>
-									<div className={styles.drugCardHead}>
-										<div className={styles.drugCardCover}>
-											{track.cover ? (
-												<img src={track.cover} alt="" loading="lazy" />
-											) : (
-												<div className={styles.coverPh}>♪</div>
-											)}
-										</div>
-										<div className={styles.drugCardInfo}>
-											<div className={styles.drugCardTitle}>{track.title}</div>
-											<div className={styles.drugCardArtist}>
-												{track.artist}
+							{drugCards.map(({ track, lines, allLines }) => {
+								const isExpanded = expandedCards.has(track.id);
+								const displayLines = isExpanded && allLines ? allLines : lines;
+								return (
+									<div
+										key={track.id}
+										className={styles.drugCard}
+										ref={(el) => {
+											if (el) cardRefs.current.set(track.id, el);
+											else cardRefs.current.delete(track.id);
+										}}
+									>
+										<div className={styles.drugCardHead}>
+											<div className={styles.drugCardCover}>
+												{track.cover ? (
+													<img src={track.cover} alt="" loading="lazy" />
+												) : (
+													<div className={styles.coverPh}>♪</div>
+												)}
+											</div>
+											<div className={styles.drugCardInfo}>
+												<div className={styles.drugCardTitle}>{track.title}</div>
+												<div className={styles.drugCardArtist}>
+													{track.artist}
+												</div>
+											</div>
+											<div className={styles.drugCardActions}>
+												{allLines && (
+													<button
+														className={`${styles.btn} ${styles.btnExpand}${isExpanded ? ` ${styles.btnExpandActive}` : ""}`}
+														onClick={(e) => {
+															e.stopPropagation();
+															toggleExpanded(track.id);
+														}}
+													>
+														{isExpanded ? "Collapse" : "Full lyrics"}
+													</button>
+												)}
+												<button
+													className={`${styles.btn} ${styles.btnCopy}`}
+													onClick={(e) => {
+														e.stopPropagation();
+														navigator.clipboard?.writeText(String(track.id));
+														showToast(`ID copied: ${track.id}`);
+													}}
+												>
+													Copy ID
+												</button>
+												<a
+													className={`${styles.btn} ${styles.btnYandex}`}
+													href={`https://yandex.ru/search/?text=${encodeURIComponent(`${track.title} ${track.artist} скачать mp3`)}`}
+													target="_blank"
+													rel="noopener noreferrer"
+												>
+													Yandex
+												</a>
 											</div>
 										</div>
-										<div className={styles.drugCardActions}>
-											<button
-												className={`${styles.btn} ${styles.btnCopy}`}
-												onClick={(e) => {
-													e.stopPropagation();
-													navigator.clipboard?.writeText(String(track.id));
-													showToast(`ID copied: ${track.id}`);
-												}}
-											>
-												Copy ID
-											</button>
-											<a
-												className={`${styles.btn} ${styles.btnYandex}`}
-												href={`https://yandex.ru/search/?text=${encodeURIComponent(`${track.title} ${track.artist} скачать mp3`)}`}
-												target="_blank"
-												rel="noopener noreferrer"
-											>
-												Yandex
-											</a>
-										</div>
-									</div>
 
-									<div className={styles.drugLines}>
-										{lines.map((line, li) => (
-											<div key={li} className={styles.drugLine}>
-												<span className={styles.drugTs}>
-													{line.ts ?? "—:——"}
-												</span>
-												<span
-													className={styles.drugText}
-													dangerouslySetInnerHTML={{ __html: line.html }}
-												/>
-											</div>
-										))}
+										<div className={`${styles.drugLines}${allLines ? ` ${styles.drugLinesNoTs}` : ""}`}>
+											{displayLines.map((line, li) => {
+												const isContext =
+													"isDrug" in line && line.isDrug === false;
+												return (
+													<div
+														key={li}
+														className={`${styles.drugLine}${isContext ? ` ${styles.drugLineContext}` : ""}`}
+													>
+														<span className={styles.drugTs}>
+															{line.ts ?? "—:——"}
+														</span>
+														<span
+															className={styles.drugText}
+															dangerouslySetInnerHTML={{ __html: line.html }}
+														/>
+													</div>
+												);
+											})}
+										</div>
 									</div>
-								</div>
-							))}
+								);
+							})}
 						</div>
 					</div>
 				</div>
