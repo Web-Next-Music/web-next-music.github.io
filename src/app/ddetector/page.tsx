@@ -357,6 +357,13 @@ export default function DDetectorPage() {
 	const [activeId, setActiveId] = useState<number | null>(null);
 	const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
+	// Header context menu (global settings)
+	const [headerCtxMenu, setHeaderCtxMenu] = useState<{ x: number; y: number } | null>(null);
+	const headerCtxMenuRef = useRef<HTMLDivElement>(null);
+
+	// Hide ignored tracks
+	const [hideIgnored, setHideIgnored] = useState(false);
+
 	// Context menu
 	const [ctxMenu, setCtxMenu] = useState<ContextMenuState | null>(null);
 	const ctxMenuRef = useRef<HTMLDivElement>(null);
@@ -371,6 +378,17 @@ export default function DDetectorPage() {
 		el.style.left = `${x}px`;
 		el.style.top = `${y}px`;
 	}, [ctxMenu]);
+
+	useLayoutEffect(() => {
+		if (!headerCtxMenu || !headerCtxMenuRef.current) return;
+		const el = headerCtxMenuRef.current;
+		const rect = el.getBoundingClientRect();
+		let { x, y } = headerCtxMenu;
+		if (x + rect.width > window.innerWidth) x = window.innerWidth - rect.width - 8;
+		if (y + rect.height > window.innerHeight) y = window.innerHeight - rect.height - 8;
+		el.style.left = `${x}px`;
+		el.style.top = `${y}px`;
+	}, [headerCtxMenu]);
 
 	// Expanded full-lyrics cards (for unsynced tracks)
 	const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
@@ -412,6 +430,25 @@ export default function DDetectorPage() {
 			document.removeEventListener("keydown", closeKey);
 		};
 	}, [ctxMenu]);
+
+	// Close header context menu on outside click / scroll / Escape
+	useEffect(() => {
+		if (!headerCtxMenu) return;
+		const close = (e: MouseEvent) => {
+			if (!headerCtxMenuRef.current?.contains(e.target as Node)) setHeaderCtxMenu(null);
+		};
+		const closeKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape") setHeaderCtxMenu(null);
+		};
+		document.addEventListener("mousedown", close);
+		document.addEventListener("scroll", () => setHeaderCtxMenu(null), true);
+		document.addEventListener("keydown", closeKey);
+		return () => {
+			document.removeEventListener("mousedown", close);
+			document.removeEventListener("scroll", () => setHeaderCtxMenu(null), true);
+			document.removeEventListener("keydown", closeKey);
+		};
+	}, [headerCtxMenu]);
 
 	const handleTrackContextMenu = useCallback(
 		(e: React.MouseEvent, track: DDetectorTrack) => {
@@ -611,6 +648,7 @@ export default function DDetectorPage() {
 						String(t.id).includes(q),
 				)
 			: tracks;
+		if (hideIgnored) list = list.filter((t) => !ignoredIds.has(t.id));
 		if (sort === "date") {
 			list = [...list].sort((a, b) => {
 				const da = a.added_at ? new Date(a.added_at).getTime() : 0;
@@ -621,7 +659,7 @@ export default function DDetectorPage() {
 			list = [...list].sort((a, b) => a.title.localeCompare(b.title));
 		}
 		return list;
-	}, [tracks, search, sort]);
+	}, [tracks, search, sort, hideIgnored, ignoredIds]);
 
 	const trackDates = useMemo(() => {
 		const map = new Map<number, string>();
@@ -676,7 +714,13 @@ export default function DDetectorPage() {
 	return (
 		<div className={styles.page}>
 			{/* Header */}
-			<div className={styles.header}>
+			<div
+				className={styles.header}
+				onContextMenu={(e) => {
+					e.preventDefault();
+					setHeaderCtxMenu({ x: e.clientX, y: e.clientY });
+				}}
+			>
 				<Link href="/" className={styles.headerTitle}>
 					D<span>Detector</span>
 				</Link>
@@ -825,7 +869,7 @@ export default function DDetectorPage() {
 								</div>
 							)}
 
-							{drugCards.map(({ track, lines, allLines }) => {
+							{drugCards.filter((c) => !hideIgnored || !ignoredIds.has(c.track.id)).map(({ track, lines, allLines }) => {
 								const isExpanded = expandedCards.has(track.id);
 								const isIgnored = ignoredIds.has(track.id);
 								const displayLines = isExpanded && allLines ? allLines : lines;
@@ -983,6 +1027,39 @@ export default function DDetectorPage() {
 							)}
 						</svg>
 						{ignoredIds.has(ctxMenu.track.id) ? "Unignore" : "Ignore"}
+					</button>
+				</div>
+			)}
+
+			{/* Header context menu */}
+			{headerCtxMenu && (
+				<div
+					ref={headerCtxMenuRef}
+					className={styles.ctxMenu}
+					style={{ top: headerCtxMenu.y, left: headerCtxMenu.x }}
+				>
+					<button
+						className={styles.ctxMenuItem}
+						onClick={() => {
+							setHideIgnored((v) => !v);
+							setHeaderCtxMenu(null);
+						}}
+					>
+						<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+							{hideIgnored ? (
+								<>
+									<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+									<circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+								</>
+							) : (
+								<>
+									<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+									<path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+									<line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+								</>
+							)}
+						</svg>
+						{hideIgnored ? "Show ignored tracks" : "Hide ignored tracks"}
 					</button>
 				</div>
 			)}
