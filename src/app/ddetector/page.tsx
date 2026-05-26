@@ -168,8 +168,7 @@ const DRUG_HIGHLIGHT_RE = new RegExp(
 	`(?<!${_W})${_W}*(?:${_DRUG_ALT})${_W}*(?!${_W})`,
 	"gi",
 );
-const MARK =
-	'<mark style="background:rgba(43,254,245,0.12);color:var(--accent);border-radius:3px;padding:0 3px;font-weight:600">$&</mark>';
+const MARK = '<mark class="drugMark">$&</mark>';
 
 function hasDrugWord(text: string): boolean {
 	DRUG_DETECT_RE.lastIndex = 0;
