@@ -427,7 +427,7 @@ body {
 
 .foundLabel {
 	font-size: 11px;
-	color: var(--accent2);
+	color: var(--accent);
 	flex-shrink: 0;
 	white-space: nowrap;
 	font-weight: 600;
@@ -490,6 +490,8 @@ body {
 	}
 
 	.drugLine {
+		border-bottom: 1px solid var(--ignore-border);
+
 		&:hover {
 			background: var(--ignore-bg-btn);
 		}
@@ -619,17 +621,12 @@ body {
 	background: var(--accent-btn-hover);
 }
 
-/* Drug lines */
-.drugLines {
-	padding: 4px 0;
-}
-
 .drugLine {
 	display: flex;
 	gap: 10px;
 	align-items: baseline;
 	padding: 5px 12px;
-	border-bottom: 1px solid var(--bg);
+	border-bottom: 1px solid var(--border);
 	transition: background 0.1s;
 
 	&:hover {
@@ -652,7 +649,7 @@ body {
 
 .drugTs {
 	font-size: 10px;
-	color: var(--accent2);
+	color: var(--accent);
 	font-variant-numeric: tabular-nums;
 	flex-shrink: 0;
 	font-family: "SF Mono", "Fira Code", monospace;
@@ -837,7 +834,7 @@ body {
 
 	&:hover {
 		background: var(--surface);
-		color: var(--text);
+		color: var(--accent);
 	}
 }
 
