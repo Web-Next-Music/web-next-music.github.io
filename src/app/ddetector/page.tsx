@@ -361,8 +361,18 @@ export default function DDetectorPage() {
 	const [headerCtxMenu, setHeaderCtxMenu] = useState<{ x: number; y: number } | null>(null);
 	const headerCtxMenuRef = useRef<HTMLDivElement>(null);
 
-	// Hide ignored tracks
-	const [hideIgnored, setHideIgnored] = useState(false);
+	// Hide ignored tracks (persisted)
+	const [hideIgnored, setHideIgnored] = useState(() => {
+		try { return localStorage.getItem("ddetector:hideIgnored") === "1"; } catch { return false; }
+	});
+
+	const toggleHideIgnored = useCallback(() => {
+		setHideIgnored((v) => {
+			const next = !v;
+			try { localStorage.setItem("ddetector:hideIgnored", next ? "1" : "0"); } catch {}
+			return next;
+		});
+	}, []);
 
 	// Context menu
 	const [ctxMenu, setCtxMenu] = useState<ContextMenuState | null>(null);
@@ -1041,7 +1051,7 @@ export default function DDetectorPage() {
 					<button
 						className={styles.ctxMenuItem}
 						onClick={() => {
-							setHideIgnored((v) => !v);
+							toggleHideIgnored();
 							setHeaderCtxMenu(null);
 						}}
 					>
