@@ -333,7 +333,6 @@ export default function DDetectorPage() {
 	const [drugCards, setDrugCards] = useState<DrugCard[]>([]);
 	const [processed, setProcessed] = useState(0);
 	const [foundCount, setFoundCount] = useState(0);
-	const processing = useRef(false);
 
 	// Search & sort
 	const searchInputRef = useRef<HTMLInputElement>(null);
@@ -532,8 +531,9 @@ export default function DDetectorPage() {
 
 	// Process tracks against lyrics
 	useEffect(() => {
-		if (!tracks.length || dataLoading || processing.current) return;
-		processing.current = true;
+		if (!tracks.length || dataLoading) return;
+
+		let cancelled = false;
 		setProcessed(0);
 		setFoundCount(0);
 		setDrugCards([]);
@@ -550,6 +550,8 @@ export default function DDetectorPage() {
 
 		(async () => {
 			for (const track of tracks) {
+				if (cancelled) return;
+
 				const lyrics = lyricsMap.has(track.id)
 					? lyricsMap.get(track.id)
 					: undefined;
@@ -592,8 +594,9 @@ export default function DDetectorPage() {
 					await new Promise((r) => setTimeout(r, 0));
 				}
 			}
-			processing.current = false;
 		})();
+
+		return () => { cancelled = true; };
 	}, [tracks, lyricsMap, dataLoading]);
 
 	// Toast helper
@@ -635,8 +638,6 @@ export default function DDetectorPage() {
 				]);
 				setTracks(t);
 				setLyricsMap(l);
-				setTrackStatus(new Map(t.map((tr) => [tr.id, "pending"])));
-				processing.current = false;
 			} else {
 				showToast(`Error: ${result.error}`);
 			}
