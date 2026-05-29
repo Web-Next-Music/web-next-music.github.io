@@ -11,10 +11,11 @@
 	background: var(--surface);
 	border: 1px solid var(--border);
 	border-radius: 16px;
-	padding: 20px 40px 20px 20px;
+	padding: 20px 20px 56px 20px;
 	margin-bottom: 10px;
 	position: relative;
 	overflow: hidden;
+	height: 170px;
 
 	&::before {
 		content: "";
@@ -56,12 +57,35 @@
 	max-width: 560px;
 }
 
+.addonActions {
+	position: absolute;
+	bottom: 16px;
+	right: 14px;
+	display: flex;
+	flex-direction: row;
+	gap: 10px;
+}
+
+.addonVersion {
+	position: absolute;
+	bottom: 20px;
+	left: 20px;
+	font-size: 13px;
+	font-style: italic;
+	color: var(--muted);
+}
+
+.addonBtnLoading {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
 .addonBtn {
 	display: inline-flex;
 	align-items: center;
+	width: 115px;
 	gap: 8px;
 	flex-shrink: 0;
-	align-self: center;
 	background: var(--surface2);
 	border: 1px solid var(--border);
 	border-radius: 8px;
@@ -77,6 +101,23 @@
 		border-color: rgba(43, 254, 245, 0.25);
 		color: var(--accent);
 	}
+}
+
+.webBadge {
+	position: absolute;
+	top: 12px;
+	right: 14px;
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 3px 10px;
+	border-radius: 20px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.3px;
+	background: rgba(43, 254, 245, 0.08);
+	border: 1px solid rgba(43, 254, 245, 0.2);
+	color: var(--accent);
 }
 
 .creditsBlock {
@@ -147,25 +188,6 @@
 
 @media (max-width: 640px) {
 	.main {
-		padding: 32px 20px 60px;
-	}
-
-	.addonHero {
-		flex-direction: column;
-		padding: 20px;
-	}
-
-	.addonBtn {
-		align-self: flex-start;
-	}
-
-	.addonTitle {
-		font-size: 22px;
-	}
-}
-
-@media (max-width: 640px) {
-	.main {
 		padding: calc(25px + var(--mini-player-h)) 20px 25px;
 	}
 
@@ -175,6 +197,8 @@
 		align-items: flex-start;
 		padding: 16px;
 		gap: 12px;
+		padding-bottom: 16px;
+		height: auto;
 	}
 
 	.addonIcon {
@@ -194,10 +218,28 @@
 		font-size: 13px;
 	}
 
-	.addonBtn {
+	.addonVersion {
+		display: none;
+	}
+
+	.webBadge {
+		position: static;
 		width: 100%;
 		justify-content: center;
-		margin-top: 10px;
+		order: -1;
+	}
+
+	.addonActions {
+		position: static;
+		width: 100%;
+		justify-content: center;
+	}
+
+	.addonBtn {
+		flex: 1;
+		justify-content: center;
+		font-size: 12px;
+		padding: 9px 14px;
 	}
 
 	.creditsBlock {
