@@ -27,200 +27,7 @@ import {
 	type LyricLine,
 } from "@/lib/ddetector";
 import styles from "./page.module.scss";
-
-// Drug detection
-const DRUG_KEYWORDS = [
-	"наркотик",
-	"наркотики",
-	"наркота",
-	"наркоман",
-	"наркомания",
-	"героин",
-	"кокаин",
-	"кокс",
-	"марихуана",
-	"гашиш",
-	"анаша",
-	"опиум",
-	"опиаты",
-	"амфетамин",
-	"метамфетамин",
-	"метамф",
-	"экстази",
-	"мдма",
-	"лсд",
-	"спайс",
-	"мефедрон",
-	"кетамин",
-	"хмур",
-	"хмурый",
-	"хмурого",
-	"хмурым",
-	"трава",
-	"дурь",
-	"дурман",
-	"порошок",
-	"дорожка",
-	"кристалл",
-	"кристаллы",
-	"колёса",
-	"колёс",
-	"таблы",
-	"соль",
-	"меф",
-	"скорость",
-	"ширяться",
-	"ширнуться",
-	"укол",
-	"доза",
-	"дозу",
-	"передоз",
-	"ломка",
-	"торчать",
-	"торчок",
-	"торчала",
-	"торчал",
-	"барыга",
-	"дилер",
-	"нарк",
-	"закинуться",
-	"вмазаться",
-	"накуриться",
-	"обкуриться",
-	"обдолбаться",
-	"пыхнуть",
-	"пыхаем",
-	"косяк",
-	"джойнт",
-	"дымить",
-	"дозняк",
-	"drug",
-	"drugs",
-	"heroin",
-	"cocaine",
-	"coke",
-	"meth",
-	"marijuana",
-	"weed",
-	"crack",
-	"xanax",
-	"xan",
-	"fentanyl",
-	"fent",
-	"codeine",
-	"lean",
-	"molly",
-	"mdma",
-	"ecstasy",
-	"acid",
-	"lsd",
-	"shroom",
-	"shrooms",
-	"mushroom",
-	"mushrooms",
-	"percocet",
-	"perc",
-	"percs",
-	"oxy",
-	"oxycodone",
-	"adderall",
-	"amphetamine",
-	"speed",
-	"ketamine",
-	"overdose",
-	"od",
-	"needle",
-	"dealer",
-	"plug",
-	"dope",
-	"stash",
-	"blunt",
-	"joint",
-	"bong",
-	"ganja",
-	"chronic",
-	"promethazine",
-	"syrup",
-	"drank",
-	"roll",
-	"rolled",
-	"rolling",
-	"junkie",
-	"junky",
-	"fiend",
-	"trap",
-	"trapping",
-	"sack",
-	"re-up",
-	"reup",
-	// Smoking / cannabis slang (RU)
-	"шмаль",
-	"шмали",
-	"дуть",
-	"дует",
-	"дуют",
-	"дул",
-	"дула",
-	"шишки",
-	"шишка",
-	"бошки",
-	"бошка",
-	"ганджубас",
-	"ганжа",
-	"конопля",
-	"каннабис",
-	"чарс",
-	"смолить",
-	"смолят",
-	"смолю",
-	"смолил",
-	"бычок",
-	"бычки",
-	"укурился",
-	"укурилась",
-	"укуренный",
-	"укуренная",
-	"укурок",
-	"упоротый",
-	"упоротая",
-	"упороться",
-	"упоролся",
-	"упоролась",
-	// Drug effects / trip slang (RU)
-	"приход",
-	"прёт",
-	"перло",
-	"торкнуло",
-	"торкает",
-	"накрыло",
-	"колбасит",
-	"улёт",
-	"балдеть",
-	"балдею",
-	"балдел",
-	"забалдеть",
-	"кайфануть",
-	"кайфанул",
-	"накайфоваться",
-	"укуриться",
-	"нюхать",
-	"нюхнуть",
-	"нюхал",
-	"нюхала",
-	"колоться",
-	"кололся",
-	"кололась",
-	"вколоться",
-	"вколоться",
-	// Psychedelics (RU)
-	"кислота",
-	"кислоту",
-	"кислоты",
-	"марки",
-	"марка",
-	"психоделик",
-	"психоделики",
-];
+import DRUG_KEYWORDS from "./drug-keywords.json";
 // Build a single regex from all keywords (longer first to prevent partial shadowing)
 const _DRUG_ALT = [...DRUG_KEYWORDS]
 	.sort((a, b) => b.length - a.length)
@@ -404,7 +211,9 @@ export default function DDetectorPage() {
 	// Search & sort
 	const searchInputRef = useRef<HTMLInputElement>(null);
 	const [search, setSearch] = useState("");
-	const [sort, setSort] = useState<"default" | "date" | "alpha" | "artist">("default");
+	const [sort, setSort] = useState<"default" | "date" | "alpha" | "artist">(
+		"default",
+	);
 	const [sortOpen, setSortOpen] = useState(false);
 	const sortRef = useRef<HTMLDivElement>(null);
 
@@ -424,18 +233,27 @@ export default function DDetectorPage() {
 	const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
 	// Header context menu (global settings)
-	const [headerCtxMenu, setHeaderCtxMenu] = useState<{ x: number; y: number } | null>(null);
+	const [headerCtxMenu, setHeaderCtxMenu] = useState<{
+		x: number;
+		y: number;
+	} | null>(null);
 	const headerCtxMenuRef = useRef<HTMLDivElement>(null);
 
 	// Hide ignored tracks (persisted)
 	const [hideIgnored, setHideIgnored] = useState(() => {
-		try { return localStorage.getItem("ddetector:hideIgnored") === "1"; } catch { return false; }
+		try {
+			return localStorage.getItem("ddetector:hideIgnored") === "1";
+		} catch {
+			return false;
+		}
 	});
 
 	const toggleHideIgnored = useCallback(() => {
 		setHideIgnored((v) => {
 			const next = !v;
-			try { localStorage.setItem("ddetector:hideIgnored", next ? "1" : "0"); } catch {}
+			try {
+				localStorage.setItem("ddetector:hideIgnored", next ? "1" : "0");
+			} catch {}
 			return next;
 		});
 	}, []);
@@ -449,8 +267,10 @@ export default function DDetectorPage() {
 		const el = ctxMenuRef.current;
 		const rect = el.getBoundingClientRect();
 		let { x, y } = ctxMenu;
-		if (x + rect.width > window.innerWidth) x = window.innerWidth - rect.width - 8;
-		if (y + rect.height > window.innerHeight) y = window.innerHeight - rect.height - 8;
+		if (x + rect.width > window.innerWidth)
+			x = window.innerWidth - rect.width - 8;
+		if (y + rect.height > window.innerHeight)
+			y = window.innerHeight - rect.height - 8;
 		el.style.left = `${x}px`;
 		el.style.top = `${y}px`;
 	}, [ctxMenu]);
@@ -460,8 +280,10 @@ export default function DDetectorPage() {
 		const el = headerCtxMenuRef.current;
 		const rect = el.getBoundingClientRect();
 		let { x, y } = headerCtxMenu;
-		if (x + rect.width > window.innerWidth) x = window.innerWidth - rect.width - 8;
-		if (y + rect.height > window.innerHeight) y = window.innerHeight - rect.height - 8;
+		if (x + rect.width > window.innerWidth)
+			x = window.innerWidth - rect.width - 8;
+		if (y + rect.height > window.innerHeight)
+			y = window.innerHeight - rect.height - 8;
 		el.style.left = `${x}px`;
 		el.style.top = `${y}px`;
 	}, [headerCtxMenu]);
@@ -511,7 +333,8 @@ export default function DDetectorPage() {
 	useEffect(() => {
 		if (!headerCtxMenu) return;
 		const close = (e: MouseEvent) => {
-			if (!headerCtxMenuRef.current?.contains(e.target as Node)) setHeaderCtxMenu(null);
+			if (!headerCtxMenuRef.current?.contains(e.target as Node))
+				setHeaderCtxMenu(null);
 		};
 		const closeKey = (e: KeyboardEvent) => {
 			if (e.key === "Escape") setHeaderCtxMenu(null);
@@ -521,7 +344,11 @@ export default function DDetectorPage() {
 		document.addEventListener("keydown", closeKey);
 		return () => {
 			document.removeEventListener("mousedown", close);
-			document.removeEventListener("scroll", () => setHeaderCtxMenu(null), true);
+			document.removeEventListener(
+				"scroll",
+				() => setHeaderCtxMenu(null),
+				true,
+			);
 			document.removeEventListener("keydown", closeKey);
 		};
 	}, [headerCtxMenu]);
@@ -585,7 +412,11 @@ export default function DDetectorPage() {
 	useEffect(() => {
 		if (!hasAccess) return;
 		setDataLoading(true);
-		Promise.all([fetchDDetectorTracks(), fetchDDetectorLyrics(), fetchIgnoredTrackIds()])
+		Promise.all([
+			fetchDDetectorTracks(),
+			fetchDDetectorLyrics(),
+			fetchIgnoredTrackIds(),
+		])
 			.then(([t, l, ignored]) => {
 				setTracks(t);
 				setLyricsMap(l);
@@ -663,7 +494,9 @@ export default function DDetectorPage() {
 			}
 		})();
 
-		return () => { cancelled = true; };
+		return () => {
+			cancelled = true;
+		};
 	}, [tracks, lyricsMap, dataLoading]);
 
 	// Toast helper
@@ -741,7 +574,8 @@ export default function DDetectorPage() {
 				artistCount.set(t.artist, (artistCount.get(t.artist) ?? 0) + 1);
 			}
 			list = [...list].sort((a, b) => {
-				const diff = (artistCount.get(b.artist) ?? 0) - (artistCount.get(a.artist) ?? 0);
+				const diff =
+					(artistCount.get(b.artist) ?? 0) - (artistCount.get(a.artist) ?? 0);
 				if (diff !== 0) return diff;
 				return a.artist.localeCompare(b.artist);
 			});
@@ -842,18 +676,20 @@ export default function DDetectorPage() {
 						</button>
 						{sortOpen && (
 							<div className={styles.sortDropdown}>
-								{(["default", "date", "alpha", "artist"] as const).map((opt) => (
-									<button
-										key={opt}
-										className={`${styles.sortOption}${sort === opt ? ` ${styles.sortOptionActive}` : ""}`}
-										onClick={() => {
-											setSort(opt);
-											setSortOpen(false);
-										}}
-									>
-										{SORT_LABELS[opt]}
-									</button>
-								))}
+								{(["default", "date", "alpha", "artist"] as const).map(
+									(opt) => (
+										<button
+											key={opt}
+											className={`${styles.sortOption}${sort === opt ? ` ${styles.sortOptionActive}` : ""}`}
+											onClick={() => {
+												setSort(opt);
+												setSortOpen(false);
+											}}
+										>
+											{SORT_LABELS[opt]}
+										</button>
+									),
+								)}
 							</div>
 						)}
 					</div>
@@ -958,94 +794,99 @@ export default function DDetectorPage() {
 								</div>
 							)}
 
-							{drugCards.filter((c) => !hideIgnored || !ignoredIds.has(c.track.id)).map(({ track, lines, allLines }) => {
-								const isExpanded = expandedCards.has(track.id);
-								const isIgnored = ignoredIds.has(track.id);
-								const displayLines = isExpanded && allLines ? allLines : lines;
-								return (
-									<div
-										key={track.id}
-										className={`${styles.drugCard}${isIgnored ? ` ${styles.drugCardIgnored}` : ""}`}
-										ref={(el) => {
-											if (el) cardRefs.current.set(track.id, el);
-											else cardRefs.current.delete(track.id);
-										}}
-										onContextMenu={(e) => handleCardContextMenu(e, track, !!allLines)}
-									>
-										<div className={styles.drugCardHead}>
-											<div className={styles.drugCardCover}>
-												{track.cover ? (
-													<img src={track.cover} alt="" loading="lazy" />
-												) : (
-													<div className={styles.coverPh}>♪</div>
-												)}
-											</div>
-											<div className={styles.drugCardInfo}>
-												<div className={styles.drugCardTitle}>
-													{track.title}
+							{drugCards
+								.filter((c) => !hideIgnored || !ignoredIds.has(c.track.id))
+								.map(({ track, lines, allLines }) => {
+									const isExpanded = expandedCards.has(track.id);
+									const isIgnored = ignoredIds.has(track.id);
+									const displayLines =
+										isExpanded && allLines ? allLines : lines;
+									return (
+										<div
+											key={track.id}
+											className={`${styles.drugCard}${isIgnored ? ` ${styles.drugCardIgnored}` : ""}`}
+											ref={(el) => {
+												if (el) cardRefs.current.set(track.id, el);
+												else cardRefs.current.delete(track.id);
+											}}
+											onContextMenu={(e) =>
+												handleCardContextMenu(e, track, !!allLines)
+											}
+										>
+											<div className={styles.drugCardHead}>
+												<div className={styles.drugCardCover}>
+													{track.cover ? (
+														<img src={track.cover} alt="" loading="lazy" />
+													) : (
+														<div className={styles.coverPh}>♪</div>
+													)}
 												</div>
-												<div className={styles.drugCardArtist}>
-													{track.artist}
+												<div className={styles.drugCardInfo}>
+													<div className={styles.drugCardTitle}>
+														{track.title}
+													</div>
+													<div className={styles.drugCardArtist}>
+														{track.artist}
+													</div>
 												</div>
-											</div>
-											<div className={styles.drugCardActions}>
-												{allLines && (
+												<div className={styles.drugCardActions}>
+													{allLines && (
+														<button
+															className={`${styles.btn} ${styles.btnExpand}${isExpanded ? ` ${styles.btnExpandActive}` : ""}`}
+															onClick={(e) => {
+																e.stopPropagation();
+																toggleExpanded(track.id);
+															}}
+														>
+															{isExpanded ? "Collapse" : "Full lyrics"}
+														</button>
+													)}
 													<button
-														className={`${styles.btn} ${styles.btnExpand}${isExpanded ? ` ${styles.btnExpandActive}` : ""}`}
+														className={`${styles.btn} ${styles.btnCopy}`}
 														onClick={(e) => {
 															e.stopPropagation();
-															toggleExpanded(track.id);
+															navigator.clipboard?.writeText(String(track.id));
+															showToast(`ID copied: ${track.id}`);
 														}}
 													>
-														{isExpanded ? "Collapse" : "Full lyrics"}
+														Copy ID
 													</button>
-												)}
-												<button
-													className={`${styles.btn} ${styles.btnCopy}`}
-													onClick={(e) => {
-														e.stopPropagation();
-														navigator.clipboard?.writeText(String(track.id));
-														showToast(`ID copied: ${track.id}`);
-													}}
-												>
-													Copy ID
-												</button>
-												<a
-													className={`${styles.btn} ${styles.btnYandex}`}
-													href={`https://yandex.ru/search/?text=${encodeURIComponent(`${track.title} ${track.artist} скачать mp3`)}`}
-													target="_blank"
-													rel="noopener noreferrer"
-												>
-													Yandex
-												</a>
+													<a
+														className={`${styles.btn} ${styles.btnYandex}`}
+														href={`https://yandex.ru/search/?text=${encodeURIComponent(`${track.title} ${track.artist} скачать mp3`)}`}
+														target="_blank"
+														rel="noopener noreferrer"
+													>
+														Yandex
+													</a>
+												</div>
+											</div>
+
+											<div
+												className={`${styles.drugLines}${allLines ? ` ${styles.drugLinesNoTs}` : ""}`}
+											>
+												{displayLines.map((line, li) => {
+													const isContext =
+														"isDrug" in line && line.isDrug === false;
+													return (
+														<div
+															key={li}
+															className={`${styles.drugLine}${isContext ? ` ${styles.drugLineContext}` : ""}`}
+														>
+															<span className={styles.drugTs}>
+																{line.ts ?? "—:——"}
+															</span>
+															<span
+																className={styles.drugText}
+																dangerouslySetInnerHTML={{ __html: line.html }}
+															/>
+														</div>
+													);
+												})}
 											</div>
 										</div>
-
-										<div
-											className={`${styles.drugLines}${allLines ? ` ${styles.drugLinesNoTs}` : ""}`}
-										>
-											{displayLines.map((line, li) => {
-												const isContext =
-													"isDrug" in line && line.isDrug === false;
-												return (
-													<div
-														key={li}
-														className={`${styles.drugLine}${isContext ? ` ${styles.drugLineContext}` : ""}`}
-													>
-														<span className={styles.drugTs}>
-															{line.ts ?? "—:——"}
-														</span>
-														<span
-															className={styles.drugText}
-															dangerouslySetInnerHTML={{ __html: line.html }}
-														/>
-													</div>
-												);
-											})}
-										</div>
-									</div>
-								);
-							})}
+									);
+								})}
 						</div>
 					</div>
 				</div>
@@ -1071,8 +912,19 @@ export default function DDetectorPage() {
 						onClick={() => setCtxMenu(null)}
 					>
 						<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-							<circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/>
-							<path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+							<circle
+								cx="11"
+								cy="11"
+								r="8"
+								stroke="currentColor"
+								strokeWidth="2"
+							/>
+							<path
+								d="M21 21l-4.35-4.35"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+							/>
 						</svg>
 						Search on Yandex
 					</a>
@@ -1085,8 +937,20 @@ export default function DDetectorPage() {
 						}}
 					>
 						<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-							<rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2"/>
-							<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="2"/>
+							<rect
+								x="9"
+								y="9"
+								width="13"
+								height="13"
+								rx="2"
+								stroke="currentColor"
+								strokeWidth="2"
+							/>
+							<path
+								d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+								stroke="currentColor"
+								strokeWidth="2"
+							/>
 						</svg>
 						Copy track ID
 					</button>
@@ -1100,7 +964,13 @@ export default function DDetectorPage() {
 							}}
 						>
 							<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-								<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+								<path
+									d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								/>
 							</svg>
 							{expandedCards.has(ctxMenu.track.id) ? "Collapse" : "Full lyrics"}
 						</button>
@@ -1110,9 +980,21 @@ export default function DDetectorPage() {
 						onClick={() => handleToggleIgnore(ctxMenu.track)}
 					>
 						<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-							<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+							<path
+								d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+								stroke="currentColor"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							/>
 							{ignoredIds.has(ctxMenu.track.id) && (
-								<path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+								<path
+									d="M9 12l2 2 4-4"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								/>
 							)}
 						</svg>
 						{ignoredIds.has(ctxMenu.track.id) ? "Unignore" : "Ignore"}
@@ -1137,14 +1019,46 @@ export default function DDetectorPage() {
 						<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
 							{hideIgnored ? (
 								<>
-									<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-									<circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+									<path
+										d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									/>
+									<circle
+										cx="12"
+										cy="12"
+										r="3"
+										stroke="currentColor"
+										strokeWidth="2"
+									/>
 								</>
 							) : (
 								<>
-									<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-									<path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-									<line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+									<path
+										d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									/>
+									<path
+										d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									/>
+									<line
+										x1="1"
+										y1="1"
+										x2="23"
+										y2="23"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+									/>
 								</>
 							)}
 						</svg>

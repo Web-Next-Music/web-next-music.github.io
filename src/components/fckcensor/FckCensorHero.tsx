@@ -7,7 +7,10 @@ import styles from "@/app/fckcensor-next/page.module.scss";
 const FCKCENSOR_REPO = "Web-Next-Music/FckCensor-Next";
 const RELEASES_URL = `https://github.com/${FCKCENSOR_REPO}/releases/latest`;
 
-async function fetchReleaseInfo(): Promise<{ url: string; tag: string | null }> {
+async function fetchReleaseInfo(): Promise<{
+	url: string;
+	tag: string | null;
+}> {
 	try {
 		const res = await fetch(
 			`https://api.github.com/repos/${FCKCENSOR_REPO}/releases?per_page=1`,
@@ -106,9 +109,7 @@ export default function FckCensorHero() {
 					Install
 				</a>
 			</div>
-			{tag && (
-				<span className={styles.addonVersion}>latest: {tag}</span>
-			)}
+			{tag && <span className={styles.addonVersion}>latest: {tag}</span>}
 			<span className={styles.webBadge}>Now available for web</span>
 		</div>
 	);
