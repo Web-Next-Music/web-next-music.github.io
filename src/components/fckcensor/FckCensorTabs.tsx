@@ -309,27 +309,16 @@ function OfficialList({ tracks, query, playlists }: OfficialListProps) {
 		start: 0,
 		end: PAGE_SIZE + BUFFER_SIZE * 2,
 	});
-	const [listOffset, setListOffset] = useState(0);
 
 	useEffect(() => {
 		setRenderRange({ start: 0, end: PAGE_SIZE + BUFFER_SIZE * 2 });
 	}, [filtered]);
 
 	useEffect(() => {
-		const updateOffset = () => {
-			if (listRef.current) {
-				const rect = listRef.current.getBoundingClientRect();
-				setListOffset(window.scrollY + rect.top);
-			}
-		};
-
-		updateOffset();
-
 		const handleScroll = () => {
+			if (!listRef.current) return;
 			const viewportHeight = window.innerHeight;
-			const scrollTop = window.scrollY;
-
-			const listScrollTop = scrollTop - listOffset;
+			const listScrollTop = -listRef.current.getBoundingClientRect().top;
 
 			if (listScrollTop + viewportHeight < 0) {
 				setRenderRange({ start: 0, end: Math.min(PAGE_SIZE, filtered.length) });
@@ -351,15 +340,18 @@ function OfficialList({ tracks, query, playlists }: OfficialListProps) {
 			setRenderRange({ start: startIdx, end: endIdx });
 		};
 
-		window.addEventListener("scroll", handleScroll, { passive: true });
+		window.addEventListener("scroll", handleScroll, {
+			passive: true,
+			capture: true,
+		});
 		window.addEventListener("resize", handleScroll, { passive: true });
 		handleScroll();
 
 		return () => {
-			window.removeEventListener("scroll", handleScroll);
+			window.removeEventListener("scroll", handleScroll, { capture: true });
 			window.removeEventListener("resize", handleScroll);
 		};
-	}, [filtered.length, listOffset]);
+	}, [filtered.length]);
 
 	const visibleTracks = filtered.slice(renderRange.start, renderRange.end);
 
@@ -487,27 +479,16 @@ function LegacyList({ tracks, query, playlists }: LegacyListProps) {
 		start: 0,
 		end: PAGE_SIZE + BUFFER_SIZE * 2,
 	});
-	const [listOffset, setListOffset] = useState(0);
 
 	useEffect(() => {
 		setRenderRange({ start: 0, end: PAGE_SIZE + BUFFER_SIZE * 2 });
 	}, [filtered]);
 
 	useEffect(() => {
-		const updateOffset = () => {
-			if (listRef.current) {
-				const rect = listRef.current.getBoundingClientRect();
-				setListOffset(window.scrollY + rect.top);
-			}
-		};
-
-		updateOffset();
-
 		const handleScroll = () => {
+			if (!listRef.current) return;
 			const viewportHeight = window.innerHeight;
-			const scrollTop = window.scrollY;
-
-			const listScrollTop = scrollTop - listOffset;
+			const listScrollTop = -listRef.current.getBoundingClientRect().top;
 
 			if (listScrollTop + viewportHeight < 0) {
 				setRenderRange({ start: 0, end: Math.min(PAGE_SIZE, filtered.length) });
@@ -529,15 +510,18 @@ function LegacyList({ tracks, query, playlists }: LegacyListProps) {
 			setRenderRange({ start: startIdx, end: endIdx });
 		};
 
-		window.addEventListener("scroll", handleScroll, { passive: true });
+		window.addEventListener("scroll", handleScroll, {
+			passive: true,
+			capture: true,
+		});
 		window.addEventListener("resize", handleScroll, { passive: true });
 		handleScroll();
 
 		return () => {
-			window.removeEventListener("scroll", handleScroll);
+			window.removeEventListener("scroll", handleScroll, { capture: true });
 			window.removeEventListener("resize", handleScroll);
 		};
-	}, [filtered.length, listOffset]);
+	}, [filtered.length]);
 
 	const visibleTracks = filtered.slice(renderRange.start, renderRange.end);
 
