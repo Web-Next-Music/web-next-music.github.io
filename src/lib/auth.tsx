@@ -53,7 +53,13 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({
+	children,
+	devToken,
+}: {
+	children: ReactNode;
+	devToken?: string | null;
+}) {
 	const [user, setUser] = useState<User | null>(null);
 	const [session, setSession] = useState<Session | null>(null);
 	const [githubToken, setGithubToken] = useState<string | null>(null);
@@ -70,7 +76,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			return;
 		}
 
-		sb.auth.getSession().then(async ({ data }) => {
+		const initialize = async () => {
+			if (devToken) {
+				const { data: existing } = await sb.auth.getSession();
+				if (!existing.session) {
+					await sb.auth
+						.setSession({ access_token: devToken, refresh_token: "dev" })
+						.catch(() => {});
+				}
+			}
+
+			const { data } = await sb.auth.getSession();
 			const s = data.session;
 			setSession(s);
 			setUser(s?.user ?? null);
@@ -115,7 +131,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			}
 
 			setLoading(false);
-		});
+		};
+
+		initialize().catch(() => setLoading(false));
 
 		const { data: listener } = sb.auth.onAuthStateChange(
 			async (event, session) => {
