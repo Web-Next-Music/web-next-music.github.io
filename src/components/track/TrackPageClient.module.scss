@@ -414,6 +414,7 @@
 	border-radius: 16px;
 	overflow: hidden;
 	height: calc(100vh - 160px);
+	height: calc(100dvh - 160px);
 	min-height: 400px;
 	max-height: 820px;
 	display: flex;

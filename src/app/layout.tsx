@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/auth";
 import { LikesProvider } from "@/lib/likesContext";
 import AuthModal from "@/components/auth/AuthModal";
 import BanBanner from "@/components/layout/BanBanner";
+import { AppWrapper } from "@/components/layout/AppWrapper";
 import "./globals.scss";
 
 export const metadata: Metadata = {
@@ -23,6 +24,11 @@ export const metadata: Metadata = {
 	},
 };
 
+const devAuthToken =
+	process.env.NODE_ENV === "development"
+		? (process.env.SUPABASE_AUTH_TOKEN ?? null)
+		: null;
+
 export default function RootLayout({
 	children,
 }: {
@@ -31,13 +37,15 @@ export default function RootLayout({
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<body suppressHydrationWarning>
-				<AuthProvider>
+				<AuthProvider devToken={devAuthToken}>
 					<LikesProvider>
 						<ThemeProvider>
-							<BanBanner />
-							<Suspense fallback={<>{children}</>}>
-								<PlayerProvider>{children}</PlayerProvider>
-							</Suspense>
+							<AppWrapper>
+								<BanBanner />
+								<Suspense fallback={<>{children}</>}>
+									<PlayerProvider>{children}</PlayerProvider>
+								</Suspense>
+							</AppWrapper>
 						</ThemeProvider>
 						<AuthModal />
 					</LikesProvider>
