@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/auth";
 import { LikesProvider } from "@/lib/likesContext";
 import AuthModal from "@/components/auth/AuthModal";
 import BanBanner from "@/components/layout/BanBanner";
+import TopLoadingBar from "@/components/layout/TopLoadingBar";
 import { AppWrapper } from "@/components/layout/AppWrapper";
 import "./globals.scss";
 
@@ -37,6 +38,7 @@ export default function RootLayout({
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<body suppressHydrationWarning>
+				<TopLoadingBar />
 				<AuthProvider devToken={devAuthToken}>
 					<LikesProvider>
 						<ThemeProvider>
