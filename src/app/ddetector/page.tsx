@@ -337,7 +337,7 @@ export default function DDetectorPage() {
 	// Search & sort
 	const searchInputRef = useRef<HTMLInputElement>(null);
 	const [search, setSearch] = useState("");
-	const [sort, setSort] = useState<"default" | "date" | "alpha">("default");
+	const [sort, setSort] = useState<"default" | "date" | "alpha" | "artist">("default");
 	const [sortOpen, setSortOpen] = useState(false);
 	const sortRef = useRef<HTMLDivElement>(null);
 
@@ -668,6 +668,16 @@ export default function DDetectorPage() {
 			});
 		} else if (sort === "alpha") {
 			list = [...list].sort((a, b) => a.title.localeCompare(b.title));
+		} else if (sort === "artist") {
+			const artistCount = new Map<string, number>();
+			for (const t of list) {
+				artistCount.set(t.artist, (artistCount.get(t.artist) ?? 0) + 1);
+			}
+			list = [...list].sort((a, b) => {
+				const diff = (artistCount.get(b.artist) ?? 0) - (artistCount.get(a.artist) ?? 0);
+				if (diff !== 0) return diff;
+				return a.artist.localeCompare(b.artist);
+			});
 		}
 		return list;
 	}, [tracks, search, sort, hideIgnored, ignoredIds]);
@@ -688,6 +698,7 @@ export default function DDetectorPage() {
 		default: "Default",
 		date: "By date",
 		alpha: "A - Z",
+		artist: "By artist",
 	};
 
 	const progressPct = tracks.length ? (processed / tracks.length) * 100 : 0;
@@ -764,7 +775,7 @@ export default function DDetectorPage() {
 						</button>
 						{sortOpen && (
 							<div className={styles.sortDropdown}>
-								{(["default", "date", "alpha"] as const).map((opt) => (
+								{(["default", "date", "alpha", "artist"] as const).map((opt) => (
 									<button
 										key={opt}
 										className={`${styles.sortOption}${sort === opt ? ` ${styles.sortOptionActive}` : ""}`}
