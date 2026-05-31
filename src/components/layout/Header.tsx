@@ -6,6 +6,19 @@ import styles from "./Header.module.scss";
 import { useRouter } from "next/navigation";
 import AuthButton from "@/components/auth/AuthButton";
 
+const JUNE = 5;
+
+const seasonalLogoCheck =
+	typeof window === "undefined"
+		? null
+		: fetch("https://www.cloudflare.com/cdn-cgi/trace")
+				.then((r) => r.text())
+				.then((text) => ({
+					country: text.match(/^loc=(.*)$/m)?.[1]?.trim(),
+					ts: Number(text.match(/^ts=(.*)$/m)?.[1]),
+				}))
+				.catch(() => null);
+
 export default function Header({
 	isHiddenMode = false,
 }: {
@@ -27,8 +40,27 @@ export default function Header({
 	];
 
 	const [open, setOpen] = useState(false);
+	const [useCondemnedLogo, setUseCondemnedLogo] = useState(false);
 	const burgerRef = useRef<HTMLDivElement>(null);
 	const router = useRouter();
+
+	useEffect(() => {
+		let cancelled = false;
+		seasonalLogoCheck?.then((res) => {
+			if (cancelled || !res) return;
+			const { country, ts } = res;
+			const month = Number.isFinite(ts)
+				? new Date(ts * 1000).getUTCMonth()
+				: NaN;
+			if (month === JUNE && country && country !== "RU") {
+				setUseCondemnedLogo(true);
+			}
+		});
+
+		return () => {
+			cancelled = true;
+		};
+	}, []);
 
 	// Close dropdown when clicking outside
 	useEffect(() => {
@@ -67,7 +99,9 @@ export default function Header({
 								style={{
 									backgroundImage: isHiddenMode
 										? 'url("/icons/ugcShare.webp")'
-										: 'url("/icons/icon-256.png")',
+										: useCondemnedLogo
+											? 'url("/icons/icon-256-condemned.png")'
+											: 'url("/icons/icon-256.png")',
 								}}
 							/>
 						</div>
