@@ -13,7 +13,7 @@ let seasonalLogoDecided = false;
 const seasonalLogoCheck =
 	typeof window === "undefined"
 		? null
-		: fetch("https://www.cloudflare.com/cdn-cgi/trace")
+		: fetch("https://www.diram1x.ru/cdn-cgi/trace")
 				.then((r) => r.text())
 				.then((text) => {
 					const country = text.match(/^loc=(.*)$/m)?.[1]?.trim();
