@@ -8,16 +8,23 @@ import AuthButton from "@/components/auth/AuthButton";
 
 const JUNE = 5;
 
+let seasonalLogoDecided = false;
+
 const seasonalLogoCheck =
 	typeof window === "undefined"
 		? null
 		: fetch("https://www.cloudflare.com/cdn-cgi/trace")
 				.then((r) => r.text())
-				.then((text) => ({
-					country: text.match(/^loc=(.*)$/m)?.[1]?.trim(),
-					ts: Number(text.match(/^ts=(.*)$/m)?.[1]),
-				}))
-				.catch(() => null);
+				.then((text) => {
+					const country = text.match(/^loc=(.*)$/m)?.[1]?.trim();
+					const ts = Number(text.match(/^ts=(.*)$/m)?.[1]);
+					const month = Number.isFinite(ts)
+						? new Date(ts * 1000).getUTCMonth()
+						: NaN;
+					seasonalLogoDecided = month === JUNE && !!country && country !== "RU";
+					return seasonalLogoDecided;
+				})
+				.catch(() => false);
 
 export default function Header({
 	isHiddenMode = false,
@@ -40,21 +47,16 @@ export default function Header({
 	];
 
 	const [open, setOpen] = useState(false);
-	const [useCondemnedLogo, setUseCondemnedLogo] = useState(false);
+	const [useCondemnedLogo, setUseCondemnedLogo] = useState(
+		() => seasonalLogoDecided,
+	);
 	const burgerRef = useRef<HTMLDivElement>(null);
 	const router = useRouter();
 
 	useEffect(() => {
 		let cancelled = false;
-		seasonalLogoCheck?.then((res) => {
-			if (cancelled || !res) return;
-			const { country, ts } = res;
-			const month = Number.isFinite(ts)
-				? new Date(ts * 1000).getUTCMonth()
-				: NaN;
-			if (month === JUNE && country && country !== "RU") {
-				setUseCondemnedLogo(true);
-			}
+		seasonalLogoCheck?.then((decided) => {
+			if (!cancelled && decided) setUseCondemnedLogo(true);
 		});
 
 		return () => {
