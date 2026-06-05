@@ -20,6 +20,7 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 
 	// Virtual scroll state
 	const wrapRef = useRef<HTMLDivElement>(null);
+	const scrollerRef = useRef<HTMLElement | Window | null>(null);
 	const [cols, setCols] = useState(3);
 	const [scrollY, setScrollY] = useState(0);
 	const [viewH, setViewH] = useState(800);
@@ -38,27 +39,52 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 		);
 	}, [fetchedAt]);
 
-	// Measure container width (for column count) and list's position in the document
 	useEffect(() => {
 		const el = wrapRef.current;
 		if (!el) return;
+
+		let node: HTMLElement | null = el.parentElement;
+		let scroller: HTMLElement | Window = window;
+		while (node) {
+			const oy = getComputedStyle(node).overflowY;
+			if (
+				(oy === "auto" || oy === "scroll") &&
+				node.scrollHeight > node.clientHeight
+			) {
+				scroller = node;
+				break;
+			}
+			node = node.parentElement;
+		}
+		scrollerRef.current = scroller;
+
+		const isWin = scroller === window;
+		const getScrollTop = () =>
+			isWin ? window.scrollY : (scroller as HTMLElement).scrollTop;
+		const getViewH = () =>
+			isWin ? window.innerHeight : (scroller as HTMLElement).clientHeight;
+
 		const measure = () => {
 			setCols(
 				Math.max(1, Math.floor((el.clientWidth + GAP) / (ITEM_MIN_W + GAP))),
 			);
-			setListTop(el.getBoundingClientRect().top + window.scrollY);
-			setViewH(window.innerHeight);
+			const base = isWin
+				? 0
+				: (scroller as HTMLElement).getBoundingClientRect().top;
+			setListTop(el.getBoundingClientRect().top - base + getScrollTop());
+			setViewH(getViewH());
 		};
+		const onScroll = () => setScrollY(getScrollTop());
+
 		const ro = new ResizeObserver(measure);
 		ro.observe(el);
 		measure();
-		return () => ro.disconnect();
-	}, []);
-
-	useEffect(() => {
-		const onScroll = () => setScrollY(window.scrollY);
-		window.addEventListener("scroll", onScroll, { passive: true });
-		return () => window.removeEventListener("scroll", onScroll);
+		setScrollY(getScrollTop());
+		scroller.addEventListener("scroll", onScroll, { passive: true });
+		return () => {
+			ro.disconnect();
+			scroller.removeEventListener("scroll", onScroll);
+		};
 	}, []);
 
 	const filtered = useMemo(() => {
