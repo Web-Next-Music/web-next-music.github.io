@@ -44,13 +44,11 @@ const RUN_LOOP: Frame[] = [
 // Row 1 C6: braking/stop (single hold frame)
 const STOP_FRAME: Frame = { sx: 397, sy: 41, sw: 17, sh: 22 };
 
-// Row 0 C4-C8: ball/dash spin
+// Row 0 C4-C6: ball/dash spin (C7-C8 excluded)
 const BALL: Frame[] = [
 	{ sx: 273, sy: 13, sw: 14, sh: 14 },
 	{ sx: 336, sy: 13, sw: 14, sh: 14 },
 	{ sx: 399, sy: 13, sw: 14, sh: 14 },
-	{ sx: 463, sy: 11, sw: 15, sh: 16 },
-	{ sx: 526, sy: 11, sw: 15, sh: 16 },
 ];
 
 // types
