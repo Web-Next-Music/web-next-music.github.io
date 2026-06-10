@@ -11,6 +11,7 @@ const MAX_RUN = 13;
 const BALL_VEL = 22;
 const ACCEL = 0.6;
 const FRICTION = 0.78;
+const BRAKE_FRICTION = 0.885;
 const DEAD_ZONE = 24;
 const STOP_ZONE = 60;
 const CHASE_ZONE = 130;
@@ -63,6 +64,7 @@ interface PhysState {
 	x: number;
 	vx: number;
 	dir: 1 | -1;
+	pendingDir: 0 | 1 | -1;
 	frameIdx: number;
 	tick: number;
 	state: SonicState;
@@ -201,6 +203,7 @@ export default function SonicRunner() {
 			x: (canvas.width || 800) / 2,
 			vx: 0,
 			dir: 1,
+			pendingDir: 0,
 			frameIdx: 0,
 			tick: 0,
 			state: "idle",
@@ -227,6 +230,12 @@ export default function SonicRunner() {
 
 			const W = canvas.width;
 			ctx.clearRect(0, 0, W, CANVAS_H);
+
+			if (!startedRef.current) {
+				s.mouseX = W / 2;
+				s.x = W / 2;
+				s.vx = 0;
+			}
 
 			const spd = Math.abs(s.vx);
 			const target = Math.max(30, Math.min(W - 30, s.mouseX));
@@ -256,34 +265,76 @@ export default function SonicRunner() {
 					SPECIAL_MIN + Math.random() * (SPECIAL_MAX - SPECIAL_MIN);
 			}
 
+			// ball: exit immediately if direction changes
+			if (s.state === "ball" && absDist > DEAD_ZONE) {
+				const wantDir = (Math.sign(dist) || s.dir) as 1 | -1;
+				if (wantDir !== s.dir) {
+					s.stateTimer = 0;
+					s.pendingDir = wantDir;
+					transitionTo(s, "stop");
+				}
+			}
+
+			// run/accel: enter stop immediately if target flips to opposite side
+			if (
+				(s.state === "run" || s.state === "accel") &&
+				absDist > DEAD_ZONE &&
+				s.pendingDir === 0
+			) {
+				const wantDir = (Math.sign(dist) || s.dir) as 1 | -1;
+				if (wantDir !== s.dir) {
+					s.pendingDir = wantDir;
+					transitionTo(s, "stop");
+				}
+			}
+
 			// physics
-			const canChase = s.state !== "idle" || absDist > CHASE_ZONE;
+			const waitingFlip = s.pendingDir !== 0 && s.state === "stop";
+			const canChase =
+				!waitingFlip && (s.state !== "idle" || absDist > CHASE_ZONE);
 			const maxSpd = s.state === "ball" ? BALL_VEL : MAX_RUN;
 			if (canChase && absDist > DEAD_ZONE) {
 				const a = s.state === "ball" ? ACCEL * 3 : ACCEL;
 				s.vx += Math.sign(dist) * a;
 			} else {
-				s.vx *= FRICTION;
+				s.vx *= s.state === "stop" ? BRAKE_FRICTION : FRICTION;
 				if (Math.abs(s.vx) < 0.3) s.vx = 0;
 			}
 			s.vx = Math.max(-maxSpd, Math.min(maxSpd, s.vx));
 			s.x += s.vx;
 			s.x = Math.max(30, Math.min(W - 30, s.x));
-			if (Math.abs(s.vx) > 0.5) s.dir = s.vx > 0 ? 1 : -1;
+
+			// dir update: queue flip through stop animation on direction change
+			if (!waitingFlip && Math.abs(s.vx) > 0.5) {
+				const wantDir = (s.vx > 0 ? 1 : -1) as 1 | -1;
+				if (wantDir !== s.dir && (s.state === "run" || s.state === "accel")) {
+					s.pendingDir = wantDir;
+					transitionTo(s, "stop");
+				} else if (s.state !== "stop") {
+					s.dir = wantDir;
+				}
+			}
 
 			// state machine transitions
 			if (s.state !== "ball") {
+				const wf = s.pendingDir !== 0 && s.state === "stop";
 				if (spd < 0.5) {
+					if (s.pendingDir !== 0) {
+						s.dir = s.pendingDir as 1 | -1;
+						s.pendingDir = 0;
+					}
 					if (s.state !== "idle") transitionTo(s, "idle");
-				} else if (absDist <= STOP_ZONE) {
-					if (s.state === "run") transitionTo(s, "stop");
-					if (s.state === "accel") transitionTo(s, "idle");
-				} else {
-					if (s.state === "stop") transitionTo(s, "accel");
-					if (s.state === "idle" && absDist > CHASE_ZONE)
-						transitionTo(s, "accel");
-					if (s.state === "accel" && s.frameIdx >= ACCEL_FRAMES.length)
-						transitionTo(s, "run");
+				} else if (!wf) {
+					if (absDist <= STOP_ZONE) {
+						if (s.state === "run") transitionTo(s, "stop");
+						if (s.state === "accel") transitionTo(s, "idle");
+					} else {
+						if (s.state === "stop") transitionTo(s, "accel");
+						if (s.state === "idle" && absDist > CHASE_ZONE)
+							transitionTo(s, "accel");
+						if (s.state === "accel" && s.frameIdx >= ACCEL_FRAMES.length)
+							transitionTo(s, "run");
+					}
 				}
 			}
 
