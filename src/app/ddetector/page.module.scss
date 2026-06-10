@@ -409,9 +409,13 @@ body {
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	padding: 0 4px 10px;
+	padding: 0 10px 10px;
 	border-bottom: 1px solid var(--border);
 	margin-bottom: 10px;
+
+	@include bp.sm {
+		margin-bottom: 0;
+	}
 }
 
 .statusLabel {
@@ -452,8 +456,7 @@ body {
 	border-radius: 10px;
 	overflow: hidden;
 	animation: cardIn 0.2s ease;
-	content-visibility: auto;
-	contain-intrinsic-size: 0 120px;
+	flex-shrink: 0;
 }
 
 .drugCardIgnored {
@@ -885,45 +888,121 @@ body {
 	}
 }
 
-/* ── Mobile ───────────────────────────────────────────── */
-@include bp.sm {
-	.header {
+.panelToggle {
+	display: none;
+}
+
+.toggleArrow {
+	transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggleArrowOpen {
+	transform: rotate(-180deg);
+}
+
+.header {
+	@include bp.sm {
 		flex-wrap: wrap;
 		padding: 10px;
 		gap: 6px;
 	}
+}
 
-	.headerControls {
+.headerControls {
+	@include bp.sm {
 		flex-basis: 100%;
 	}
+}
 
-	.sortWrap {
+.sortWrap {
+	@include bp.sm {
 		margin-left: 0;
 	}
+}
 
-	.searchWrap {
+.searchWrap {
+	@include bp.sm {
 		max-width: none;
 	}
+}
 
-	.fetchBtn {
+.fetchBtn {
+	@include bp.sm {
 		flex-shrink: 0;
 	}
+}
 
-	.panels {
+.panels {
+	@include bp.sm {
 		flex-direction: column;
+		position: relative;
+		overflow: hidden;
 	}
+}
 
-	.panelLeft {
+.panelLeft {
+	@include bp.sm {
 		width: 100%;
 		flex: 1;
 		min-height: 0;
 		border-right: none;
-		border-bottom: 1px solid var(--border);
+		border-bottom: none;
 	}
+}
 
-	.panelRight {
+.panelToggle {
+	@include bp.sm {
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		width: 100%;
+		height: 36px;
+		flex-shrink: 0;
+		background: transparent;
+		border: none;
+		cursor: pointer;
+		color: var(--muted);
+		transition: color 0.15s;
+
+		&:hover {
+			color: var(--text);
+		}
+	}
+}
+
+$peek: 60px;
+
+.panelRight {
+	@include bp.sm {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 100%;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		background: var(--bg);
+		padding: 0;
+		border-top: 1px solid var(--border);
+		transform: translateY(calc(100% - #{$peek}));
+		transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+		z-index: 20;
+		overflow-y: hidden;
+	}
+}
+
+.lyricsWrap {
+	@include bp.sm {
+		overflow-y: auto;
 		flex: 1;
 		min-height: 0;
+		padding: 10px;
+	}
+}
+
+.panelRightOpen {
+	@include bp.sm {
+		transform: translateY(-1px);
 	}
 }

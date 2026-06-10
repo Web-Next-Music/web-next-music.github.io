@@ -228,6 +228,8 @@ export default function DDetectorPage() {
 	// Ignored tracks
 	const [ignoredIds, setIgnoredIds] = useState<Set<number>>(new Set());
 
+	const [rightOpen, setRightOpen] = useState(false);
+
 	// Active track
 	const [activeId, setActiveId] = useState<number | null>(null);
 	const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -516,9 +518,11 @@ export default function DDetectorPage() {
 			startTransition(() => {
 				setActiveId(track.id);
 			});
-			cardRefs.current
-				.get(track.id)
-				?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+			const card = cardRefs.current.get(track.id);
+			if (card) {
+				setRightOpen(true);
+				card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+			}
 		},
 		[showToast],
 	);
@@ -762,8 +766,28 @@ export default function DDetectorPage() {
 						))}
 					</div>
 
-					{/* Right: drug cards */}
-					<div className={styles.panelRight}>
+					<div
+						className={`${styles.panelRight}${rightOpen ? ` ${styles.panelRightOpen}` : ""}`}
+					>
+						<button
+							className={styles.panelToggle}
+							onClick={() => setRightOpen((v) => !v)}
+							aria-label={rightOpen ? "Collapse results" : "Expand results"}
+						>
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2.5"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								className={`${styles.toggleArrow}${rightOpen ? ` ${styles.toggleArrowOpen}` : ""}`}
+							>
+								<polyline points="18 15 12 9 6 15" />
+							</svg>
+						</button>
 						<div className={styles.rightHeader}>
 							<span className={styles.statusLabel}>
 								{processed < tracks.length
