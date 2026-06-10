@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./SonicRunner.module.scss";
 
 // physics
@@ -134,6 +134,49 @@ export default function SonicRunner() {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const rafRef = useRef(0);
+	const [started, setStarted] = useState(false);
+	const startedRef = useRef(false);
+	const sonicXRef = useRef(0);
+
+	function getCanvasCoords(e: React.MouseEvent<HTMLCanvasElement>) {
+		const canvas = canvasRef.current!;
+		const rect = canvas.getBoundingClientRect();
+		return {
+			x: (e.clientX - rect.left) * (canvas.width / rect.width),
+			y: (e.clientY - rect.top) * (canvas.height / rect.height),
+		};
+	}
+
+	function isOverSonic(cx: number, cy: number) {
+		const HIT_W = 10 * SCALE;
+		const HIT_H = 23 * SCALE;
+		return (
+			cx >= sonicXRef.current - HIT_W &&
+			cx <= sonicXRef.current + HIT_W &&
+			cy >= GROUND_Y - HIT_H &&
+			cy <= GROUND_Y
+		);
+	}
+
+	function handleCanvasMouseMove(e: React.MouseEvent<HTMLCanvasElement>) {
+		if (startedRef.current || !canvasRef.current) return;
+		const { x, y } = getCanvasCoords(e);
+		canvasRef.current.style.cursor = isOverSonic(x, y) ? "pointer" : "";
+	}
+
+	function handleCanvasMouseLeave() {
+		if (startedRef.current || !canvasRef.current) return;
+		canvasRef.current.style.cursor = "";
+	}
+
+	function handleCanvasClick(e: React.MouseEvent<HTMLCanvasElement>) {
+		if (startedRef.current || !canvasRef.current) return;
+		const { x, y } = getCanvasCoords(e);
+		if (isOverSonic(x, y)) {
+			startedRef.current = true;
+			setStarted(true);
+		}
+	}
 
 	useEffect(() => {
 		const canvas = canvasRef.current;
@@ -169,7 +212,7 @@ export default function SonicRunner() {
 		};
 
 		function onMouseMove(e: MouseEvent) {
-			if (!container) return;
+			if (!container || !startedRef.current) return;
 			s.mouseX = e.clientX - container.getBoundingClientRect().left;
 		}
 		window.addEventListener("mousemove", onMouseMove, { passive: true });
@@ -303,6 +346,7 @@ export default function SonicRunner() {
 			}
 			drawFrame(ctx, sheet, curFrame, s.x, s.dir);
 			ctx.restore();
+			sonicXRef.current = s.x;
 		}
 
 		rafRef.current = requestAnimationFrame(loop);
@@ -316,7 +360,14 @@ export default function SonicRunner() {
 
 	return (
 		<div ref={containerRef} className={styles.container}>
-			<canvas ref={canvasRef} className={styles.canvas} />
+			<canvas
+				ref={canvasRef}
+				className={styles.canvas}
+				style={started ? {} : { pointerEvents: "auto" }}
+				onMouseMove={handleCanvasMouseMove}
+				onMouseLeave={handleCanvasMouseLeave}
+				onClick={handleCanvasClick}
+			/>
 		</div>
 	);
 }
