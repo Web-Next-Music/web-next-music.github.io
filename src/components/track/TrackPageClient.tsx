@@ -16,6 +16,17 @@ import {
 import { decodeTrackKey, encodeTrackKey, stableTrackKey } from "@/lib/trackKey";
 import styles from "./TrackPageClient.module.scss";
 import { ID3Writer } from "browser-id3-writer";
+import {
+	ArrowLeft as ArrowLeftIcon,
+	Music as MusicNoteIcon,
+	Pause as PauseIcon,
+	Play as PlayIcon,
+	Info as InfoCircleIcon,
+	Download as DownloadTrackIcon,
+	Clipboard as ClipboardIcon,
+	ExternalLink as ExternalLinkIcon,
+	Clock as ClockIcon,
+} from "lucide-react";
 
 interface LrcLine {
 	time: number;
@@ -438,21 +449,7 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 		return (
 			<div className={styles.centered}>
 				<div className={styles.notFoundIcon}>
-					<svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-						<circle
-							cx="12"
-							cy="12"
-							r="10"
-							stroke="var(--muted)"
-							strokeWidth="1.5"
-						/>
-						<path
-							d="M12 8v4M12 16h.01"
-							stroke="var(--muted)"
-							strokeWidth="1.5"
-							strokeLinecap="round"
-						/>
-					</svg>
+					<InfoCircleIcon width={48} height={48} />
 				</div>
 				<h2 className={styles.centeredTitle}>Track not found</h2>
 				<p className={styles.centeredDesc}>
@@ -495,15 +492,7 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 						display: isHiddenMode ? "none" : "auto",
 					}}
 				>
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-						<path
-							d="M19 12H5M12 5l-7 7 7 7"
-							stroke="currentColor"
-							strokeWidth="1.8"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-						/>
-					</svg>
+					<ArrowLeftIcon />
 				</button>
 				<div
 					className={`${styles.layout} ${!showLyrics ? styles.layoutCentered : ""}`}
@@ -518,29 +507,7 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 								/>
 							) : (
 								<div className={styles.heroCoverPlaceholder}>
-									<svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-										<path
-											d="M9 18V5l12-2v13"
-											stroke="var(--muted)"
-											strokeWidth="1.5"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-										/>
-										<circle
-											cx="6"
-											cy="18"
-											r="3"
-											stroke="var(--muted)"
-											strokeWidth="1.5"
-										/>
-										<circle
-											cx="18"
-											cy="16"
-											r="3"
-											stroke="var(--muted)"
-											strokeWidth="1.5"
-										/>
-									</svg>
+									<MusicNoteIcon width={48} height={48} />
 								</div>
 							)}
 
@@ -563,24 +530,9 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 										<span />
 									</div>
 								) : isThisPlaying ? (
-									<svg
-										width="28"
-										height="28"
-										viewBox="0 0 24 24"
-										fill="currentColor"
-									>
-										<rect x="6" y="4" width="4" height="16" rx="1.5" />
-										<rect x="14" y="4" width="4" height="16" rx="1.5" />
-									</svg>
+									<PauseIcon width={28} height={28} />
 								) : (
-									<svg
-										width="28"
-										height="28"
-										viewBox="0 0 24 24"
-										fill="currentColor"
-									>
-										<path d="M6 3.5l14 8.5-14 8.5V3.5z" />
-									</svg>
+									<PlayIcon width={28} height={28} />
 								)}
 							</button>
 
@@ -649,57 +601,14 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 									disabled={isDownloading}
 									className={styles.outlineBtn}
 								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										aria-hidden="true"
-										role="img"
-										width="15"
-										height="15"
-										viewBox="0 0 24 24"
-									>
-										<g
-											fill="none"
-											stroke="currentColor"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth={2}
-										>
-											<path d="M12 15V3m9 12v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-											<path d="m7 10l5 5l5-5" />
-										</g>
-									</svg>
+									<DownloadTrackIcon size={15} />
 									{isDownloading ? "Downloading..." : "Download"}
 								</button>
 							)}
 
 							{directUrl && !id && (
-								<button
-									onClick={handleCopyKey}
-									className={styles.outlineBtn}
-									style={{
-										borderColor:
-											copyKeyFeedback === "copied"
-												? "var(--accent)"
-												: "var(--border)",
-										color:
-											copyKeyFeedback === "copied"
-												? "var(--accent)"
-												: "var(--text)",
-									}}
-								>
-									<svg
-										width="15"
-										height="15"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										strokeWidth="2"
-										strokeLinecap="round"
-										strokeLinejoin="round"
-									>
-										<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-										<rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-									</svg>
+								<button onClick={handleCopyKey} className={styles.outlineBtn}>
+									<ClipboardIcon size={15} />
 									{copyKeyFeedback === "copied" ? "Copied!" : "Copy key"}
 								</button>
 							)}
@@ -711,31 +620,7 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 									rel="noopener noreferrer"
 									className={styles.outlineBtn}
 								>
-									<svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-										<path
-											d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"
-											stroke="currentColor"
-											strokeWidth="1.8"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-										/>
-										<polyline
-											points="15 3 21 3 21 9"
-											stroke="currentColor"
-											strokeWidth="1.8"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-										/>
-										<line
-											x1="10"
-											y1="14"
-											x2="21"
-											y2="3"
-											stroke="currentColor"
-											strokeWidth="1.8"
-											strokeLinecap="round"
-										/>
-									</svg>
+									<ExternalLinkIcon size={14} />
 									Yandex Music
 								</a>
 							)}
@@ -761,26 +646,7 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 										</>
 									) : isSynced ? (
 										<>
-											<svg
-												width="11"
-												height="11"
-												viewBox="0 0 24 24"
-												fill="none"
-											>
-												<circle
-													cx="12"
-													cy="12"
-													r="10"
-													stroke="var(--accent)"
-													strokeWidth="2"
-												/>
-												<polyline
-													points="12 6 12 12 16 14"
-													stroke="var(--accent)"
-													strokeWidth="2"
-													strokeLinecap="round"
-												/>
-											</svg>
+											<ClockIcon size={11} color="var(--accent)" />
 											Synchronized
 										</>
 									) : hasLyrics ? (

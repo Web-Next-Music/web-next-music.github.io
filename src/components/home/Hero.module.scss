@@ -1,12 +1,14 @@
+@use "../../styles/breakpoints" as bp;
+
 .hero {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: 1fr 1.2fr;
 	min-height: 80vh;
-	max-width: 1200px;
+	max-width: 1280px;
 	margin: 0 auto;
-	padding: 60px 40px;
+	padding: 60px 50px;
 	align-items: center;
-	gap: 40px;
+	gap: 60px;
 }
 
 .heroLeft {
@@ -18,21 +20,49 @@
 .badge {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
+	gap: 7px;
 	background: var(--badge-background-color);
 	border: 1px solid var(--badge-border-color);
 	color: var(--accent);
 	font-size: 11px;
 	font-family: var(--font-base);
-	padding: 4px 10px;
-	border-radius: 4px;
-	margin-bottom: 24px;
+	font-weight: 700;
+	padding: 5px 12px;
+	border-radius: 99px;
+	margin-bottom: 28px;
 	width: fit-content;
+}
+
+.badgeDot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--accent);
+	flex-shrink: 0;
+	animation: badgePulse 2.5s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.3;
+	}
+}
+
+.skeletonBadge {
+	display: inline-block;
+	width: 100px;
+	height: 10px;
+	border-radius: 4px;
+	background: var(--border);
 }
 
 .title {
 	font-size: 52px;
-	font-weight: 700;
+	font-weight: 800;
 	line-height: 1.05;
 	letter-spacing: -2px;
 	margin-bottom: 20px;
@@ -47,86 +77,215 @@
 }
 
 .desc {
-	font-size: 15px;
+	font-size: 16px;
+	font-weight: 700;
 	color: var(--muted);
 	line-height: 1.7;
 	max-width: 440px;
-	margin-bottom: 40px;
+	margin-bottom: 20px;
+}
+
+.features {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 36px;
+}
+
+.featureTag {
+	font-size: 11px;
+	font-weight: 700;
+	color: var(--muted);
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 99px;
+	padding: 4px 12px;
+	letter-spacing: 0.2px;
+}
+
+.dlSection {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.dlSectionLabel {
+	font-size: 10px;
+	font-weight: 800;
+	letter-spacing: 0.8px;
+	text-transform: uppercase;
+	color: var(--muted);
 }
 
 .dlGrid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	gap: 10px;
+	gap: 8px;
+}
+
+@keyframes dlBtnIn {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 .dlBtn {
 	display: flex;
 	align-items: center;
-	gap: 12px;
+	gap: 10px;
 	background: var(--surface);
 	border: 1px solid var(--border);
 	border-radius: 10px;
-	padding: 14px 16px;
+	padding: 12px 14px;
 	cursor: pointer;
-	transition: all 0.2s;
+	transition:
+		background 0.25s ease,
+		border-color 0.25s ease;
+	text-decoration: none;
+	color: inherit;
+	animation: dlBtnIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 
+	&:nth-child(1) {
+		animation-delay: 0.05s;
+	}
+	&:nth-child(2) {
+		animation-delay: 0.1s;
+	}
+	&:nth-child(3) {
+		animation-delay: 0.15s;
+	}
+	&:nth-child(4) {
+		animation-delay: 0.2s;
+	}
+
+	&:hover .dlArrow {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.dlBtnWin,
+.dlBtnAppimage,
+.dlBtnDeb,
+.dlBtnPkg {
+	position: relative;
+	overflow: hidden;
+
+	&::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+		opacity: 0;
+		transition: opacity 0.3s ease;
+		pointer-events: none;
+		border-radius: inherit;
+	}
+
+	& > * {
+		position: relative;
+		z-index: 1;
+	}
+
+	&:hover::before {
+		opacity: 1;
+	}
+}
+
+.dlBtnWin {
+	&::before {
+		background: linear-gradient(135deg, #0174cf22 0%, var(--surface) 100%);
+	}
 	&:hover {
-		background: var(--surface2);
-		border-color: rgba(43, 254, 245, 0.2);
+		border-color: #0174cf44;
+	}
+}
+.dlBtnAppimage {
+	&::before {
+		background: linear-gradient(135deg, #739fb922 0%, var(--surface) 100%);
+	}
+	&:hover {
+		border-color: #739fb944;
+	}
+}
+.dlBtnDeb {
+	&::before {
+		background: linear-gradient(135deg, #a81d3322 0%, var(--surface) 100%);
+	}
+	&:hover {
+		border-color: #a81d3344;
+	}
+}
+.dlBtnPkg {
+	&::before {
+		background: linear-gradient(135deg, #1793d122 0%, var(--surface) 100%);
+	}
+	&:hover {
+		border-color: #1793d144;
 	}
 }
 
 .dlIcon {
-	width: 32px;
-	height: 32px;
+	width: 30px;
+	height: 30px;
 	border-radius: 7px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 18px;
 	flex-shrink: 0;
 }
 
 .win {
-	background: #0174cf30;
+	background: #0174cf22;
 }
 .appimage {
-	background: #739fb930;
+	background: #739fb922;
 }
 .deb {
-	background: #a81d3330;
+	background: #a81d3322;
 }
 .pkg {
-	background: #1793d130;
+	background: #1793d122;
 }
 
 .dlText {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: 1px;
 	min-width: 0;
+	flex: 1;
 }
 
 .dlLabel {
-	font-size: 11px;
+	font-size: 12px;
 	color: var(--muted);
-	font-weight: 400;
+	font-weight: 700;
 }
 
 .dlName {
-	font-size: 14px;
-	font-weight: 500;
-	align-items: center;
-	gap: 6px;
+	font-size: 13px;
+	font-weight: 700;
 }
 
 .dlSize {
 	font-size: 10px;
 	font-family: var(--font-base);
 	color: var(--muted);
-	font-weight: 400;
+	font-weight: 800;
 	margin-left: 5px;
+}
+
+.dlArrow {
+	color: var(--muted);
+	flex-shrink: 0;
+	opacity: 0;
+	transform: translateY(-2px);
+	transition: all 0.18s;
 }
 
 .heroRight {
@@ -135,15 +294,37 @@
 	align-items: center;
 }
 
-@media (max-width: 900px) {
+.previewWrapper {
+	position: relative;
+	width: 100%;
+	max-width: 580px;
+}
+
+.previewImg {
+	position: relative;
+	z-index: 1;
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+@include bp.tablet-lg {
 	.hero {
 		grid-template-columns: 1fr;
 		padding: 48px 20px;
 		min-height: unset;
 	}
 
+	.previewImg {
+		display: none;
+	}
+
 	.heroRight {
 		justify-content: center;
+	}
+
+	.previewWrapper {
+		max-width: 100%;
 	}
 
 	.title {
@@ -155,8 +336,12 @@
 	}
 }
 
-@media (max-width: 480px) {
+@include bp.xs {
 	.dlGrid {
 		grid-template-columns: 1fr;
+	}
+
+	.heroRight {
+		display: none;
 	}
 }

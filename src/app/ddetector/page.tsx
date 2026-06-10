@@ -911,7 +911,7 @@ export default function DDetectorPage() {
 						rel="noopener noreferrer"
 						onClick={() => setCtxMenu(null)}
 					>
-						<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
 							<circle
 								cx="11"
 								cy="11"
@@ -936,7 +936,7 @@ export default function DDetectorPage() {
 							setCtxMenu(null);
 						}}
 					>
-						<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
 							<rect
 								x="9"
 								y="9"
@@ -963,7 +963,7 @@ export default function DDetectorPage() {
 								setCtxMenu(null);
 							}}
 						>
-							<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
 								<path
 									d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
 									stroke="currentColor"
@@ -979,7 +979,7 @@ export default function DDetectorPage() {
 						className={`${styles.ctxMenuItem} ${ignoredIds.has(ctxMenu.track.id) ? styles.ctxMenuItemUnignore : styles.ctxMenuItemIgnore}`}
 						onClick={() => handleToggleIgnore(ctxMenu.track)}
 					>
-						<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
 							<path
 								d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
 								stroke="currentColor"
@@ -1016,7 +1016,7 @@ export default function DDetectorPage() {
 							setHeaderCtxMenu(null);
 						}}
 					>
-						<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
 							{hideIgnored ? (
 								<>
 									<path

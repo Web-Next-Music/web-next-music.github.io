@@ -4,6 +4,7 @@ import {
 	createContext,
 	useContext,
 	useEffect,
+	useRef,
 	useState,
 	useCallback,
 	type ReactNode,
@@ -39,9 +40,17 @@ export function LikesProvider({ children }: { children: ReactNode }) {
 	const [likedMeta, setLikedMeta] = useState<Map<string, TrackLikeMeta>>(
 		new Map(),
 	);
+	const committedIdsRef = useRef<Set<string>>(new Set());
+	const pendingTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+		new Map(),
+	);
 
 	useEffect(() => {
 		if (!user) {
+			for (const timer of pendingTimersRef.current.values())
+				clearTimeout(timer);
+			pendingTimersRef.current.clear();
+			committedIdsRef.current.clear();
 			setLikedTrackIds(new Set());
 			setLikedMeta(new Map());
 			return;
@@ -59,7 +68,9 @@ export function LikesProvider({ children }: { children: ReactNode }) {
 					console.error("[likes] load error:", error.message);
 				}
 				if (data) {
-					setLikedTrackIds(new Set(data.map((r) => r.track_id as string)));
+					const ids = new Set(data.map((r) => r.track_id as string));
+					committedIdsRef.current = new Set(ids);
+					setLikedTrackIds(ids);
 					const meta = new Map<string, TrackLikeMeta>();
 					for (const r of data) {
 						const trackId = r.track_id as string;
@@ -92,18 +103,19 @@ export function LikesProvider({ children }: { children: ReactNode }) {
 			if (!user) return;
 			const sb = getSupabase();
 			if (!sb) return;
-			const wasLiked = likedTrackIds.has(trackId);
 
-			// Optimistic update
+			const wasLiked = likedTrackIds.has(trackId);
+			const willBeLiked = !wasLiked;
+
+			// Immediate optimistic update
 			setLikedTrackIds((prev) => {
 				const next = new Set(prev);
-				if (wasLiked) next.delete(trackId);
-				else next.add(trackId);
+				willBeLiked ? next.add(trackId) : next.delete(trackId);
 				return next;
 			});
-			if (!wasLiked && meta) {
+			if (willBeLiked && meta) {
 				setLikedMeta((prev) => new Map(prev).set(trackId, meta));
-			} else if (wasLiked) {
+			} else if (!willBeLiked) {
 				setLikedMeta((prev) => {
 					const m = new Map(prev);
 					m.delete(trackId);
@@ -111,76 +123,100 @@ export function LikesProvider({ children }: { children: ReactNode }) {
 				});
 			}
 
-			// Before inserting a new like, remove stale entries with matching title+artist
-			// so URL rotation between sessions doesn't create duplicate liked rows.
-			if (!wasLiked && (meta?.title || meta?.artist)) {
-				const norm = (s?: string | null) =>
-					s?.normalize("NFC").toLowerCase().replace(/\s+/g, " ").trim() ?? "";
-				const t = norm(meta?.title);
-				const a = norm(meta?.artist);
-				const staleIds: string[] = [];
-				for (const [id, m] of likedMeta) {
-					if (id === trackId) continue;
-					const titleOk = !t || !m.title || norm(m.title) === t;
-					const artistOk = !a || !m.artist || norm(m.artist) === a;
-					if (titleOk && artistOk) staleIds.push(id);
+			// Clear any existing pending DB write for this track
+			const existing = pendingTimersRef.current.get(trackId);
+			if (existing !== undefined) clearTimeout(existing);
+
+			// If toggled back to the committed DB state, no write needed
+			if (willBeLiked === committedIdsRef.current.has(trackId)) {
+				pendingTimersRef.current.delete(trackId);
+				return;
+			}
+
+			// Capture data for the debounced DB write
+			const capturedMeta = meta;
+			const capturedLikedMeta = likedMeta;
+			const userId = user.id;
+
+			const timer = setTimeout(async () => {
+				pendingTimersRef.current.delete(trackId);
+
+				// Remove stale duplicate likes before inserting a new one
+				if (willBeLiked && (capturedMeta?.title || capturedMeta?.artist)) {
+					const norm = (s?: string | null) =>
+						s?.normalize("NFC").toLowerCase().replace(/\s+/g, " ").trim() ?? "";
+					const t = norm(capturedMeta?.title);
+					const a = norm(capturedMeta?.artist);
+					const staleIds: string[] = [];
+					for (const [id, m] of capturedLikedMeta) {
+						if (id === trackId) continue;
+						const titleOk = !t || !m.title || norm(m.title) === t;
+						const artistOk = !a || !m.artist || norm(m.artist) === a;
+						if (titleOk && artistOk) staleIds.push(id);
+					}
+					if (staleIds.length > 0) {
+						await sb
+							.from("track_likes")
+							.delete()
+							.eq("user_id", userId)
+							.in("track_id", staleIds);
+						setLikedTrackIds((prev) => {
+							const next = new Set(prev);
+							for (const id of staleIds) next.delete(id);
+							return next;
+						});
+						setLikedMeta((prev) => {
+							const m = new Map(prev);
+							for (const id of staleIds) m.delete(id);
+							return m;
+						});
+						for (const id of staleIds) committedIdsRef.current.delete(id);
+					}
 				}
-				if (staleIds.length > 0) {
-					await sb
-						.from("track_likes")
-						.delete()
-						.eq("user_id", user.id)
-						.in("track_id", staleIds);
+
+				const { error } = willBeLiked
+					? await sb.from("track_likes").upsert(
+							{
+								track_id: trackId,
+								user_id: userId,
+								title: capturedMeta?.title ?? null,
+								artist: capturedMeta?.artist ?? null,
+								cover: capturedMeta?.cover ?? null,
+								mp3_url: capturedMeta?.mp3_url ?? null,
+							},
+							{ onConflict: "user_id,track_id" },
+						)
+					: await sb
+							.from("track_likes")
+							.delete()
+							.eq("track_id", trackId)
+							.eq("user_id", userId);
+
+				if (!error) {
+					if (willBeLiked) committedIdsRef.current.add(trackId);
+					else committedIdsRef.current.delete(trackId);
+				} else {
+					console.error("[likes] toggle error:", error.message);
+					// Revert to committed DB state
+					const committedLiked = committedIdsRef.current.has(trackId);
 					setLikedTrackIds((prev) => {
 						const next = new Set(prev);
-						for (const id of staleIds) next.delete(id);
+						committedLiked ? next.add(trackId) : next.delete(trackId);
 						return next;
 					});
-					setLikedMeta((prev) => {
-						const m = new Map(prev);
-						for (const id of staleIds) m.delete(id);
-						return m;
-					});
+					if (!committedLiked) {
+						setLikedMeta((prev) => {
+							const m = new Map(prev);
+							m.delete(trackId);
+							return m;
+						});
+					}
 				}
-			}
+			}, 400);
 
-			const { error } = wasLiked
-				? await sb
-						.from("track_likes")
-						.delete()
-						.eq("track_id", trackId)
-						.eq("user_id", user.id)
-				: await sb.from("track_likes").upsert(
-						{
-							track_id: trackId,
-							user_id: user.id,
-							title: meta?.title ?? null,
-							artist: meta?.artist ?? null,
-							cover: meta?.cover ?? null,
-							mp3_url: meta?.mp3_url ?? null,
-						},
-						{ onConflict: "user_id,track_id" },
-					);
-
-			if (error) {
-				console.error("[likes] toggle error:", error.message);
-				// Revert optimistic update
-				setLikedTrackIds((prev) => {
-					const next = new Set(prev);
-					if (wasLiked) next.add(trackId);
-					else next.delete(trackId);
-					return next;
-				});
-				if (!wasLiked && meta) {
-					setLikedMeta((prev) => {
-						const m = new Map(prev);
-						m.delete(trackId);
-						return m;
-					});
-				}
-			}
+			pendingTimersRef.current.set(trackId, timer);
 		},
-		[user, likedTrackIds],
+		[user, likedTrackIds, likedMeta],
 	);
 
 	const findLikedByMeta = useCallback(

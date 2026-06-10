@@ -1,3 +1,5 @@
+@use "../../styles/breakpoints" as bp;
+
 .header {
 	display: flex;
 	align-items: center;
@@ -18,7 +20,7 @@
 	max-width: 1200px;
 	margin: 0 auto;
 	width: 100%;
-	padding: 0 40px;
+	padding: 0 10px;
 }
 
 .logo {
@@ -28,7 +30,7 @@
 	display: flex;
 	align-items: center;
 	gap: 15px;
-	font-family: var(--font-heading-large);
+	font-family: var(--font-logo);
 	font-size: 23px;
 	flex-shrink: 0;
 	cursor: pointer;
@@ -41,6 +43,7 @@
 	background-size: cover;
 	border: 1px solid var(--border);
 	flex-shrink: 0;
+	background-color: var(--surface);
 }
 
 .navWrap {
@@ -50,24 +53,23 @@
 
 .nav {
 	display: flex;
-	gap: 8px;
 
 	a {
-		font-size: 13px;
-		font-weight: 500;
+		font-size: 15px;
+		font-weight: 700;
 		color: var(--muted);
 		padding: 6px 14px;
 		border-radius: 6px;
 		border: 1px solid transparent;
 		transition: all 0.2s;
 		font-family: var(--font-heading-large);
-		font-weight: 700;
+		font-weight: 800;
 		white-space: nowrap;
 
-		&:hover {
+		&:hover,
+		&.active {
 			color: var(--text);
-			border-color: var(--border);
-			background: var(--surface);
+			background: var(--header);
 		}
 	}
 }
@@ -188,7 +190,7 @@
 	}
 }
 
-@media (max-width: 900px) {
+@include bp.tablet-lg {
 	.header {
 		padding: 10px;
 	}
@@ -198,7 +200,7 @@
 	}
 }
 
-@media (max-width: 725px) {
+@include bp.tablet-nav {
 	.nav {
 		display: none;
 	}

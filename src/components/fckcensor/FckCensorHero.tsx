@@ -42,7 +42,7 @@ const GitHubIcon = () => (
 
 const ScriptIcon = () => (
 	<svg
-		width="15"
+		width="17"
 		height="15"
 		viewBox="0 0 24 24"
 		fill="none"

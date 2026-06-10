@@ -13,10 +13,12 @@ export default function ExperimentsPage() {
 	return (
 		<>
 			<Header />
-			<ExperimentsView
-				experiments={data.experiments}
-				fetchedAt={data.fetchedAt}
-			/>
+			<main>
+				<ExperimentsView
+					experiments={data.experiments}
+					fetchedAt={data.fetchedAt}
+				/>
+			</main>
 			<Footer />
 		</>
 	);

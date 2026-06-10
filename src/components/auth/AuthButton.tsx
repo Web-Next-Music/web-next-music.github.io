@@ -102,8 +102,8 @@ export default function AuthButton() {
 						onClick={() => setDropdownOpen(false)}
 					>
 						<svg
-							width="13"
-							height="13"
+							width="16"
+							height="16"
 							viewBox="0 0 24 24"
 							fill="none"
 							stroke="currentColor"
@@ -123,8 +123,8 @@ export default function AuthButton() {
 							onClick={() => setDropdownOpen(false)}
 						>
 							<svg
-								width="13"
-								height="13"
+								width="16"
+								height="16"
 								viewBox="0 0 24 24"
 								fill="none"
 								stroke="currentColor"
@@ -146,7 +146,7 @@ export default function AuthButton() {
 							await signOut();
 						}}
 					>
-						<svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
 							<path
 								d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
 								stroke="currentColor"

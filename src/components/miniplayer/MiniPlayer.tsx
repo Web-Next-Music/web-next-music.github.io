@@ -164,13 +164,33 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 					aria-label={isPlaying ? "Pause" : "Play"}
 				>
 					{isPlaying ? (
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-							<rect x="6" y="4" width="4" height="16" rx="1" />
-							<rect x="14" y="4" width="4" height="16" rx="1" />
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<rect x="14" y="3" width="5" height="18" rx="1" />
+							<rect x="5" y="3" width="5" height="18" rx="1" />
 						</svg>
 					) : (
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-							<path d="M5 3l14 9-14 9V3z" />
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />
 						</svg>
 					)}
 				</button>
@@ -182,55 +202,51 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 						aria-label={muted ? "Unmute" : "Mute"}
 					>
 						{effectiveVolume === 0 ? (
-							<svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-								<path d="M11 5L6 9H3v6h3l5 4V5z" fill="currentColor" />
-								<line
-									x1="22"
-									y1="9"
-									x2="16"
-									y2="15"
-									stroke="currentColor"
-									strokeWidth="2"
-									strokeLinecap="round"
-								/>
-								<line
-									x1="16"
-									y1="9"
-									x2="22"
-									y2="15"
-									stroke="currentColor"
-									strokeWidth="2"
-									strokeLinecap="round"
-								/>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="17"
+								height="15"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
+								<line x1="22" x2="16" y1="9" y2="15" />
+								<line x1="16" x2="22" y1="9" y2="15" />
 							</svg>
 						) : effectiveVolume < 0.5 ? (
-							<svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-								<path d="M11 5L6 9H3v6h3l5 4V5z" fill="currentColor" />
-								<path
-									d="M15.5 8.5a5 5 0 0 1 0 7"
-									stroke="currentColor"
-									strokeWidth="1.8"
-									strokeLinecap="round"
-									fill="none"
-								/>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="17"
+								height="15"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
+								<path d="M16 9a5 5 0 0 1 0 6" />
 							</svg>
 						) : (
-							<svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-								<path d="M11 5L6 9H3v6h3l5 4V5z" fill="currentColor" />
-								<path
-									d="M15.5 8.5a5 5 0 0 1 0 7"
-									stroke="currentColor"
-									strokeWidth="1.8"
-									strokeLinecap="round"
-									fill="none"
-								/>
-								<path
-									d="M18.5 5.5a9 9 0 0 1 0 13"
-									stroke="currentColor"
-									strokeWidth="1.8"
-									strokeLinecap="round"
-									fill="none"
-								/>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="17"
+								height="15"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
+								<path d="M16 9a5 5 0 0 1 0 6" />
+								<path d="M19.364 18.364a9 9 0 0 0 0-12.728" />
 							</svg>
 						)}
 					</button>
@@ -258,13 +274,19 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 					onClick={close}
 					aria-label="Close player"
 				>
-					<svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-						<path
-							d="M18 6L6 18M6 6l12 12"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-						/>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						width="14"
+						height="14"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path d="M18 6 6 18" />
+						<path d="m6 6 12 12" />
 					</svg>
 				</button>
 			</div>

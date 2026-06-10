@@ -1,3 +1,5 @@
+@use "../../styles/breakpoints" as bp;
+
 .bar {
 	display: flex;
 	align-items: center;
@@ -35,7 +37,7 @@
 	width: 100%;
 	max-width: 1200px;
 	margin: 0 auto;
-	padding: 0 40px;
+	padding: 0 10px;
 }
 
 .left {
@@ -87,7 +89,7 @@
 
 .title {
 	font-size: 12px;
-	font-weight: 600;
+	font-weight: 800;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -96,6 +98,7 @@
 
 .artist {
 	font-size: 11px;
+	font-weight: 700;
 	color: var(--muted);
 	white-space: nowrap;
 	overflow: hidden;
@@ -104,8 +107,12 @@
 
 .timeSingle {
 	font-size: 11px;
+	font-weight: 700;
 	color: var(--muted);
-	font-family: var(--font-base);
+	font-family:
+		SF Mono,
+		Fira Code,
+		monospace;
 	white-space: nowrap;
 	flex-shrink: 0;
 	min-width: 30px;
@@ -258,7 +265,7 @@
 	}
 }
 
-@media (max-width: 900px) {
+@include bp.tablet-lg {
 	.inner {
 		padding: 0 10px;
 	}

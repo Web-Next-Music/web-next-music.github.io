@@ -1,10 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Syne:wght@400..800&display=swap");
-
 @font-face {
 	font-family: "Science Gothic";
 	src: local("Science Gothic");
-	font-weight: 500;
+	font-weight: 700;
 }
 
 *,
@@ -17,8 +14,9 @@
 }
 
 :root {
-	--font-heading-large: "Syne", "Science Gothic", sans-serif;
-	--font-base: "Space Mono", monospace;
+	--font-heading-large: var(--font-quicksand), sans-serif;
+	--font-logo: var(--font-syne), sans-serif;
+	--font-base: var(--font-nunito), sans-serif;
 	--mini-player-h: 0px;
 
 	/* Overlay shadow*/
@@ -45,11 +43,15 @@
 }
 
 @mixin light-vars {
-	--bg: #f4f4f8;
-	--header: #ffffffd9;
-	--surface: #ffffff;
-	--surface2: #eaeaf0;
-	--border: #d4d4de;
+	--bg: #f3f3f4;
+	--header: #f3f3f4d9;
+	--surface: #fbfbfb;
+	--surface2: #f3f3f3;
+	--border: color-mix(
+		in oklab,
+		hsl(240 calc(1 * 4%) 60.784%/0.2784313725490196) 100%,
+		hsl(0 0% 0%/0.2784313725490196) 0%
+	);
 	--text: #111116;
 	--muted: #666;
 	--accent: #00c9c0;
@@ -69,13 +71,17 @@
 }
 
 @mixin dark-vars {
-	--bg: #0d0d0f;
-	--header: #0d0d0fd9;
-	--surface: #16161a;
-	--surface2: #1e1e24;
-	--border: #2a2a32;
+	--bg: #000000;
+	--header: #000000d9;
+	--surface: #0c0c0e;
+	--surface2: #171719;
+	--border: color-mix(
+		in oklab,
+		hsl(240 calc(1 * 4%) 60.784%/0.2) 100%,
+		hsl(0 0% 0%/0.2) 0%
+	);
 	--text: #f0f0f4;
-	--muted: #888894;
+	--muted: #666666;
 	--accent: #2bfef5;
 	--accent2: #00c9c0;
 	--badge-background-color: #2bfef514;

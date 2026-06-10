@@ -1,6 +1,8 @@
+@use "../../styles/breakpoints" as bp;
+
 .page {
 	max-width: 1020px;
-	margin: calc(0px + var(--mini-player-h)) auto 0 auto;
+	margin: 0 auto;
 	padding: 20px;
 	min-height: 600px;
 	transition: margin 0.25s ease;
@@ -168,7 +170,7 @@
 
 .username {
 	font-size: 16px;
-	font-weight: 600;
+	font-weight: 800;
 	color: var(--text);
 	margin: 4px 0 0;
 	font-family: var(--font-heading-large);
@@ -176,6 +178,7 @@
 
 .joinDate {
 	font-size: 12px;
+	font-weight: 700;
 	color: var(--muted);
 	margin: 3px 0 0;
 	cursor: pointer;
@@ -209,7 +212,7 @@
 
 .sectionTitle {
 	font-size: 15px;
-	font-weight: 600;
+	font-weight: 800;
 	color: var(--text);
 	margin: 0;
 	font-family: var(--font-heading-large);
@@ -237,7 +240,7 @@
 .playlistName {
 	font-family: var(--font-heading-large);
 	font-size: 15px;
-	font-weight: 500;
+	font-weight: 700;
 	color: var(--text);
 	flex: 1;
 	min-width: 0;
@@ -250,19 +253,6 @@
 	font-size: 11px;
 	color: var(--muted);
 	flex-shrink: 0;
-}
-
-// Track shared
-.trackRowActive {
-	background: rgba(43, 254, 245, 0.04);
-}
-
-.trackInfo {
-	flex: 1;
-	min-width: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
 }
 
 // States
@@ -347,7 +337,7 @@
 	border-radius: 8px;
 	padding: 10px 22px;
 	font-size: 14px;
-	font-weight: 500;
+	font-weight: 700;
 	color: #000;
 	cursor: pointer;
 	transition: opacity 0.15s;
@@ -383,7 +373,8 @@
 	border-radius: 8px;
 	padding: 6px 12px;
 	font-size: 12px;
-	font-weight: 500;
+	font-weight: 700;
+	font-family: var(--font-heading-large);
 	color: var(--text);
 	cursor: pointer;
 	transition: all 0.15s;
@@ -400,194 +391,12 @@
 	flex-direction: column;
 }
 
-.trackNum {
-	font-size: 12px;
-	color: var(--muted);
-	width: 18px;
-	text-align: right;
-	flex-shrink: 0;
-}
-
-.trackCoverWrap {
-	position: relative;
-	width: 40px;
-	height: 40px;
-	flex-shrink: 0;
-}
-
-.trackCover {
-	width: 40px;
-	height: 40px;
-	border-radius: 6px;
-	object-fit: cover;
-	display: block;
-	border: 1px solid var(--border);
-}
-
-.trackCoverPlaceholder {
-	width: 40px;
-	height: 40px;
-	border-radius: 6px;
-	background: var(--surface2);
-	border: 1px solid var(--border);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
-.trackTitle {
-	font-size: 14px;
-	font-weight: 500;
-	color: var(--text);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	text-decoration: none;
-}
-
-.trackArtist {
-	font-size: 12px;
-	color: var(--muted);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.trackActions {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	flex-shrink: 0;
-	opacity: 0;
-	transition: opacity 0.15s;
-}
-
-.trackRow {
-	display: flex;
-	align-items: center;
-	gap: 14px;
-	padding: 9px 14px;
-	border-radius: 10px;
-	border: 1px solid transparent;
-	transition: all 0.15s;
-	cursor: pointer;
-	text-decoration: none;
-	color: var(--text);
-
-	&:hover {
-		background: var(--surface);
-		border-color: var(--border);
-
-		.trackActions {
-			opacity: 1;
-		}
-		.playBtn {
-			opacity: 1;
-		}
-	}
-}
-
-// Play button (profile - standalone)
-.playBtn {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 30px;
-	height: 30px;
-	border-radius: 8px;
-	border: 1px solid var(--border);
-	background: var(--surface);
-	color: var(--muted);
-	cursor: pointer;
-	flex-shrink: 0;
-	opacity: 0;
-	transition:
-		opacity 0.15s,
-		background 0.15s,
-		color 0.15s,
-		border-color 0.15s;
-
-	&:hover {
-		background: var(--surface2);
-		color: var(--accent);
-		border-color: var(--accent);
-	}
-}
-
-.playBtnActive {
-	opacity: 1 !important;
-	color: var(--accent) !important;
-	border-color: var(--accent) !important;
-	background: rgba(43, 254, 245, 0.08) !important;
-}
-
-// Small covers in playlist rows (profile)
-.trackCoverWrapSm {
-	position: relative;
-	width: 28px;
-	height: 28px;
-	flex-shrink: 0;
-
-	.playBtn {
-		border-radius: 4px;
-	}
-}
-
-.trackCoverSm {
-	width: 28px;
-	height: 28px;
-	border-radius: 4px;
-	object-fit: cover;
-	display: block;
-	border: 1px solid var(--border);
-}
-
-.trackCoverSmPlaceholder {
-	width: 28px;
-	height: 28px;
-	border-radius: 4px;
-	background: var(--surface);
-	border: 1px solid var(--border);
-}
-
-.trackTitleLink {
-	font-size: 12px;
-	font-weight: 500;
-	color: var(--text);
-	text-decoration: none;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-
-	&:hover {
-		color: var(--accent);
-	}
-}
-
-// Playlist track row (profile)
-.playlistTrackRow {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	padding: 5px 15px 5px 5px;
-	transition: background 0.12s;
-	cursor: pointer;
-
-	&:hover {
-		background: rgba(255, 255, 255, 0.05);
-	}
-}
-
-.playlistTrackRowActive {
-	background: rgba(43, 254, 245, 0.04);
-}
-
 // Playlist editing (profile)
 .playlistNameInput {
 	flex: 1;
 	min-width: 0;
 	font-size: 13px;
-	font-weight: 500;
+	font-weight: 700;
 	color: var(--text);
 	background: var(--surface2);
 	border: 1px solid var(--accent);
@@ -766,7 +575,7 @@
 	border-radius: 6px;
 	padding: 5px 12px;
 	font-size: 12px;
-	font-weight: 500;
+	font-weight: 700;
 	color: #000;
 	cursor: pointer;
 	transition: opacity 0.15s;
@@ -878,7 +687,7 @@
 	border-radius: 8px;
 	padding: 7px 14px;
 	font-size: 13px;
-	font-weight: 500;
+	font-weight: 700;
 	color: #000;
 	cursor: pointer;
 	transition: opacity 0.15s;
@@ -957,7 +766,7 @@
 		color: var(--text);
 	}
 	h1 {
-		font-size: 16px;
+		font-size: 26px;
 	}
 	h2 {
 		font-size: 14px;
@@ -967,6 +776,7 @@
 	}
 	p {
 		margin: 4px 0;
+		font-size: 16px;
 	}
 	a {
 		color: var(--accent);
@@ -1028,7 +838,9 @@
 	}
 
 	.statLabel {
+		font-family: var(--font-heading-large);
 		font-size: 13px;
+		font-weight: 700;
 		color: inherit;
 	}
 
@@ -1060,11 +872,12 @@
 	.statLabel {
 		font-size: 13px;
 		color: var(--muted);
+		font-weight: 700;
 	}
 }
 
 // Responsive
-@media (max-width: 720px) {
+@include bp.tablet-sm {
 	.page {
 		padding: 20px;
 	}
@@ -1097,10 +910,6 @@
 			padding: 20px;
 		}
 
-		.trackRow {
-			padding: 8px 10px;
-		}
-
 		.statItem {
 			justify-content: center;
 			padding: 14px 0;
@@ -1111,8 +920,6 @@
 			display: none;
 		}
 
-		.playBtn,
-		.trackActions,
 		.playlistActions {
 			opacity: 1;
 		}
@@ -1145,7 +952,7 @@
 	border-radius: 16px;
 	padding: 16px 16px;
 	font-size: 13px;
-	font-weight: 500;
+	font-weight: 700;
 	line-height: 1.5;
 	margin-bottom: 16px;
 }

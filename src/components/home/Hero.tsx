@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import styles from "./Hero.module.scss";
-import AppPreview from "@/components/home/AppPreview";
 import { findAsset, formatSize, fetchLatestRelease } from "@/lib/github";
 import { useAuth } from "@/lib/auth";
 import type { GithubAsset, GithubRelease } from "@/types/ui";
@@ -84,6 +83,7 @@ export default function Hero() {
 			href: winAsset?.browser_download_url ?? release?.html_url ?? "#",
 			size: winAsset ? formatSize(winAsset.size) : null,
 			iconClass: "win",
+			btnClass: "dlBtnWin",
 		},
 		{
 			icon: <AppImageIcon />,
@@ -92,6 +92,7 @@ export default function Hero() {
 			href: appImageAsset?.browser_download_url ?? release?.html_url ?? "#",
 			size: appImageAsset ? formatSize(appImageAsset.size) : null,
 			iconClass: "appimage",
+			btnClass: "dlBtnAppimage",
 		},
 		{
 			icon: <DebIcon />,
@@ -100,6 +101,7 @@ export default function Hero() {
 			href: debAsset?.browser_download_url ?? release?.html_url ?? "#",
 			size: debAsset ? formatSize(debAsset.size) : null,
 			iconClass: "deb",
+			btnClass: "dlBtnDeb",
 		},
 		{
 			icon: <PkgIcon />,
@@ -108,8 +110,11 @@ export default function Hero() {
 			href: pkgAsset?.browser_download_url ?? release?.html_url ?? "#",
 			size: pkgAsset ? formatSize(pkgAsset.size) : null,
 			iconClass: "pkg",
+			btnClass: "dlBtnPkg",
 		},
 	];
+
+	const features = ["Themes", "Addons", "Discord RPC", "OBS Widget"];
 
 	return (
 		<section className={styles.hero}>
@@ -132,43 +137,67 @@ export default function Hero() {
 					Web client for Yandex Music with support for themes, addons, Discord
 					Rich Presence (RPC) and OBS widget
 				</p>
-				<div className={styles.dlGrid}>
-					{buttons.map((btn, i) => {
-						const isDisabled = loading || !btn.href || btn.href === "#";
+				<div className={styles.dlSection}>
+					<span className={styles.dlSectionLabel}>Download</span>
+					<div className={styles.dlGrid}>
+						{buttons.map((btn, i) => {
+							const isDisabled = loading || !btn.href || btn.href === "#";
 
-						return (
-							<a
-								key={i}
-								href={btn.href}
-								onClick={(e) => {
-									if (isDisabled) return;
-
-									e.preventDefault();
-									downloadViaIframe(btn.href);
-								}}
-								className={`${styles.dlBtn} ${loading ? styles.dlBtnLoading : ""}`}
-							>
-								<div className={`${styles.dlIcon} ${styles[btn.iconClass]}`}>
-									{btn.icon}
-								</div>
-
-								<div className={styles.dlText}>
-									<span className={styles.dlLabel}>{btn.label}</span>
-
-									<span className={styles.dlName}>
-										{btn.name}
-										{btn.size && (
-											<span className={styles.dlSize}>{btn.size}</span>
-										)}
-									</span>
-								</div>
-							</a>
-						);
-					})}
+							return (
+								<a
+									key={i}
+									href={btn.href}
+									onClick={(e) => {
+										if (isDisabled) return;
+										e.preventDefault();
+										downloadViaIframe(btn.href);
+									}}
+									className={`${styles.dlBtn} ${styles[btn.btnClass]} ${loading ? styles.dlBtnLoading : ""}`}
+								>
+									<div className={`${styles.dlIcon} ${styles[btn.iconClass]}`}>
+										{btn.icon}
+									</div>
+									<div className={styles.dlText}>
+										<span className={styles.dlLabel}>{btn.label}</span>
+										<span className={styles.dlName}>
+											{btn.name}
+											{btn.size && (
+												<span className={styles.dlSize}>{btn.size}</span>
+											)}
+										</span>
+									</div>
+									<svg
+										className={styles.dlArrow}
+										width="14"
+										height="14"
+										viewBox="0 0 24 24"
+										fill="none"
+									>
+										<path
+											d="M12 4v12m0 0-4-4m4 4 4-4M4 20h16"
+											stroke="currentColor"
+											strokeWidth="1.8"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										/>
+									</svg>
+								</a>
+							);
+						})}
+					</div>
 				</div>
 			</div>
 			<div className={styles.heroRight}>
-				<AppPreview />
+				<div className={styles.previewWrapper}>
+					<Image
+						src="/preview.png"
+						alt="Next Music Client preview"
+						width={900}
+						height={580}
+						className={styles.previewImg}
+						priority
+					/>
+				</div>
 			</div>
 		</section>
 	);

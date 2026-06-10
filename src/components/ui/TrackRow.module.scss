@@ -1,3 +1,5 @@
+@use "../../styles/breakpoints" as bp;
+
 .row {
 	display: flex;
 	align-items: center;
@@ -27,6 +29,7 @@
 
 .num {
 	font-size: 12px;
+	font-weight: 700;
 	color: var(--muted);
 	width: 18px;
 	text-align: right;
@@ -70,7 +73,7 @@
 
 .title {
 	font-size: 14px;
-	font-weight: 500;
+	font-weight: 800;
 	color: var(--text);
 	white-space: nowrap;
 	overflow: hidden;
@@ -79,6 +82,7 @@
 
 .artist {
 	font-size: 12px;
+	font-weight: 700;
 	color: var(--muted);
 	white-space: nowrap;
 	overflow: hidden;
@@ -207,7 +211,7 @@
 	}
 }
 
-@media (max-width: 720px) {
+@include bp.tablet-sm {
 	.actions {
 		opacity: 1;
 	}

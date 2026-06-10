@@ -6,7 +6,9 @@ export default function Home() {
 	return (
 		<>
 			<Header />
-			<StoreFeed />
+			<main>
+				<StoreFeed />
+			</main>
 			<Footer />
 		</>
 	);

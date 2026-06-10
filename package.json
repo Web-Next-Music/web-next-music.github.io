@@ -1,7 +1,7 @@
 {
 	"name": "next-music-website",
 	"private": true,
-	"packageManager": "pnpm@10.33.0",
+	"packageManager": "pnpm@11.5.3",
 	"scripts": {
 		"dev": "next dev --turbopack",
 		"build": "next build",
@@ -14,25 +14,26 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@supabase/supabase-js": "^2.106.0",
+		"@supabase/supabase-js": "^2.108.1",
 		"browser-id3-writer": "^6.3.1",
-		"marked": "^18.0.4",
+		"lucide-react": "^1.17.0",
+		"marked": "^18.0.5",
 		"music-metadata-browser": "^2.5.11",
-		"next": "^16.2.3",
-		"react": "^19.2.5",
-		"react-dom": "^19.2.5"
+		"next": "^16.2.9",
+		"react": "^19.2.7",
+		"react-dom": "^19.2.7"
 	},
 	"devDependencies": {
 		"@types/node": "^25",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
-		"autoprefixer": "^10.4.27",
-		"eslint": "^10.2.0",
-		"eslint-config-next": "^16.2.3",
-		"postcss": "^8.5.9",
-		"prettier": "^3.8.3",
-		"sass": "^1.99.0",
-		"tsx": "^4.22.0",
+		"autoprefixer": "^10.5.0",
+		"eslint": "^10.4.1",
+		"eslint-config-next": "^16.2.9",
+		"postcss": "^8.5.15",
+		"prettier": "^3.8.4",
+		"sass": "^1.100.0",
+		"tsx": "^4.22.4",
 		"typescript": "^6"
 	}
 }

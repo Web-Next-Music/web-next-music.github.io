@@ -358,7 +358,7 @@ const IconPalette = () => (
 const IconDownload = () => (
 	<svg
 		width="13"
-		height="13"
+		height="17"
 		viewBox="0 0 16 16"
 		fill="none"
 		stroke="currentColor"
@@ -416,7 +416,7 @@ const IconX = () => (
 const IconCode = () => (
 	<svg
 		width="13"
-		height="13"
+		height="17"
 		viewBox="0 0 24 24"
 		fill="none"
 		stroke="currentColor"
@@ -431,7 +431,7 @@ const IconCode = () => (
 const IconFile = () => (
 	<svg
 		width="13"
-		height="13"
+		height="17"
 		viewBox="0 0 24 24"
 		fill="none"
 		stroke="currentColor"

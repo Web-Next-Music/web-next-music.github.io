@@ -3,6 +3,15 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import {
+	Loader as LoaderIcon,
+	Pause as PauseIcon,
+	Play as PlayIcon,
+	Plus as PlusIcon,
+	Check as CheckIcon,
+	X as XIcon,
+	Music as MusicIcon,
+} from "lucide-react";
 import { usePlayer } from "@/lib/miniplayer/context";
 import { useAuth } from "@/lib/auth";
 import { encodeTrackKey, decodeTrackKey } from "@/lib/trackKey";
@@ -101,26 +110,11 @@ function PlayBtn({
 			aria-label={active ? "Pause" : "Play"}
 		>
 			{loading ? (
-				<svg
-					width="13"
-					height="13"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2.5"
-					strokeLinecap="round"
-				>
-					<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-				</svg>
+				<LoaderIcon size={13} />
 			) : active ? (
-				<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-					<rect x="6" y="4" width="4" height="16" rx="1" />
-					<rect x="14" y="4" width="4" height="16" rx="1" />
-				</svg>
+				<PauseIcon size={13} />
 			) : (
-				<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-					<path d="M5 3l14 9-14 9V3z" />
-				</svg>
+				<PlayIcon size={13} />
 			)}
 		</button>
 	);
@@ -206,18 +200,7 @@ function AddToPlaylistMenu({
 				title={isBanned ? "Your account is banned" : "Add to playlist"}
 				style={isBanned ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
 			>
-				<svg
-					width="13"
-					height="13"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2.5"
-					strokeLinecap="round"
-				>
-					<line x1="12" y1="5" x2="12" y2="19" />
-					<line x1="5" y1="12" x2="19" y2="12" />
-				</svg>
+				<PlusIcon size={13} />
 			</button>
 			{open &&
 				pos &&
@@ -241,20 +224,7 @@ function AddToPlaylistMenu({
 									onClick={(e) => handleToggle(e, pl.id)}
 								>
 									<span>{pl.name}</span>
-									{isIn && (
-										<svg
-											width="12"
-											height="12"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											strokeWidth="2.5"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-										>
-											<polyline points="20 6 9 17 4 12" />
-										</svg>
-									)}
+									{isIn && <CheckIcon size={12} />}
 								</button>
 							);
 						})}
@@ -304,29 +274,7 @@ export default function TrackRow({
 					<img src={cover} alt="" className={styles.coverImg} loading="lazy" />
 				) : (
 					<div className={styles.coverPlaceholder}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-							<path
-								d="M9 18V5l12-2v13"
-								stroke="var(--muted)"
-								strokeWidth="1.5"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-							<circle
-								cx="6"
-								cy="18"
-								r="3"
-								stroke="var(--muted)"
-								strokeWidth="1.5"
-							/>
-							<circle
-								cx="18"
-								cy="16"
-								r="3"
-								stroke="var(--muted)"
-								strokeWidth="1.5"
-							/>
-						</svg>
+						<MusicIcon size={14} color="var(--muted)" />
 					</div>
 				)}
 			</div>
@@ -369,17 +317,7 @@ export default function TrackRow({
 						}}
 						aria-label="Remove"
 					>
-						<svg
-							width="12"
-							height="12"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2.5"
-							strokeLinecap="round"
-						>
-							<path d="M18 6L6 18M6 6l12 12" />
-						</svg>
+						<XIcon size={12} />
 					</button>
 				)}
 				<PlayBtn

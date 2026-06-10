@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import styles from "./Header.module.scss";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import AuthButton from "@/components/auth/AuthButton";
 
 const JUNE = 5;
@@ -46,6 +46,7 @@ export default function Header({
 				]),
 	];
 
+	const pathname = usePathname();
 	const [open, setOpen] = useState(false);
 	const [useCondemnedLogo, setUseCondemnedLogo] = useState(
 		() => seasonalLogoDecided,
@@ -113,13 +114,25 @@ export default function Header({
 					</div>
 
 					<div className={styles.navWrap}>
-						<div className={styles.nav}>
+						<nav className={styles.nav} aria-label="Main navigation">
 							{NAV_LINKS.map((l) => (
-								<Link key={l.href} href={l.href}>
+								<Link
+									key={l.href}
+									href={l.href}
+									className={
+										l.href === "/"
+											? pathname === "/"
+												? styles.active
+												: undefined
+											: pathname.startsWith(l.href)
+												? styles.active
+												: undefined
+									}
+								>
 									{l.label}
 								</Link>
 							))}
-						</div>
+						</nav>
 
 						{!isHiddenMode && (
 							<div className={styles.headerRight}>

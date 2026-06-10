@@ -1,3 +1,5 @@
+@use "../../styles/breakpoints" as bp;
+
 .section {
 	max-width: 1200px;
 	margin: 0 auto;
@@ -6,37 +8,41 @@
 }
 
 .sectionLabel {
-	font-size: 11px;
+	font-size: 14px;
+	font-weight: 800;
 	font-family: var(--font-base);
 	color: var(--accent);
 	letter-spacing: 2px;
-	margin-bottom: 12px;
+	margin-bottom: 20px;
 }
 
 .sectionTitle {
 	font-size: 32px;
 	font-weight: 700;
 	letter-spacing: -1px;
-	margin-bottom: 8px;
+	margin-bottom: 10px;
 	font-family: var(--font-heading-large);
 }
 
 .sectionSub {
 	font-size: 14px;
+	font-weight: 700;
 	color: var(--muted);
-	margin-bottom: 36px;
+	margin-bottom: 20px;
 }
 
 .grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-	gap: 12px;
+	gap: 10px;
+	min-height: 228px;
 }
 
 .card {
 	background: var(--surface);
 	border: 1px solid var(--border);
 	border-radius: 10px;
+	height: 108px;
 	padding: 15px;
 	display: flex;
 	flex-direction: column;
@@ -61,8 +67,8 @@
 }
 
 .name {
-	font-size: 13px;
-	font-weight: 700;
+	font-size: 14px;
+	font-weight: 800;
 	text-align: center;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -72,18 +78,22 @@
 }
 
 .empty {
-	font-size: 13px;
+	font-size: 14px;
+	font-weight: 700;
 	color: var(--muted);
 	grid-column: 1 / -1;
 }
 
 .pagination {
 	display: flex;
+	background-color: var(--surface);
+	border: 1px solid var(--border);
+	padding: 10px;
+	border-radius: 10px;
 	align-items: center;
 	justify-content: center;
-	flex-wrap: wrap;
 	gap: 6px;
-	margin-top: 28px;
+	margin-top: 20px;
 }
 
 .pageBtn {
@@ -96,6 +106,7 @@
 	color: var(--text);
 	font-size: 13px;
 	font-family: var(--font-base);
+	font-weight: 800;
 	cursor: pointer;
 	transition:
 		background 0.15s,
@@ -127,7 +138,7 @@
 	}
 }
 
-@media (max-width: 900px) {
+@include bp.tablet-lg {
 	.section {
 		padding: 60px 20px;
 	}

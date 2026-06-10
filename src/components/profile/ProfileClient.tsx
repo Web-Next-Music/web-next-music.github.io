@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { marked } from "marked";
 
@@ -31,28 +30,17 @@ import {
 	findTrackById,
 } from "@/lib/trackStore";
 import { TRACK_META } from "@/lib/fckcensor";
+import { syncGitHubMeta, syncGithubStar } from "@/lib/publicProfile";
 import {
-	getPlaylists,
-	createPlaylist,
-	deletePlaylist,
-	renamePlaylist,
 	getPlaylistTracks,
-	addTrackToPlaylist,
 	removeTrackFromPlaylist,
 	type Playlist,
 	type PlaylistTrack,
 } from "@/lib/playlists";
-import {
-	syncGitHubMeta,
-	syncGithubStar,
-	getOwnProfile,
-	saveBio,
-	getPinnedPlaylistIds,
-	pinPlaylist,
-	unpinPlaylist,
-} from "@/lib/publicProfile";
 import TrackRow from "@/components/ui/TrackRow";
 import styles from "./profile.module.scss";
+import { useProfileBio } from "./useProfileBio";
+import { useProfilePlaylists } from "./useProfilePlaylists";
 
 function trackHref(trackId: string, dbMeta?: TrackLikeMeta): string {
 	if (trackId.endsWith("-e")) return `/track?key=${trackId}`;
@@ -104,332 +92,6 @@ function resolveTrackMeta(
 			};
 	}
 	return null;
-}
-
-function PlayTrackBtn({
-	trackId,
-	dbMeta,
-	small,
-}: {
-	trackId: string;
-	dbMeta?: TrackLikeMeta;
-	small?: boolean;
-}) {
-	const player = usePlayer();
-	const [loading, setLoading] = useState(false);
-
-	if (!player) return null;
-
-	const { nowPlaying, isPlaying, play, pause, resume } = player;
-	const isThis = nowPlaying?.id === trackId || nowPlaying?.url === trackId;
-	const active = isThis && isPlaying;
-
-	const handleClick = async (e: React.MouseEvent) => {
-		e.preventDefault();
-		e.stopPropagation();
-		if (isThis) {
-			isPlaying ? pause() : resume();
-			return;
-		}
-		// Key-based track: mp3_url from DB columns, or fall back to decoding the trackId key
-		const playUrl =
-			dbMeta?.mp3_url ??
-			(!trackId.startsWith("http") ? decodeTrackKey(trackId)?.url : undefined);
-		if (playUrl) {
-			play({
-				id: trackId,
-				url: playUrl,
-				title: dbMeta?.title ?? "Unknown",
-				artist: dbMeta?.artist ?? "",
-				cover: dbMeta?.cover,
-			});
-			return;
-		}
-		setLoading(true);
-		await ensureTracksLoaded();
-		const track = findTrackById(trackId);
-		if (track)
-			play({
-				id: track.id,
-				url: track.url,
-				title: track.title,
-				artist: track.artist,
-				cover: track.cover,
-				yandexUrl: track.yandexUrl,
-			});
-		setLoading(false);
-	};
-
-	const sz = small ? 12 : 14;
-
-	return (
-		<button
-			className={`${styles.playBtn} ${isThis ? styles.playBtnActive : ""}`}
-			onClick={handleClick}
-			aria-label={active ? "Pause" : "Play"}
-		>
-			{loading ? (
-				<svg
-					width={sz}
-					height={sz}
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2.5"
-					strokeLinecap="round"
-				>
-					<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-				</svg>
-			) : active ? (
-				<svg width={sz} height={sz} viewBox="0 0 24 24" fill="currentColor">
-					<rect x="6" y="4" width="4" height="16" rx="1" />
-					<rect x="14" y="4" width="4" height="16" rx="1" />
-				</svg>
-			) : (
-				<svg width={sz} height={sz} viewBox="0 0 24 24" fill="currentColor">
-					<path d="M5 3l14 9-14 9V3z" />
-				</svg>
-			)}
-		</button>
-	);
-}
-
-function TrackItem({
-	trackId,
-	index,
-	playlists,
-	playlistContents,
-	likedMeta,
-	onAddToPlaylist,
-	onRemoveFromPlaylist,
-	onEnsurePlaylistLoaded,
-	onUnlike,
-	showUnlike,
-}: {
-	trackId: string;
-	index: number;
-	playlists: Playlist[];
-	playlistContents: Record<string, Set<string>>;
-	likedMeta: Map<string, TrackLikeMeta>;
-	onAddToPlaylist: (trackId: string, playlistId: string) => void;
-	onRemoveFromPlaylist: (trackId: string, playlistId: string) => void;
-	onEnsurePlaylistLoaded: (playlistId: string) => Promise<void>;
-	onUnlike?: (trackId: string) => void;
-	showUnlike?: boolean;
-}) {
-	const meta = resolveTrackMeta(trackId, likedMeta);
-	const dbMeta = likedMeta.get(trackId);
-	const title = meta?.title ?? `Track #${trackId}`;
-	const artist = meta?.artist ?? "";
-	const cover = meta?.cover;
-	const [menuOpen, setMenuOpen] = useState(false);
-	const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(
-		null,
-	);
-	const [loadingPlaylists, setLoadingPlaylists] = useState(false);
-	const menuWrapRef = useRef<HTMLDivElement>(null);
-	const menuPortalRef = useRef<HTMLDivElement>(null);
-	const { isBanned } = useAuth();
-	const player = usePlayer();
-	const isThis = player?.nowPlaying?.id === trackId;
-
-	useEffect(() => {
-		if (!menuOpen) return;
-		const handler = (e: MouseEvent) => {
-			if (
-				!menuWrapRef.current?.contains(e.target as Node) &&
-				!menuPortalRef.current?.contains(e.target as Node)
-			)
-				setMenuOpen(false);
-		};
-		document.addEventListener("mousedown", handler);
-		return () => document.removeEventListener("mousedown", handler);
-	}, [menuOpen]);
-
-	const handleOpenMenu = async (e: React.MouseEvent) => {
-		e.preventDefault();
-		if (isBanned) return;
-		if (menuOpen) {
-			setMenuOpen(false);
-			setMenuPos(null);
-			return;
-		}
-		if (menuWrapRef.current) {
-			const rect = menuWrapRef.current.getBoundingClientRect();
-			setMenuPos({
-				top: rect.bottom + 4,
-				right: window.innerWidth - rect.right,
-			});
-		}
-		setLoadingPlaylists(true);
-		await Promise.all(playlists.map((p) => onEnsurePlaylistLoaded(p.id)));
-		setLoadingPlaylists(false);
-		setMenuOpen(true);
-	};
-
-	return (
-		<Link
-			href={trackHref(trackId, dbMeta)}
-			className={`${styles.trackRow} ${isThis ? styles.trackRowActive : ""}`}
-		>
-			<span className={styles.trackNum}>{index + 1}</span>
-			<div className={styles.trackCoverWrap}>
-				{cover ? (
-					<img
-						src={cover}
-						alt=""
-						className={styles.trackCover}
-						loading="lazy"
-					/>
-				) : (
-					<div className={styles.trackCoverPlaceholder}>
-						<svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-							<path
-								d="M9 18V5l12-2v13"
-								stroke="var(--muted)"
-								strokeWidth="1.5"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-							<circle
-								cx="6"
-								cy="18"
-								r="3"
-								stroke="var(--muted)"
-								strokeWidth="1.5"
-							/>
-							<circle
-								cx="18"
-								cy="16"
-								r="3"
-								stroke="var(--muted)"
-								strokeWidth="1.5"
-							/>
-						</svg>
-					</div>
-				)}
-			</div>
-			<div className={styles.trackInfo}>
-				<span className={styles.trackTitle}>{title}</span>
-				{artist && <span className={styles.trackArtist}>{artist}</span>}
-			</div>
-			<div
-				className={styles.trackActions}
-				onClick={(e) => {
-					e.preventDefault();
-					e.stopPropagation();
-				}}
-			>
-				{playlists.length > 0 && !isBanned && (
-					<div className={styles.menuWrap} ref={menuWrapRef}>
-						<button
-							className={styles.iconBtn}
-							onClick={handleOpenMenu}
-							title="Add to playlist"
-						>
-							{loadingPlaylists ? (
-								<svg
-									width="14"
-									height="14"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="2.5"
-									strokeLinecap="round"
-								>
-									<path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M2 12h4M18 12h4" />
-								</svg>
-							) : (
-								<svg
-									width="14"
-									height="14"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="2"
-									strokeLinecap="round"
-								>
-									<line x1="12" y1="5" x2="12" y2="19" />
-									<line x1="5" y1="12" x2="19" y2="12" />
-								</svg>
-							)}
-						</button>
-						{menuOpen &&
-							menuPos &&
-							createPortal(
-								<div
-									ref={menuPortalRef}
-									className={styles.menu}
-									style={{
-										position: "fixed",
-										top: menuPos.top,
-										right: menuPos.right,
-									}}
-								>
-									{playlists.map((p) => {
-										const inPlaylist =
-											playlistContents[p.id]?.has(trackId) ?? false;
-										return (
-											<button
-												key={p.id}
-												className={`${styles.menuItem} ${inPlaylist ? styles.menuItemActive : ""}`}
-												onClick={(e) => {
-													e.preventDefault();
-													if (inPlaylist) onRemoveFromPlaylist(trackId, p.id);
-													else onAddToPlaylist(trackId, p.id);
-													setMenuOpen(false);
-												}}
-											>
-												<span className={styles.menuItemName}>{p.name}</span>
-												{inPlaylist && (
-													<svg
-														width="13"
-														height="13"
-														viewBox="0 0 24 24"
-														fill="none"
-														stroke="currentColor"
-														strokeWidth="2.5"
-														strokeLinecap="round"
-														strokeLinejoin="round"
-													>
-														<polyline points="20 6 9 17 4 12" />
-													</svg>
-												)}
-											</button>
-										);
-									})}
-								</div>,
-								document.body,
-							)}
-					</div>
-				)}
-				{showUnlike && onUnlike && (
-					<button
-						className={`${styles.iconBtn} ${styles.iconBtnLiked}`}
-						onClick={(e) => {
-							e.preventDefault();
-							onUnlike(trackId);
-						}}
-						title="Remove from liked"
-					>
-						<svg
-							width="14"
-							height="14"
-							viewBox="0 0 24 24"
-							fill="currentColor"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-						>
-							<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-						</svg>
-					</button>
-				)}
-				<PlayTrackBtn trackId={trackId} dbMeta={dbMeta} />
-			</div>
-		</Link>
-	);
 }
 
 function PlaylistSection({
@@ -543,8 +205,8 @@ function PlaylistSection({
 							}
 						>
 							<svg
-								width="13"
-								height="13"
+								width="17"
+								height="17"
 								viewBox="0 0 24 24"
 								fill={isPinned ? "currentColor" : "none"}
 								stroke="currentColor"
@@ -562,8 +224,8 @@ function PlaylistSection({
 							title="Rename"
 						>
 							<svg
-								width="13"
-								height="13"
+								width="17"
+								height="17"
 								viewBox="0 0 24 24"
 								fill="none"
 								stroke="currentColor"
@@ -580,8 +242,8 @@ function PlaylistSection({
 							title="Delete playlist"
 						>
 							<svg
-								width="13"
-								height="13"
+								width="17"
+								height="17"
 								viewBox="0 0 24 24"
 								fill="none"
 								stroke="currentColor"
@@ -645,29 +307,40 @@ export default function ProfileClient() {
 	const { user, loading, banChecking, openAuthModal, isBanned } = useAuth();
 	const { likedTrackIds, likedMeta, toggle: toggleLike } = useLikes();
 	const player = usePlayer();
-	const [playlists, setPlaylists] = useState<Playlist[]>([]);
-	const [playlistsLoading, setPlaylistsLoading] = useState(false);
-	const [creating, setCreating] = useState(false);
-	const [newName, setNewName] = useState("");
 	const newNameRef = useRef<HTMLInputElement>(null);
 	const [tab, setTab] = useState<"bio" | "liked" | "playlists">("bio");
 	const [, setStoreReady] = useState(() => getStoreSnapshot().loaded);
-	const [playlistContents, setPlaylistContents] = useState<
-		Record<string, Set<string>>
-	>({});
 	const [githubStarred, setGithubStarred] = useState<boolean | null>(null);
 	const [starLoading, setStarLoading] = useState(false);
 	const [exactDate, setExactDate] = useState(false);
 
-	// Bio
-	const [bio, setBio] = useState<string>("");
-	const [bioLoading, setBioLoading] = useState(false);
-	const [editingBio, setEditingBio] = useState(false);
-	const [bioInput, setBioInput] = useState("");
-	const [bioSaving, setBioSaving] = useState(false);
+	const {
+		bio,
+		bioLoading,
+		editingBio,
+		setEditingBio,
+		bioInput,
+		setBioInput,
+		bioSaving,
+		handleSaveBio,
+	} = useProfileBio(user?.id);
 
-	// Pinned playlists
-	const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
+	const {
+		playlists,
+		playlistsLoading,
+		creating,
+		setCreating,
+		newName,
+		setNewName,
+		playlistContents,
+		pinnedIds,
+		handleContentsLoaded,
+		handleTrackRemoved,
+		handleCreatePlaylist,
+		handleDeletePlaylist,
+		handleRenamePlaylist,
+		handleTogglePin,
+	} = useProfilePlaylists(user?.id);
 
 	useEffect(() => {
 		if (getStoreSnapshot().loaded) return;
@@ -686,7 +359,6 @@ export default function ProfileClient() {
 		return true;
 	});
 
-	// Sync GitHub metadata and load own bio on login
 	useEffect(() => {
 		if (!user) return;
 		const githubId = (user.user_metadata?.provider_id ??
@@ -696,15 +368,8 @@ export default function ProfileClient() {
 		const avatar = user.user_metadata?.avatar_url as string | undefined;
 		if (githubId && login)
 			syncGitHubMeta(user.id, githubId, login, name ?? null, avatar ?? null);
-		setBioLoading(true);
-		getOwnProfile(user.id).then((p) => {
-			if (p?.bio) setBio(p.bio);
-			setBioLoading(false);
-		});
-		getPinnedPlaylistIds(user.id).then(setPinnedIds);
 	}, [user?.id]);
 
-	// Verify GitHub star status on every profile open (server-side check, no user token needed)
 	useEffect(() => {
 		if (!user) return;
 		setStarLoading(true);
@@ -715,122 +380,8 @@ export default function ProfileClient() {
 	}, [user?.id]);
 
 	useEffect(() => {
-		if (!user) return;
-		setPlaylistsLoading(true);
-		getPlaylists(user.id).then((data) => {
-			setPlaylists(data);
-			setPlaylistsLoading(false);
-		});
-	}, [user?.id]);
-
-	useEffect(() => {
 		if (creating) newNameRef.current?.focus();
 	}, [creating]);
-
-	const handleEnsurePlaylistLoaded = useCallback(
-		async (playlistId: string) => {
-			if (playlistContents[playlistId]) return;
-			const tracks = await getPlaylistTracks(playlistId);
-			setPlaylistContents((prev) => ({
-				...prev,
-				[playlistId]: new Set(tracks.map((t) => t.track_id)),
-			}));
-		},
-		[playlistContents],
-	);
-
-	const handleContentsLoaded = useCallback(
-		(playlistId: string, trackIds: string[]) => {
-			setPlaylistContents((prev) => ({
-				...prev,
-				[playlistId]: new Set(trackIds),
-			}));
-		},
-		[],
-	);
-
-	const handleTrackRemoved = useCallback(
-		(playlistId: string, trackId: string) => {
-			setPlaylistContents((prev) => {
-				const set = new Set(prev[playlistId]);
-				set.delete(trackId);
-				return { ...prev, [playlistId]: set };
-			});
-		},
-		[],
-	);
-
-	const handleCreatePlaylist = async () => {
-		const name = newName.trim();
-		if (!name || !user) return;
-		const pl = await createPlaylist(user.id, name);
-		if (pl) {
-			setPlaylists((prev) => [pl, ...prev]);
-			setPlaylistContents((prev) => ({ ...prev, [pl.id]: new Set() }));
-		}
-		setNewName("");
-		setCreating(false);
-	};
-
-	const handleDeletePlaylist = async (id: string) => {
-		await deletePlaylist(id);
-		setPlaylists((prev) => prev.filter((p) => p.id !== id));
-		setPlaylistContents((prev) => {
-			const n = { ...prev };
-			delete n[id];
-			return n;
-		});
-	};
-
-	const handleRenamePlaylist = async (id: string, name: string) => {
-		await renamePlaylist(id, name);
-		setPlaylists((prev) => prev.map((p) => (p.id === id ? { ...p, name } : p)));
-	};
-
-	const handleAddToPlaylist = async (trackId: string, playlistId: string) => {
-		await addTrackToPlaylist(playlistId, trackId, 0);
-		setPlaylistContents((prev) => {
-			const set = new Set(prev[playlistId] ?? []);
-			set.add(trackId);
-			return { ...prev, [playlistId]: set };
-		});
-	};
-
-	const handleRemoveFromPlaylist = async (
-		trackId: string,
-		playlistId: string,
-	) => {
-		await removeTrackFromPlaylist(playlistId, trackId);
-		setPlaylistContents((prev) => {
-			const set = new Set(prev[playlistId] ?? []);
-			set.delete(trackId);
-			return { ...prev, [playlistId]: set };
-		});
-	};
-
-	const handleSaveBio = async () => {
-		if (!user) return;
-		setBioSaving(true);
-		await saveBio(user.id, bioInput);
-		setBio(bioInput);
-		setEditingBio(false);
-		setBioSaving(false);
-	};
-
-	const handleTogglePin = async (playlistId: string) => {
-		if (!user) return;
-		if (pinnedIds.has(playlistId)) {
-			setPinnedIds((prev) => {
-				const s = new Set(prev);
-				s.delete(playlistId);
-				return s;
-			});
-			await unpinPlaylist(user.id, playlistId);
-		} else {
-			setPinnedIds((prev) => new Set(prev).add(playlistId));
-			await pinPlaylist(user.id, playlistId, pinnedIds.size);
-		}
-	};
 
 	if (loading || banChecking) {
 		return (
@@ -878,7 +429,7 @@ export default function ProfileClient() {
 					<div className={styles.content}>
 						<div className={styles.banNotice}>
 							<svg
-								width="15"
+								width="17"
 								height="15"
 								viewBox="0 0 24 24"
 								fill="none"
@@ -915,7 +466,7 @@ export default function ProfileClient() {
 								<span className={styles.starBadge} aria-hidden="true">
 									{starLoading ? (
 										<svg
-											width="15"
+											width="17"
 											height="15"
 											viewBox="0 0 24 24"
 											fill="none"
@@ -990,6 +541,7 @@ export default function ProfileClient() {
 							onClick={() => setTab("bio")}
 						>
 							<svg
+								xmlns="http://www.w3.org/2000/svg"
 								width="16"
 								height="16"
 								viewBox="0 0 24 24"
@@ -999,7 +551,7 @@ export default function ProfileClient() {
 								strokeLinecap="round"
 								strokeLinejoin="round"
 							>
-								<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+								<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
 								<circle cx="12" cy="7" r="4" />
 							</svg>
 							<span className={styles.statLabel} style={{ flex: 1 }}>
@@ -1011,6 +563,7 @@ export default function ProfileClient() {
 							onClick={() => setTab("liked")}
 						>
 							<svg
+								xmlns="http://www.w3.org/2000/svg"
 								width="16"
 								height="16"
 								viewBox="0 0 24 24"
@@ -1020,7 +573,7 @@ export default function ProfileClient() {
 								strokeLinecap="round"
 								strokeLinejoin="round"
 							>
-								<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+								<path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" />
 							</svg>
 							<span className={styles.statLabel}>Liked tracks</span>
 						</button>
@@ -1029,6 +582,7 @@ export default function ProfileClient() {
 							onClick={() => setTab("playlists")}
 						>
 							<svg
+								xmlns="http://www.w3.org/2000/svg"
 								width="16"
 								height="16"
 								viewBox="0 0 24 24"
@@ -1036,13 +590,13 @@ export default function ProfileClient() {
 								stroke="currentColor"
 								strokeWidth="2"
 								strokeLinecap="round"
+								strokeLinejoin="round"
 							>
-								<line x1="8" y1="6" x2="21" y2="6" />
-								<line x1="8" y1="12" x2="21" y2="12" />
-								<line x1="8" y1="18" x2="21" y2="18" />
-								<line x1="3" y1="6" x2="3.01" y2="6" />
-								<line x1="3" y1="12" x2="3.01" y2="12" />
-								<line x1="3" y1="18" x2="3.01" y2="18" />
+								<path d="M16 5H3" />
+								<path d="M11 12H3" />
+								<path d="M11 19H3" />
+								<path d="M21 16V5" />
+								<circle cx="18" cy="16" r="3" />
 							</svg>
 							<span className={styles.statLabel}>Playlists</span>
 						</button>
@@ -1069,6 +623,7 @@ export default function ProfileClient() {
 													}}
 												>
 													<svg
+														xmlns="http://www.w3.org/2000/svg"
 														width="12"
 														height="12"
 														viewBox="0 0 24 24"
@@ -1076,9 +631,10 @@ export default function ProfileClient() {
 														stroke="currentColor"
 														strokeWidth="2"
 														strokeLinecap="round"
+														strokeLinejoin="round"
 													>
-														<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-														<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+														<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+														<path d="m15 5 4 4" />
 													</svg>
 													{bio ? "Edit bio" : "Add bio"}
 												</button>
@@ -1247,16 +803,18 @@ export default function ProfileClient() {
 									}
 								>
 									<svg
-										width="13"
-										height="13"
+										xmlns="http://www.w3.org/2000/svg"
+										width="17"
+										height="17"
 										viewBox="0 0 24 24"
 										fill="none"
 										stroke="currentColor"
-										strokeWidth="2.5"
+										strokeWidth="2"
 										strokeLinecap="round"
+										strokeLinejoin="round"
 									>
-										<line x1="12" y1="5" x2="12" y2="19" />
-										<line x1="5" y1="12" x2="19" y2="12" />
+										<path d="M5 12h14" />
+										<path d="M12 5v14" />
 									</svg>
 									New Playlist
 								</button>

@@ -283,36 +283,38 @@ export default function PublicProfileClient({
 						<div className={styles.statsCard}>
 							<div className={styles.statItem}>
 								<svg
-									width="15"
+									xmlns="http://www.w3.org/2000/svg"
+									width="17"
 									height="15"
 									viewBox="0 0 24 24"
 									fill="currentColor"
 									stroke="currentColor"
-									strokeWidth="2"
-									strokeLinecap="round"
-									strokeLinejoin="round"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
 								>
-									<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+									<path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" />
 								</svg>
 								<span className={styles.statValue}>{stats.likes}</span>
 								<span className={styles.statLabel}>Liked tracks</span>
 							</div>
 							<div className={styles.statItem}>
 								<svg
-									width="15"
+									xmlns="http://www.w3.org/2000/svg"
+									width="17"
 									height="15"
 									viewBox="0 0 24 24"
 									fill="none"
 									stroke="currentColor"
-									strokeWidth="2"
-									strokeLinecap="round"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
 								>
-									<line x1="8" y1="6" x2="21" y2="6" />
-									<line x1="8" y1="12" x2="21" y2="12" />
-									<line x1="8" y1="18" x2="21" y2="18" />
-									<line x1="3" y1="6" x2="3.01" y2="6" />
-									<line x1="3" y1="12" x2="3.01" y2="12" />
-									<line x1="3" y1="18" x2="3.01" y2="18" />
+									<path d="M16 5H3" />
+									<path d="M11 12H3" />
+									<path d="M11 19H3" />
+									<path d="M21 16V5" />
+									<circle cx="18" cy="16" r="3" />
 								</svg>
 								<span className={styles.statValue}>{stats.playlists}</span>
 								<span className={styles.statLabel}>Playlists</span>
@@ -325,7 +327,7 @@ export default function PublicProfileClient({
 					{banned && (
 						<div className={styles.banNotice}>
 							<svg
-								width="15"
+								width="17"
 								height="15"
 								viewBox="0 0 24 24"
 								fill="none"

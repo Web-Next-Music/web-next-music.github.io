@@ -40,7 +40,7 @@ export default function StarsSection() {
 				{loading && <p className={styles.empty}>Loading…</p>}
 
 				{!loading && stargazers.length === 0 && (
-					<p className={styles.empty}>No stars yet - be the first!</p>
+					<p className={styles.empty}>No stars yet</p>
 				)}
 
 				{!loading &&

@@ -19,7 +19,7 @@
 
 .signInBtn {
 	font-family: var(--font-heading-large);
-	font-size: 13px;
+	font-size: 14px;
 	font-weight: 700;
 	color: var(--muted);
 	padding: 6px 14px;
@@ -121,7 +121,8 @@
 }
 
 .email {
-	font-size: 12px;
+	font-size: 14px;
+	font-weight: 800;
 	color: var(--muted);
 	padding: 4px 8px 8px;
 	border-bottom: 1px solid var(--border);
@@ -140,6 +141,7 @@
 	border-radius: 6px;
 	color: var(--muted);
 	font-size: 13px;
+	font-weight: 700;
 	text-decoration: none;
 	transition:
 		color 0.15s,
@@ -163,7 +165,8 @@
 	background: none;
 	color: var(--muted);
 	font-family: var(--font-base);
-	font-size: 13px;
+	font-size: 14px;
+	font-weight: 700;
 	cursor: pointer;
 	transition:
 		color 0.15s,

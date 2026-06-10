@@ -7,15 +7,17 @@ export default function AddonPage() {
 	return (
 		<>
 			<Header />
-			<Suspense
-				fallback={
-					<div style={{ textAlign: "center", padding: "4rem" }}>
-						Loading addon…
-					</div>
-				}
-			>
-				<AddonDetail />
-			</Suspense>
+			<main>
+				<Suspense
+					fallback={
+						<div style={{ textAlign: "center", padding: "4rem" }}>
+							Loading addon…
+						</div>
+					}
+				>
+					<AddonDetail />
+				</Suspense>
+			</main>
 			<Footer />
 		</>
 	);

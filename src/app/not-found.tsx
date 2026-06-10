@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import SonicRunner from "@/components/not-found/SonicRunner";
 import styles from "./not-found.module.scss";
 
 export default function NotFound() {
@@ -8,21 +9,6 @@ export default function NotFound() {
 		<>
 			<Header />
 			<main className={styles.main}>
-				<div className={styles.wave} aria-hidden>
-					{Array.from({ length: 32 }).map((_, i) => (
-						<div
-							key={i}
-							className={styles.bar}
-							style={
-								{
-									"--h": `${20 + Math.abs(Math.sin(i * 0.7) * 60)}%`,
-									"--delay": `${i * 0.05}s`,
-								} as React.CSSProperties
-							}
-						/>
-					))}
-				</div>
-
 				<div className={styles.content}>
 					<div className={styles.code}>404</div>
 					<h1 className={styles.title}>Page not found</h1>
@@ -46,6 +32,7 @@ export default function NotFound() {
 					</div>
 				</div>
 			</main>
+			<SonicRunner />
 			<Footer />
 		</>
 	);

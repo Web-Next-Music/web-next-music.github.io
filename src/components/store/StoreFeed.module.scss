@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
+@use "../../styles/breakpoints" as bp;
 
 .root {
 	background: var(--bg);
@@ -95,9 +95,10 @@
 	font-size: 0.54rem;
 	padding: 1px 6px;
 	border-radius: 20px;
-	background: rgba(43, 254, 245, 0.1);
+	font-weight: 700;
+	background: var(--accent-surface);
+	border: 1px solid var(--accent-border);
 	color: var(--accent);
-	border: 1px solid rgba(43, 254, 245, 0.25);
 }
 
 .toolbar {
@@ -148,6 +149,7 @@
 	font-size: 0.73rem;
 	outline: none;
 	transition: border-color 0.2s;
+	font-weight: 700;
 
 	&::placeholder {
 		color: var(--muted);
@@ -168,6 +170,7 @@
 .tagFilterLabel {
 	font-family: var(--font-base);
 	font-size: 0.58rem;
+	font-weight: 700;
 	color: var(--muted);
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
@@ -180,6 +183,7 @@
 	border-radius: 20px;
 	border: 1px solid;
 	letter-spacing: 0.04em;
+	font-weight: 700;
 	transition:
 		opacity 0.15s,
 		transform 0.15s;
@@ -191,9 +195,9 @@
 }
 
 .tagNm {
-	background: rgba(43, 254, 245, 0.08);
-	color: #2bfef5;
-	border-color: rgba(43, 254, 245, 0.25);
+	background: var(--accent-surface);
+	border: 1px solid var(--accent-border);
+	color: var(--accent);
 }
 
 .tagPs {
@@ -220,11 +224,12 @@
 
 .secLabel {
 	font-family: var(--font-base);
-	font-size: 0.58rem;
+	font-size: 12px;
 	letter-spacing: 0.15em;
 	color: var(--muted);
 	text-transform: uppercase;
 	margin-bottom: 16px;
+	font-weight: 700;
 	display: flex;
 	align-items: center;
 	gap: 10px;
@@ -353,8 +358,7 @@
 	height: 44px;
 	border-radius: 9px;
 	flex-shrink: 0;
-	background: rgba(43, 254, 245, 0.1);
-	border: 1px solid rgba(43, 254, 245, 0.25);
+	background: var(--surface2);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -362,8 +366,6 @@
 }
 
 .logoPhTheme {
-	background: rgba(245, 158, 11, 0.1);
-	border-color: rgba(245, 158, 11, 0.25);
 	color: #fbbf24;
 }
 
@@ -386,7 +388,8 @@
 
 .cardSub {
 	font-family: var(--font-base);
-	font-size: 0.56rem;
+	font-size: 12px;
+	font-weight: 700;
 	color: var(--muted);
 }
 
@@ -420,13 +423,16 @@
 	padding: 7px 14px;
 	border-radius: 8px;
 	font-family: var(--font-heading-large);
-	font-size: 0.78rem;
+	font-size: 14px;
 	font-weight: 700;
 	cursor: pointer;
 	border: none;
 	transition:
 		opacity 0.15s,
-		transform 0.1s;
+		transform 0.1s,
+		background 0.15s,
+		border 0.15s,
+		color 0.15s;
 	text-decoration: none;
 
 	&:active {
@@ -558,7 +564,8 @@
 
 .extPageAuthor {
 	font-family: var(--font-base);
-	font-size: 0.65rem;
+	font-size: 12px;
+	font-weight: 700;
 	color: var(--muted);
 }
 
@@ -1083,14 +1090,16 @@
 
 .dlOptionSub {
 	font-family: var(--font-base);
-	font-size: 0.6rem;
+	font-size: 11px;
 	color: var(--muted);
 	margin-top: 2px;
+	font-weight: 700;
 }
 
 .dlOptionBadge {
 	font-family: var(--font-base);
-	font-size: 0.58rem;
+	font-size: 11px;
+	font-weight: 700;
 	padding: 2px 8px;
 	border-radius: 20px;
 	background: var(--surface);
@@ -1128,6 +1137,7 @@
 	color: var(--muted);
 	display: flex;
 	align-items: center;
+	font-weight: 700;
 	gap: 8px;
 	padding: 10px 0;
 }
@@ -1167,7 +1177,7 @@
 		border: 1px solid var(--border);
 		border-radius: 4px;
 		padding: 1px 6px;
-		font-family: "Space Mono", monospace;
+		font-family: var(--font-space-mono), monospace;
 		font-size: 0.85em;
 	}
 }
@@ -1198,7 +1208,7 @@
 	}
 }
 
-@media (max-width: 600px) {
+@include bp.sm {
 	.toolbarInner {
 		padding: 12px 16px;
 	}

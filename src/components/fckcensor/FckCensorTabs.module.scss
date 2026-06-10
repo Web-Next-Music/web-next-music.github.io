@@ -1,41 +1,50 @@
+@use "../../styles/breakpoints" as *;
+
 .tabBar {
 	display: flex;
-	gap: 4px;
-	margin-bottom: 12px;
-	border-bottom: 1px solid var(--border);
+	width: 100%;
+	gap: 10px;
+	margin-bottom: 10px;
+	border-radius: 14px;
+	background: var(--surface);
+	padding: 10px;
+	border: 1px solid var(--border);
 }
 
 .tab {
 	display: inline-flex;
+	width: 100%;
 	align-items: center;
 	gap: 10px;
-	background: none;
-	border: none;
-	border-bottom: 1px solid transparent;
-	margin-bottom: -1px;
+	border: 1px solid transparent;
+	background-color: var(--surface2);
 	padding: 10px 18px;
 	font-family: var(--font-heading-large);
 	font-size: 14px;
-	font-weight: 500;
+	font-weight: 700;
 	color: var(--muted);
 	cursor: pointer;
 	transition: all 0.15s;
-	border-radius: 6px 6px 0 0;
+	border-radius: 10px;
 
 	&:hover {
 		color: var(--text);
-		background: var(--surface);
-		border-bottom: 1px solid var(--border);
+		background: var(--accent-btn-hover);
+	}
+
+	@include mobile {
+		padding: 8px 12px;
+		font-size: 13px;
 	}
 
 	&.active {
 		color: var(--accent);
-		border-bottom-color: var(--accent);
+		border: 1px solid var(--border);
 		background: var(--surface);
 
 		.count {
-			background: rgba(43, 254, 245, 0.1);
-			border-color: rgba(43, 254, 245, 0.2);
+			background: var(--accent-surface);
+			border-color: var(--accent-border);
 			color: var(--accent);
 		}
 	}
@@ -49,7 +58,7 @@
 	border-radius: 20px;
 	padding: 1px 7px;
 	color: var(--muted);
-	font-weight: 400;
+	font-weight: 700;
 }
 
 .searchWrap {
@@ -74,8 +83,9 @@
 	border: 1px solid var(--border);
 	border-radius: 8px;
 	font-size: 13px;
-	color: var(--text);
+	font-weight: 700;
 	font-family: var(--font-base);
+	color: var(--text);
 	transition: border-color 0.15s;
 	outline: none;
 
@@ -147,15 +157,25 @@
 	&:active {
 		transform: scale(0.995);
 	}
+
+	@include mobile {
+		gap: 10px;
+		padding: 8px 10px;
+	}
 }
 
 .num {
 	font-size: 12px;
+	font-weight: 700;
 	font-family: var(--font-base);
 	color: var(--muted);
 	width: 25px;
 	text-align: right;
 	flex-shrink: 0;
+
+	@include mobile {
+		display: none;
+	}
 }
 
 .cover {
@@ -195,7 +215,7 @@
 
 .title {
 	font-size: 14px;
-	font-weight: 500;
+	font-weight: 800;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -203,6 +223,7 @@
 
 .artist {
 	font-size: 12px;
+	font-weight: 700;
 	color: var(--muted);
 	margin-top: 2px;
 	white-space: nowrap;
@@ -233,6 +254,10 @@
 		background: var(--surface2);
 		color: var(--accent);
 		border-color: var(--accent);
+	}
+
+	@include mobile {
+		opacity: 1;
 	}
 }
 
@@ -273,6 +298,10 @@
 		background: var(--surface2);
 		color: var(--text);
 		border-color: var(--border);
+	}
+
+	@include mobile {
+		opacity: 1;
 	}
 }
 
@@ -378,28 +407,4 @@
 	text-align: center;
 	color: var(--muted);
 	font-size: 14px;
-}
-
-@media (max-width: 640px) {
-	.tab {
-		padding: 8px 12px;
-		font-size: 13px;
-	}
-
-	.trackRow {
-		gap: 10px;
-		padding: 8px 10px;
-	}
-
-	.num {
-		display: none;
-	}
-
-	.playBtn {
-		opacity: 1;
-	}
-
-	.addToPlaylistBtn {
-		opacity: 1;
-	}
 }

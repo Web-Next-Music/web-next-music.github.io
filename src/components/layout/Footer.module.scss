@@ -1,3 +1,5 @@
+@use "../../styles/breakpoints" as bp;
+
 .footer {
 	border-top: 1px solid var(--border);
 	border-bottom: 1px solid var(--border);
@@ -14,8 +16,8 @@
 
 .col {
 	h4 {
-		font-size: 12px;
-		font-weight: 500;
+		font-size: 14px;
+		font-weight: 800;
 		color: var(--muted);
 		letter-spacing: 1px;
 		margin-bottom: 14px;
@@ -25,6 +27,7 @@
 	a {
 		display: block;
 		font-size: 13px;
+		font-weight: 700;
 		color: var(--muted);
 		margin-bottom: 8px;
 		transition: color 0.2s;
@@ -36,14 +39,15 @@
 }
 
 .brand {
-	font-size: 14px;
-	font-weight: 700;
+	font-size: 16px;
+	font-weight: 800;
 	letter-spacing: -0.5px;
 	margin-bottom: 8px;
 }
 
 .copy {
-	font-size: 12px;
+	font-size: 14px;
+	font-weight: 700;
 	color: var(--muted);
 	line-height: 1.6;
 }
@@ -58,7 +62,8 @@
 	gap: 16px;
 
 	p {
-		font-size: 12px;
+		font-size: 13px;
+		font-weight: 700;
 		color: var(--muted);
 	}
 }
@@ -69,9 +74,14 @@
 	gap: 8px;
 	background: none;
 	border: none;
+	outline: none;
 	cursor: pointer;
 	padding: 0;
 	font-family: var(--font-heading-large);
+
+	&:focus-visible {
+		outline: none;
+	}
 
 	&:hover {
 		.toggleLabel {
@@ -82,6 +92,7 @@
 
 .toggleLabel {
 	font-size: 12px;
+	font-weight: 700;
 	color: var(--muted);
 	transition: color 0.2s;
 	user-select: none;
@@ -101,13 +112,13 @@
 	background: var(--surface2);
 
 	&.dark {
-		background: rgba(43, 254, 245, 0.1);
-		border-color: rgba(43, 254, 245, 0.25);
+		background: var(--surface2);
+		border-color: var(--border);
 	}
 
 	&.light {
-		background: rgba(0, 174, 168, 0.1);
-		border-color: rgba(0, 174, 168, 0.3);
+		background: var(--surface2);
+		border-color: var(--border);
 
 		.toggleThumb {
 			transform: translateX(20px);
@@ -132,7 +143,7 @@
 		background 0.25s;
 }
 
-@media (max-width: 768px) {
+@include bp.tablet {
 	.content {
 		grid-template-columns: 1fr 1fr;
 		padding: 40px 20px;

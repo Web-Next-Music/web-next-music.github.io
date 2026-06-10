@@ -9,9 +9,7 @@ export const metadata: Metadata = {
 		title: "User Profile - Next Music",
 		description:
 			"Web client for Yandex Music with support for themes, addons, Discord Rich Presence (RPC) and OBS widget.",
-		images: [
-			"https://github.com/Web-Next-Music/Next-Music-Client/raw/main/doc/preview.png?raw=true",
-		],
+		images: ["/preview.png"],
 		type: "profile",
 	},
 };
@@ -20,9 +18,11 @@ export default function ProfilePage() {
 	return (
 		<>
 			<Header />
-			<Suspense>
-				<ProfileRouter />
-			</Suspense>
+			<main>
+				<Suspense>
+					<ProfileRouter />
+				</Suspense>
+			</main>
 			<Footer />
 		</>
 	);

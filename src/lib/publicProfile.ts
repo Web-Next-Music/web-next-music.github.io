@@ -186,7 +186,6 @@ export async function getPublicProfile(
 	return { profile, banned: row.is_banned };
 }
 
-// Called when viewing any public profile — syncs github_starred for that github_id via Edge Function.
 export async function syncGithubStarForProfile(
 	githubId: string,
 ): Promise<boolean | null> {
@@ -209,9 +208,6 @@ export async function syncGithubStarForProfile(
 	}
 }
 
-// Calls the Edge Function to verify the GitHub star server-side and update the DB.
-// No user token needed — the function reads the github_login from the DB and
-// checks the public stargazers list using an optional server-side PAT.
 export async function syncGithubStar(): Promise<boolean | null> {
 	const sb = getSupabase();
 	if (!sb || !config.supabase.url) return null;

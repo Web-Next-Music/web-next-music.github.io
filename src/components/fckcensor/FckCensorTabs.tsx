@@ -26,6 +26,14 @@ import {
 	findTrackById,
 } from "@/lib/trackStore";
 import { createPortal } from "react-dom";
+import {
+	Plus,
+	Check,
+	Pause,
+	Play,
+	Search as SearchIcon,
+	Music,
+} from "lucide-react";
 import { usePlayer, PlayerProvider } from "@/lib/miniplayer";
 import { MiniPlayerInner } from "@/components/miniplayer/MiniPlayer";
 import LikeButton from "@/components/ui/LikeButton";
@@ -126,18 +134,7 @@ function AddToPlaylistBtn({
 				onClick={handleOpen}
 				aria-label="Add to playlist"
 			>
-				<svg
-					width="13"
-					height="13"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2.5"
-					strokeLinecap="round"
-				>
-					<line x1="12" y1="5" x2="12" y2="19" />
-					<line x1="5" y1="12" x2="19" y2="12" />
-				</svg>
+				<Plus size={17} />
 			</button>
 			{open &&
 				pos &&
@@ -164,20 +161,7 @@ function AddToPlaylistBtn({
 										onClick={(e) => handleToggle(e, pl.id)}
 									>
 										<span>{pl.name}</span>
-										{inPlaylist && (
-											<svg
-												width="12"
-												height="12"
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												strokeWidth="2.5"
-												strokeLinecap="round"
-												strokeLinejoin="round"
-											>
-												<polyline points="20 6 9 17 4 12" />
-											</svg>
-										)}
+										{inPlaylist && <Check size={12} />}
 									</button>
 								);
 							})
@@ -237,16 +221,7 @@ function PlayBtn({ track }: PlayBtnProps) {
 			onClick={handleClick}
 			aria-label={active ? "Pause" : "Play"}
 		>
-			{active ? (
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-					<rect x="6" y="4" width="4" height="16" rx="1" />
-					<rect x="14" y="4" width="4" height="16" rx="1" />
-				</svg>
-			) : (
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-					<path d="M5 3l14 9-14 9V3z" />
-				</svg>
-			)}
+			{active ? <Pause size={14} /> : <Play size={14} />}
 		</button>
 	);
 }
@@ -254,21 +229,7 @@ function PlayBtn({ track }: PlayBtnProps) {
 function SearchBar({ value, onChange }: SearchBarProps) {
 	return (
 		<div className={styles.searchWrap}>
-			<svg
-				className={styles.searchIcon}
-				width="14"
-				height="14"
-				viewBox="0 0 24 24"
-				fill="none"
-			>
-				<circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" />
-				<path
-					d="M21 21l-4.35-4.35"
-					stroke="currentColor"
-					strokeWidth="1.5"
-					strokeLinecap="round"
-				/>
-			</svg>
+			<SearchIcon className={styles.searchIcon} size={14} />
 			<input
 				className={styles.searchInput}
 				type="text"
@@ -567,29 +528,7 @@ function LegacyList({ tracks, query, playlists }: LegacyListProps) {
 									/>
 								) : (
 									<div className={styles.legacyIcon}>
-										<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-											<path
-												d="M9 18V5l12-2v13"
-												stroke="var(--muted)"
-												strokeWidth="1.5"
-												strokeLinecap="round"
-												strokeLinejoin="round"
-											/>
-											<circle
-												cx="6"
-												cy="18"
-												r="3"
-												stroke="var(--muted)"
-												strokeWidth="1.5"
-											/>
-											<circle
-												cx="18"
-												cy="16"
-												r="3"
-												stroke="var(--muted)"
-												strokeWidth="1.5"
-											/>
-										</svg>
+										<Music size={16} color="var(--muted)" />
 									</div>
 								)}
 
@@ -714,7 +653,7 @@ function Skeleton() {
 }
 
 export default function FckCensorTabs() {
-	const [tab, setTab] = useState<TabId>("official");
+	const [tab, setTab] = useState<TabId>(() => getTabFromHash());
 	const [query, setQuery] = useState("");
 	const [playlists, setPlaylists] = useState<Playlist[]>([]);
 	const { user } = useAuth();
@@ -739,10 +678,8 @@ export default function FckCensorTabs() {
 	}, [user?.id]);
 
 	useEffect(() => {
-		const initial = getTabFromHash();
-		setTab(initial);
 		if (!window.location.hash) {
-			history.replaceState(null, "", TAB_HASHES[initial]);
+			history.replaceState(null, "", TAB_HASHES[tab]);
 		}
 		const onHashChange = () => {
 			setTab(getTabFromHash());
@@ -750,6 +687,7 @@ export default function FckCensorTabs() {
 		};
 		window.addEventListener("hashchange", onHashChange);
 		return () => window.removeEventListener("hashchange", onHashChange);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const handleTabChange = (t: TabId) => {
