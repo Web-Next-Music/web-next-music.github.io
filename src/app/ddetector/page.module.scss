@@ -223,6 +223,15 @@ body {
 	border-right: 1px solid var(--border);
 	overflow-y: auto;
 	padding: 10px;
+
+	@include bp.sm {
+		width: 100%;
+		flex: 1;
+		min-height: 0;
+		border-right: none;
+		border-bottom: none;
+		padding-bottom: 72px;
+	}
 }
 
 /* Track row */
@@ -937,16 +946,6 @@ body {
 		flex-direction: column;
 		position: relative;
 		overflow: hidden;
-	}
-}
-
-.panelLeft {
-	@include bp.sm {
-		width: 100%;
-		flex: 1;
-		min-height: 0;
-		border-right: none;
-		border-bottom: none;
 	}
 }
 
