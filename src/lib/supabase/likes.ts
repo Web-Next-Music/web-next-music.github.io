@@ -1,4 +1,4 @@
-import { getSupabase } from "./supabase";
+import { getSupabase } from ".";
 
 type LikeTable = "track_likes" | "account_likes";
 type LikeField = "track_id" | "github_login";

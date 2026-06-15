@@ -14,10 +14,10 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import styles from "./StoreFeed.module.scss";
-import { Extension, Tag } from "@/lib/addonCache";
+import { Extension, Tag } from "@/lib/addons/addonCache";
 import type { CalloutType } from "@/types/addon";
-import { useExtensions } from "./useExtensions";
-import { useStoreNavigation, extSlug } from "./useStoreNavigation";
+import { useExtensions } from "@/lib/store/useExtensions";
+import { useStoreNavigation, extSlug } from "@/lib/store/useStoreNavigation";
 
 const ALL_TAGS: Tag[] = ["Next Music", "PulseSync", "Web"];
 

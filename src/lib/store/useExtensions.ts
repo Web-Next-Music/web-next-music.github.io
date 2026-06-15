@@ -6,8 +6,8 @@ import {
 	refreshCacheTimestamp,
 	cacheMatchesNewData,
 	clearCache,
-} from "@/lib/addonCache";
-import { loadExtensions } from "@/lib/extensionLoader";
+} from "@/lib/addons/addonCache";
+import { loadExtensions } from "@/lib/addons/extensionLoader";
 
 export function useExtensions(
 	token: string | null | undefined,

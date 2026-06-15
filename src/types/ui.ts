@@ -1,7 +1,7 @@
 import type { ReactNode, RefObject } from "react";
 import type { NowPlaying } from "./player";
 import type { OfficialTrack, LegacyTrack } from "./track";
-import type { Playlist } from "@/lib/playlists";
+import type { Playlist } from "@/lib/supabase/playlists";
 
 export interface CardShellProps {
 	delay?: number;

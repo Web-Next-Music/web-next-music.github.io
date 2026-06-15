@@ -11,7 +11,7 @@ import {
 } from "react";
 import { useAuth } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
-import { decodeTrackKey } from "@/lib/trackKey";
+import { decodeTrackKey } from "@/lib/track/trackKey";
 
 export interface TrackLikeMeta {
 	title?: string;

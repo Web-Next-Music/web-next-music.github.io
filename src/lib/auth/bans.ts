@@ -1,4 +1,4 @@
-import { getSupabase } from "./supabase";
+import { getSupabase } from "@/lib/supabase";
 
 export type BanInfo = Record<string, never>;
 

@@ -1,4 +1,4 @@
-import { getSupabase } from "./supabase";
+import { getSupabase } from "@/lib/supabase";
 
 export interface DDetectorTrack {
 	id: number;

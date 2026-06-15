@@ -24,7 +24,7 @@ import {
 	getStoreSnapshot,
 	getServerSnapshot,
 	findTrackById,
-} from "@/lib/trackStore";
+} from "@/lib/track/trackStore";
 import { createPortal } from "react-dom";
 import {
 	Plus,
@@ -44,7 +44,7 @@ import {
 	addTrackToPlaylist,
 	removeTrackFromPlaylist,
 	type Playlist,
-} from "@/lib/playlists";
+} from "@/lib/supabase/playlists";
 import styles from "./FckCensorTabs.module.scss";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";

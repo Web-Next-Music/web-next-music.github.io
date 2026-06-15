@@ -7,14 +7,14 @@ import {
 	getUserStats,
 	syncGithubStarForProfile,
 	type UserProfile,
-} from "@/lib/publicProfile";
+} from "@/lib/supabase/publicProfile";
 import {
 	getPlaylistTracks,
 	type Playlist,
 	type PlaylistTrack,
-} from "@/lib/playlists";
-import { decodeTrackKey } from "@/lib/trackKey";
-import { findTrackById } from "@/lib/trackStore";
+} from "@/lib/supabase/playlists";
+import { decodeTrackKey } from "@/lib/track/trackKey";
+import { findTrackById } from "@/lib/track/trackStore";
 import { TRACK_META } from "@/lib/fckcensor";
 import { marked } from "marked";
 import TrackRow from "@/components/ui/TrackRow";

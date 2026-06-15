@@ -10,7 +10,7 @@ import {
 	saveToCache,
 	refreshCacheTimestamp,
 	cacheMatchesNewData,
-} from "@/lib/addonCache";
+} from "@/lib/addons/addonCache";
 
 const OWNER = "Web-Next-Music";
 const REPO = "Next-Music-Extensions";

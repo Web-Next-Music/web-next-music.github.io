@@ -8,12 +8,12 @@ import {
 	addTrackToPlaylist,
 	removeTrackFromPlaylist,
 	type Playlist,
-} from "@/lib/playlists";
+} from "@/lib/supabase/playlists";
 import {
 	getPinnedPlaylistIds,
 	pinPlaylist,
 	unpinPlaylist,
-} from "@/lib/publicProfile";
+} from "@/lib/supabase/publicProfile";
 
 export function useProfilePlaylists(userId: string | undefined) {
 	const [playlists, setPlaylists] = useState<Playlist[]>([]);

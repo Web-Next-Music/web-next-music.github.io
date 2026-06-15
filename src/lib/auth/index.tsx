@@ -9,9 +9,9 @@ import {
 	type ReactNode,
 } from "react";
 import type { User, Session } from "@supabase/supabase-js";
-import { getSupabase } from "./supabase";
-import { cookieStorage } from "./cookieStorage";
-import { syncGitHubMeta } from "./publicProfile";
+import { getSupabase } from "@/lib/supabase";
+import { cookieStorage } from "../cookieStorage";
+import { syncGitHubMeta } from "@/lib/supabase/publicProfile";
 import { getBanInfo, type BanInfo } from "./bans";
 
 const GH_TOKEN_KEY = "gh_provider_token";

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePlayer } from "@/lib/miniplayer/context";
-import { encodeTrackKey, decodeTrackKey } from "@/lib/trackKey";
+import { encodeTrackKey, decodeTrackKey } from "@/lib/track/trackKey";
 import LikeButton from "@/components/ui/LikeButton";
 import styles from "./MiniPlayer.module.scss";
 

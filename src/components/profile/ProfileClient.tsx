@@ -20,27 +20,27 @@ function formatJoinDate(iso: string, exact: boolean): string {
 	return `Joined ${d.toLocaleDateString("en-US", { month: "long", year: "numeric" })}`;
 }
 import { useAuth } from "@/lib/auth";
-import { useLikes, type TrackLikeMeta } from "@/lib/likesContext";
+import { useLikes, type TrackLikeMeta } from "@/lib/supabase/likesContext";
 import { usePlayer } from "@/lib/miniplayer/context";
-import { encodeTrackKey, decodeTrackKey } from "@/lib/trackKey";
+import { encodeTrackKey, decodeTrackKey } from "@/lib/track/trackKey";
 import {
 	ensureTracksLoaded,
 	subscribeStore,
 	getStoreSnapshot,
 	findTrackById,
-} from "@/lib/trackStore";
+} from "@/lib/track/trackStore";
 import { TRACK_META } from "@/lib/fckcensor";
-import { syncGitHubMeta, syncGithubStar } from "@/lib/publicProfile";
+import { syncGitHubMeta, syncGithubStar } from "@/lib/supabase/publicProfile";
 import {
 	getPlaylistTracks,
 	removeTrackFromPlaylist,
 	type Playlist,
 	type PlaylistTrack,
-} from "@/lib/playlists";
+} from "@/lib/supabase/playlists";
 import TrackRow from "@/components/ui/TrackRow";
 import styles from "./profile.module.scss";
-import { useProfileBio } from "./useProfileBio";
-import { useProfilePlaylists } from "./useProfilePlaylists";
+import { useProfileBio } from "@/lib/profile/useProfileBio";
+import { useProfilePlaylists } from "@/lib/profile/useProfilePlaylists";
 
 function trackHref(trackId: string, dbMeta?: TrackLikeMeta): string {
 	if (trackId.endsWith("-e")) return `/track?key=${trackId}`;

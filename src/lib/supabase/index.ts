@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { config } from "./config";
-import { cookieStorage } from "./cookieStorage";
+import { config } from "../config";
+import { cookieStorage } from "../cookieStorage";
 
 let _client: SupabaseClient | null = null;
 
