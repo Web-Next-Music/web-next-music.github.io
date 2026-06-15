@@ -14,14 +14,14 @@ import {
 } from "lucide-react";
 import { usePlayer } from "@/lib/miniplayer/context";
 import { useAuth } from "@/lib/auth";
-import { encodeTrackKey, decodeTrackKey } from "@/lib/trackKey";
+import { encodeTrackKey, decodeTrackKey } from "@/lib/track/trackKey";
 import {
 	getPlaylistTracks,
 	addTrackToPlaylist,
 	removeTrackFromPlaylist,
 	type Playlist,
-} from "@/lib/playlists";
-import type { TrackLikeMeta } from "@/lib/likesContext";
+} from "@/lib/supabase/playlists";
+import type { TrackLikeMeta } from "@/lib/supabase/likesContext";
 import LikeButton from "./LikeButton";
 import styles from "./TrackRow.module.scss";
 
@@ -88,7 +88,7 @@ function PlayBtn({
 		}
 		setLoading(true);
 		const { ensureTracksLoaded, findTrackById } =
-			await import("@/lib/trackStore");
+			await import("@/lib/track/trackStore");
 		await ensureTracksLoaded();
 		const track = findTrackById(trackId);
 		if (track)

@@ -25,7 +25,7 @@ import {
 	triggerDDetectorFetch,
 	type DDetectorTrack,
 	type LyricLine,
-} from "@/lib/ddetector";
+} from "@/lib/track/ddetector";
 import styles from "./page.module.scss";
 import DRUG_KEYWORDS from "./drug-keywords.json";
 // Build a single regex from all keywords (longer first to prevent partial shadowing)

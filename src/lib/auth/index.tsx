@@ -9,8 +9,9 @@ import {
 	type ReactNode,
 } from "react";
 import type { User, Session } from "@supabase/supabase-js";
-import { getSupabase } from "./supabase";
-import { syncGitHubMeta } from "./publicProfile";
+import { getSupabase } from "@/lib/supabase";
+import { cookieStorage } from "../cookieStorage";
+import { syncGitHubMeta } from "@/lib/supabase/publicProfile";
 import { getBanInfo, type BanInfo } from "./bans";
 
 const GH_TOKEN_KEY = "gh_provider_token";
@@ -76,6 +77,12 @@ export function AuthProvider({
 			return;
 		}
 
+		// Migrate: The GH provider token used to live in localStorage/sessionStorage
+		try {
+			localStorage.removeItem(GH_TOKEN_KEY);
+			sessionStorage.removeItem(GH_TOKEN_KEY);
+		} catch {}
+
 		const initialize = async () => {
 			if (devToken) {
 				const { data: existing } = await sb.auth.getSession();
@@ -92,10 +99,10 @@ export function AuthProvider({
 			setUser(s?.user ?? null);
 
 			if (s?.provider_token) {
-				localStorage.setItem(GH_TOKEN_KEY, s.provider_token);
+				cookieStorage.setItem(GH_TOKEN_KEY, s.provider_token);
 				setGithubToken(s.provider_token);
 			} else if (s?.user) {
-				const saved = localStorage.getItem(GH_TOKEN_KEY);
+				const saved = cookieStorage.getItem(GH_TOKEN_KEY);
 				setGithubToken(saved);
 			}
 
@@ -141,10 +148,10 @@ export function AuthProvider({
 				setUser(session?.user ?? null);
 
 				if (session?.provider_token) {
-					localStorage.setItem(GH_TOKEN_KEY, session.provider_token);
+					cookieStorage.setItem(GH_TOKEN_KEY, session.provider_token);
 					setGithubToken(session.provider_token);
 				} else if (!session) {
-					localStorage.removeItem(GH_TOKEN_KEY);
+					cookieStorage.removeItem(GH_TOKEN_KEY);
 					sessionStorage.removeItem(BAN_CACHE_KEY);
 					setGithubToken(null);
 					setIsBanned(false);

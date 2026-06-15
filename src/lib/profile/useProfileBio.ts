@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getOwnProfile, saveBio } from "@/lib/publicProfile";
+import { getOwnProfile, saveBio } from "@/lib/supabase/publicProfile";
 
 export function useProfileBio(userId: string | undefined) {
 	const [bio, setBio] = useState("");

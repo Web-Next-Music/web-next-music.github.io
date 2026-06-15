@@ -1,20 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { config } from "@/lib/config";
 import {
 	getPublicProfile,
 	getUserPinnedPlaylists,
 	getUserStats,
 	syncGithubStarForProfile,
 	type UserProfile,
-} from "@/lib/publicProfile";
+} from "@/lib/supabase/publicProfile";
 import {
 	getPlaylistTracks,
 	type Playlist,
 	type PlaylistTrack,
-} from "@/lib/playlists";
-import { decodeTrackKey } from "@/lib/trackKey";
-import { findTrackById } from "@/lib/trackStore";
+} from "@/lib/supabase/playlists";
+import { decodeTrackKey } from "@/lib/track/trackKey";
+import { findTrackById } from "@/lib/track/trackStore";
 import { TRACK_META } from "@/lib/fckcensor";
 import { marked } from "marked";
 import TrackRow from "@/components/ui/TrackRow";
@@ -246,7 +247,7 @@ export default function PublicProfileClient({
 									</span>
 								) : (
 									<a
-										href="https://github.com/Web-Next-Music/Next-Music-Client"
+										href={config.github.client.url}
 										target="_blank"
 										rel="noopener noreferrer"
 										className={styles.starBadge}

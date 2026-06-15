@@ -1,8 +1,9 @@
 import type { Extension, ReleaseAsset, Tag } from "@/types/addon";
 import type { GHItem, GHReleaseAsset, GHLatestRelease } from "@/types/github";
+import { config } from "@/lib/config";
 
-const OWNER = "Web-Next-Music";
-const REPO = "Next-Music-Extensions";
+const OWNER = config.github.extensions.owner;
+const REPO = config.github.extensions.repo;
 const GH = "https://api.github.com";
 
 function ghHeaders(token?: string): Record<string, string> {

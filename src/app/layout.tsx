@@ -10,10 +10,11 @@ import { Suspense } from "react";
 import { ThemeProvider } from "@/lib/theme";
 import { PlayerProvider } from "@/lib/miniplayer";
 import { AuthProvider } from "@/lib/auth";
-import { LikesProvider } from "@/lib/likesContext";
-import AuthModal from "@/components/auth/AuthModal";
+import { LikesProvider } from "@/lib/supabase/likesContext";
+import AuthModal from "@/components/ui/AuthModal";
 import BanBanner from "@/components/layout/BanBanner";
 import { AppWrapper } from "@/components/layout/AppWrapper";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import "./globals.scss";
 
 export const metadata: Metadata = {
@@ -87,9 +88,11 @@ export default function RootLayout({
 						<ThemeProvider>
 							<AppWrapper>
 								<BanBanner />
-								<Suspense fallback={<>{children}</>}>
-									<PlayerProvider>{children}</PlayerProvider>
-								</Suspense>
+								<ErrorBoundary>
+									<Suspense fallback={<>{children}</>}>
+										<PlayerProvider>{children}</PlayerProvider>
+									</Suspense>
+								</ErrorBoundary>
 							</AppWrapper>
 						</ThemeProvider>
 						<AuthModal />

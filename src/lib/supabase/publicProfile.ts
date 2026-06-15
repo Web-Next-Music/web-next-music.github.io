@@ -1,5 +1,5 @@
-import { getSupabase } from "./supabase";
-import { config } from "./config";
+import { getSupabase } from ".";
+import { config } from "../config";
 import type { Playlist } from "./playlists";
 
 export interface UserProfile {

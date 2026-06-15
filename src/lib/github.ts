@@ -1,8 +1,9 @@
 import type { Stargazer, ReleaseAsset, RepoRelease } from "@/types/github";
+import { config } from "@/lib/config";
 
 export type { Stargazer, ReleaseAsset, RepoRelease };
 
-const REPO = "Web-Next-Music/Next-Music-Client";
+const REPO = config.github.client.fullName;
 const BASE = "https://api.github.com";
 
 function headers(token?: string): HeadersInit {

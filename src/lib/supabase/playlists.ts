@@ -1,4 +1,4 @@
-import { getSupabase } from "./supabase";
+import { getSupabase } from ".";
 
 export interface Playlist {
 	id: string;

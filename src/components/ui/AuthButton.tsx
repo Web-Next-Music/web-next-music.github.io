@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
-import { syncGithubStar } from "@/lib/publicProfile";
-import { checkDDetectorAccess } from "@/lib/ddetector";
+import { syncGithubStar } from "@/lib/supabase/publicProfile";
+import { checkDDetectorAccess } from "@/lib/track/ddetector";
 import styles from "./AuthButton.module.scss";
 
 const starredCache = new Map<string, boolean>();

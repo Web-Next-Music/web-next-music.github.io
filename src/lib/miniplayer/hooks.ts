@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback, useContext, useState } from "react";
 import type { NowPlaying } from "@/types/player";
-import { encodeTrackKey } from "@/lib/trackKey";
+import { encodeTrackKey } from "@/lib/track/trackKey";
 
 const WS_PORT = 6972;
 const WS_URL = `ws://127.0.0.1:${WS_PORT}`;
