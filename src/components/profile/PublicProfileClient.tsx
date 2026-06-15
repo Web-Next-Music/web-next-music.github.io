@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { config } from "@/lib/config";
 import {
 	getPublicProfile,
 	getUserPinnedPlaylists,
@@ -246,7 +247,7 @@ export default function PublicProfileClient({
 									</span>
 								) : (
 									<a
-										href="https://github.com/Web-Next-Music/Next-Music-Client"
+										href={config.github.client.url}
 										target="_blank"
 										rel="noopener noreferrer"
 										className={styles.starBadge}

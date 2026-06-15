@@ -3,7 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/auth";
 import { useLikes, type TrackLikeMeta } from "@/lib/supabase/likesContext";
-import { getLikeCount, getUserLiked, addLike, removeLike } from "@/lib/supabase/likes";
+import {
+	getLikeCount,
+	getUserLiked,
+	addLike,
+	removeLike,
+} from "@/lib/supabase/likes";
 import styles from "./LikeButton.module.scss";
 
 type LikeTarget =

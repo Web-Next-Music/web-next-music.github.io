@@ -13,7 +13,11 @@ import {
 	findTrackById,
 	type CachedTrack,
 } from "@/lib/track/trackStore";
-import { decodeTrackKey, encodeTrackKey, stableTrackKey } from "@/lib/track/trackKey";
+import {
+	decodeTrackKey,
+	encodeTrackKey,
+	stableTrackKey,
+} from "@/lib/track/trackKey";
 import styles from "./TrackPageClient.module.scss";
 import { ID3Writer } from "browser-id3-writer";
 import {

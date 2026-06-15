@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { config } from "@/lib/config";
 import { marked } from "marked";
 
 marked.use({ breaks: true, gfm: true } as Parameters<typeof marked.use>[0]);
@@ -502,7 +503,7 @@ export default function ProfileClient() {
 										</svg>
 									) : (
 										<a
-											href="https://github.com/Web-Next-Music/Next-Music-Client"
+											href={config.github.client.url}
 											target="_blank"
 											rel="noopener noreferrer"
 											title="Star Web-Next-Music/Next-Music-Client on GitHub"
