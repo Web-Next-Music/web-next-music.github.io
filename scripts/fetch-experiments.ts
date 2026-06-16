@@ -9,7 +9,7 @@ const exec = promisify(execFile);
 const __dir = dirname(fileURLToPath(import.meta.url));
 
 // .env.local
-const envPath = join(__dir, "../.env.local");
+const envPath = join(__dir, "../.env");
 if (existsSync(envPath)) {
 	const lines = readFileSync(envPath, "utf8").split(/\r?\n/);
 	for (const line of lines) {
@@ -29,7 +29,7 @@ const OUTPUT_PATH = join(__dir, "../src/data/experiments.json");
 
 if (!TOKEN) {
 	console.error("[ERROR] YANDEX_TOKEN is not set.");
-	console.error("        Add to .env.local:  YANDEX_TOKEN=y0_...");
+	console.error("        Add to .env:  YANDEX_TOKEN=y0_...");
 	process.exit(1);
 }
 
