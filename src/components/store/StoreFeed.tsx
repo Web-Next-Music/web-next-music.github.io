@@ -1,7 +1,8 @@
 "use client";
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Blocks, Palette, Download, Search } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import Select from "@components/ui/Select";
 import styles from "./StoreFeed.module.scss";
 import { Extension, Tag } from "@/lib/addons/addonCache";
 import { useExtensions } from "@/lib/store/useExtensions";
@@ -16,11 +17,11 @@ const TAG_CLASS: Record<Tag, string> = {
 	Web: "tagWeb",
 };
 
-function matchSearch(ext: Extension, query: string, activeTags: Tag[]) {
+function matchSearch(ext: Extension, query: string, activeTag: Tag | "") {
 	const q = query.toLowerCase();
 	return (
 		(!q || ext.name.toLowerCase().includes(q)) &&
-		(activeTags.length === 0 || activeTags.every((t) => ext.tags.includes(t)))
+		(!activeTag || ext.tags.includes(activeTag))
 	);
 }
 
@@ -173,31 +174,23 @@ export default function NextMusicStore() {
 		useStoreNavigation(extensions);
 
 	const [activeTab, setActiveTab] = useState<"addons" | "themes">("addons");
-	const [activeTags, setActiveTags] = useState<Tag[]>([]);
+	const [activeTag, setActiveTag] = useState<Tag | "">("");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [downloadTarget, setDownloadTarget] = useState<Extension | null>(null);
-
-	const toggleTag = useCallback(
-		(tag: Tag) =>
-			setActiveTags((p) =>
-				p.includes(tag) ? p.filter((t) => t !== tag) : [...p, tag],
-			),
-		[],
-	);
 
 	const filteredAddons = useMemo(
 		() =>
 			extensions.filter(
-				(e) => !e.isTheme && matchSearch(e, searchQuery, activeTags),
+				(e) => !e.isTheme && matchSearch(e, searchQuery, activeTag),
 			),
-		[extensions, searchQuery, activeTags],
+		[extensions, searchQuery, activeTag],
 	);
 	const filteredThemes = useMemo(
 		() =>
 			extensions.filter(
-				(e) => e.isTheme && matchSearch(e, searchQuery, activeTags),
+				(e) => e.isTheme && matchSearch(e, searchQuery, activeTag),
 			),
-		[extensions, searchQuery, activeTags],
+		[extensions, searchQuery, activeTag],
 	);
 	const shownItems = useMemo(
 		() => (activeTab === "addons" ? filteredAddons : filteredThemes),
@@ -260,25 +253,15 @@ export default function NextMusicStore() {
 									onChange={(e) => setSearchQuery(e.target.value)}
 								/>
 							</div>
-							<div className={styles.tagFilters}>
-								<span className={styles.tagFilterLabel}>Filter:</span>
-								{ALL_TAGS.map((tag) => (
-									<TagBadge
-										key={tag}
-										tag={tag}
-										active={activeTags.includes(tag)}
-										onClick={() => toggleTag(tag)}
-									/>
-								))}
-								{activeTags.length > 0 && (
-									<button
-										className={`${styles.btn} ${styles.btnGhost}`}
-										style={{ padding: "3px 10px", fontSize: "0.62rem" }}
-										onClick={() => setActiveTags([])}
-									>
-										Clear
-									</button>
-								)}
+							<div className={styles.filterWrap}>
+								<Select
+									value={activeTag}
+									onChange={setActiveTag}
+									options={[
+										{ value: "", label: "All" },
+										...ALL_TAGS.map((t) => ({ value: t, label: t })),
+									]}
+								/>
 							</div>
 						</div>
 					</div>

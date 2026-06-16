@@ -1,46 +1,75 @@
 @use "../../styles/breakpoints" as *;
 
+.searchPanel {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 16px;
+	margin-bottom: 12px;
+}
+
 .tabBar {
 	display: flex;
-	width: 100%;
-	gap: 10px;
-	margin-bottom: 10px;
-	border-radius: 14px;
-	background: var(--surface);
-	padding: 10px;
-	border: 1px solid var(--border);
+	gap: 6px;
+	padding: 0 10px;
+	margin-bottom: -1px;
+	position: relative;
+	z-index: 1;
 }
 
 .tab {
 	display: inline-flex;
-	width: 100%;
 	align-items: center;
-	gap: 10px;
-	border: 1px solid transparent;
+	gap: 8px;
+	border: 1px solid var(--border);
 	background-color: var(--surface2);
-	padding: 10px 18px;
+	padding: 7px 16px;
 	font-family: var(--font-heading-large);
-	font-size: 14px;
+	font-size: 13px;
 	font-weight: 700;
 	color: var(--muted);
 	cursor: pointer;
-	transition: all 0.15s;
-	border-radius: 10px;
+	transition:
+		transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+		box-shadow 0.18s ease,
+		color 0.15s,
+		background 0.15s,
+		border-color 0.15s;
+	border-radius: 10px 10px 0 0;
+	border-bottom: none;
+	position: relative;
+
+	&::after {
+		content: "";
+		position: absolute;
+		bottom: -1px;
+		left: 0;
+		right: 0;
+		height: 1px;
+		background: var(--surface2);
+		transition: background 0.15s;
+	}
 
 	&:hover {
 		color: var(--text);
-		background: var(--accent-btn-hover);
+
+		&::after {
+			background: var(--surface2);
+		}
 	}
 
 	@include mobile {
-		padding: 8px 12px;
-		font-size: 13px;
+		padding: 6px 12px;
+		font-size: 12px;
 	}
 
 	&.active {
 		color: var(--accent);
-		border: 1px solid var(--border);
 		background: var(--surface);
+		border-color: var(--border);
+
+		&::after {
+			background: var(--surface);
+		}
 
 		.count {
 			background: var(--accent-surface);
@@ -65,12 +94,12 @@
 	position: relative;
 	display: flex;
 	align-items: center;
-	margin-bottom: 12px;
+	padding: 10px;
 }
 
 .searchIcon {
 	position: absolute;
-	left: 11px;
+	left: 21px;
 	color: var(--muted);
 	pointer-events: none;
 	flex-shrink: 0;
@@ -79,9 +108,9 @@
 .searchInput {
 	width: 100%;
 	padding: 8px 32px 8px 34px;
-	background: var(--surface);
+	background: var(--surface2);
 	border: 1px solid var(--border);
-	border-radius: 8px;
+	border-radius: 100px;
 	font-size: 13px;
 	font-weight: 700;
 	font-family: var(--font-base);
@@ -100,7 +129,7 @@
 
 .searchClear {
 	position: absolute;
-	right: 8px;
+	right: 18px;
 	background: none;
 	border: none;
 	font-size: 16px;
@@ -134,7 +163,7 @@
 	align-items: center;
 	gap: 14px;
 	padding: 9px 14px;
-	border-radius: 10px;
+	border-radius: 16px;
 	border: 1px solid transparent;
 	transition: all 0.15s;
 	cursor: pointer;

@@ -138,9 +138,8 @@
 	position: sticky;
 	top: 0;
 	z-index: 20;
-	background: var(--header);
+	background: var(--bg);
 	border-bottom: 1px solid var(--border);
-	backdrop-filter: blur(12px);
 	padding: 10px;
 	display: flex;
 	align-items: center;

@@ -718,10 +718,12 @@ export default function FckCensorTabs() {
 					</span>
 				</button>
 			</div>
+			<div className={styles.searchPanel}>
+				<SearchBar value={query} onChange={setQuery} />
+			</div>
 
 			{tab === "official" && (
 				<>
-					<SearchBar value={query} onChange={setQuery} />
 					{loading ? (
 						<Skeleton />
 					) : (
@@ -735,7 +737,6 @@ export default function FckCensorTabs() {
 			)}
 			{tab === "legacy" && (
 				<>
-					<SearchBar value={query} onChange={setQuery} />
 					{loading ? (
 						<Skeleton />
 					) : (

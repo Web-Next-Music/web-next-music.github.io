@@ -10,8 +10,6 @@
 	*::before,
 	*::after {
 		box-sizing: border-box;
-		margin: 0;
-		padding: 0;
 	}
 
 	::-webkit-scrollbar {
@@ -35,11 +33,10 @@
 
 .tabs {
 	border-bottom: 1px solid var(--border);
-	background: var(--header);
+	background: var(--bg);
 	position: sticky;
 	top: calc(60px + var(--mini-player-h));
-	backdrop-filter: blur(12px);
-	z-index: 20;
+	z-index: 101;
 }
 
 .tabsInner {
@@ -102,12 +99,11 @@
 }
 
 .toolbar {
-	background: var(--header);
+	background: var(--bg);
 	border-bottom: 1px solid var(--border);
 	position: sticky;
 	top: calc(108px + var(--mini-player-h));
-	backdrop-filter: blur(12px);
-	z-index: 19;
+	z-index: 100;
 }
 
 .toolbarInner {
@@ -160,6 +156,11 @@
 	}
 }
 
+.filterWrap {
+	margin-left: auto;
+	flex-shrink: 0;
+}
+
 .tagFilters {
 	display: flex;
 	gap: 6px;
@@ -181,35 +182,26 @@
 	font-size: 0.56rem;
 	padding: 2px 7px;
 	border-radius: 20px;
-	border: 1px solid;
+	border: 1px solid var(--border);
 	letter-spacing: 0.04em;
 	font-weight: 700;
-	transition:
-		opacity 0.15s,
-		transform 0.15s;
 	white-space: nowrap;
+	background: var(--surface2);
+	color: var(--muted);
 }
 
 .tagBadgeClickable {
 	cursor: pointer;
+	transition: opacity 0.15s;
+
+	&:hover {
+		opacity: 0.75;
+	}
 }
 
-.tagNm {
-	background: var(--accent-surface);
-	border: 1px solid var(--accent-border);
-	color: var(--accent);
-}
-
-.tagPs {
-	background: rgba(59, 130, 246, 0.1);
-	color: #60a5fa;
-	border-color: rgba(59, 130, 246, 0.22);
-}
-
+.tagNm,
+.tagPs,
 .tagWeb {
-	background: rgba(139, 92, 246, 0.1);
-	color: #a78bfa;
-	border-color: rgba(139, 92, 246, 0.25);
 }
 
 .tagBadgeActive {
@@ -421,7 +413,7 @@
 	align-items: center;
 	gap: 6px;
 	padding: 7px 14px;
-	border-radius: 8px;
+	border-radius: 100px;
 	font-family: var(--font-heading-large);
 	font-size: 14px;
 	font-weight: 700;
@@ -564,7 +556,7 @@
 
 .extPageAuthor {
 	font-family: var(--font-base);
-	font-size: 12px;
+	font-size: 14px;
 	font-weight: 700;
 	color: var(--muted);
 }
@@ -968,8 +960,7 @@
 	position: fixed;
 	inset: 0;
 	z-index: 100;
-	background: rgba(0, 0, 0, 0.55);
-	backdrop-filter: blur(4px);
+	background: rgba(0, 0, 0, 0.7);
 	display: flex;
 	align-items: center;
 	justify-content: center;

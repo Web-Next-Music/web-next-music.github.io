@@ -11,6 +11,7 @@
 	margin: 0;
 	padding: 0;
 	user-select: none;
+	font-weight: 700;
 }
 
 :root {
@@ -43,10 +44,11 @@
 }
 
 @mixin light-vars {
-	--bg: #f3f3f4;
+	--banner-dim: rgba(255, 255, 255, 0.6);
+	--bg: #f9f9f9;
 	--header: #f3f3f4d9;
-	--surface: #fbfbfb;
-	--surface2: #f3f3f3;
+	--surface: #fdfdfe;
+	--surface2: #ffffff;
 	--border: color-mix(
 		in oklab,
 		hsl(240 calc(1 * 4%) 60.784%/0.2784313725490196) 100%,
@@ -71,6 +73,7 @@
 }
 
 @mixin dark-vars {
+	--banner-dim: rgba(0, 0, 0, 0.9);
 	--bg: #000000;
 	--header: #000000d9;
 	--surface: #0c0c0e;

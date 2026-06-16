@@ -39,17 +39,11 @@
 
 	&:hover {
 		border-color: rgba(43, 254, 245, 0.3);
-		color: var(--accent);
-
-		.chevron {
-			color: var(--accent);
-		}
 	}
 }
 
 .triggerOpen {
 	border-color: rgba(43, 254, 245, 0.3);
-	color: var(--accent);
 }
 
 .divider {
@@ -77,7 +71,7 @@
 	position: absolute;
 	top: calc(100% + 6px);
 	right: 0;
-	min-width: 160px;
+	min-width: 140px;
 	background: var(--surface);
 	border: 1px solid var(--border);
 	border-radius: 12px;

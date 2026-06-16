@@ -26,6 +26,7 @@ import {
 	type DDetectorTrack,
 	type LyricLine,
 } from "@/lib/track/ddetector";
+import Select from "@components/ui/Select";
 import styles from "./page.module.scss";
 import DRUG_KEYWORDS from "./drug-keywords.json";
 // Build a single regex from all keywords (longer first to prevent partial shadowing)
@@ -214,8 +215,6 @@ export default function DDetectorPage() {
 	const [sort, setSort] = useState<"default" | "date" | "alpha" | "artist">(
 		"default",
 	);
-	const [sortOpen, setSortOpen] = useState(false);
-	const sortRef = useRef<HTMLDivElement>(null);
 
 	// Fetch button
 	const [fetching, setFetching] = useState(false);
@@ -301,16 +300,6 @@ export default function DDetectorPage() {
 			return next;
 		});
 	}, []);
-
-	// Close sort dropdown on outside click
-	useEffect(() => {
-		if (!sortOpen) return;
-		const handler = (e: MouseEvent) => {
-			if (!sortRef.current?.contains(e.target as Node)) setSortOpen(false);
-		};
-		document.addEventListener("mousedown", handler);
-		return () => document.removeEventListener("mousedown", handler);
-	}, [sortOpen]);
 
 	// Close context menu on outside click / scroll / Escape
 	useEffect(() => {
@@ -599,13 +588,6 @@ export default function DDetectorPage() {
 		return map;
 	}, [tracks]);
 
-	const SORT_LABELS: Record<typeof sort, string> = {
-		default: "Default",
-		date: "By date",
-		alpha: "A - Z",
-		artist: "By artist",
-	};
-
 	const progressPct = tracks.length ? (processed / tracks.length) * 100 : 0;
 
 	// Render states
@@ -654,49 +636,16 @@ export default function DDetectorPage() {
 				<div className={styles.headerCount}>{filteredTracks.length} tracks</div>
 
 				<div className={styles.headerControls}>
-					<div ref={sortRef} className={styles.sortWrap}>
-						<button
-							className={styles.sortBtn}
-							onClick={() => setSortOpen((v) => !v)}
-						>
-							<svg
-								width="12"
-								height="12"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							>
-								<line x1="8" y1="6" x2="21" y2="6" />
-								<line x1="8" y1="12" x2="21" y2="12" />
-								<line x1="8" y1="18" x2="21" y2="18" />
-								<line x1="3" y1="6" x2="3.01" y2="6" />
-								<line x1="3" y1="12" x2="3.01" y2="12" />
-								<line x1="3" y1="18" x2="3.01" y2="18" />
-							</svg>
-							{SORT_LABELS[sort]}
-						</button>
-						{sortOpen && (
-							<div className={styles.sortDropdown}>
-								{(["default", "date", "alpha", "artist"] as const).map(
-									(opt) => (
-										<button
-											key={opt}
-											className={`${styles.sortOption}${sort === opt ? ` ${styles.sortOptionActive}` : ""}`}
-											onClick={() => {
-												setSort(opt);
-												setSortOpen(false);
-											}}
-										>
-											{SORT_LABELS[opt]}
-										</button>
-									),
-								)}
-							</div>
-						)}
-					</div>
+					<Select
+						value={sort}
+						onChange={setSort}
+						options={[
+							{ value: "default", label: "Default" },
+							{ value: "date", label: "By date" },
+							{ value: "alpha", label: "A - Z" },
+							{ value: "artist", label: "By artist" },
+						]}
+					/>
 
 					<div className={styles.searchWrap}>
 						<input

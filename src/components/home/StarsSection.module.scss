@@ -1,10 +1,15 @@
 @use "../../styles/breakpoints" as bp;
 
 .section {
-	max-width: 1200px;
 	margin: 0 auto;
-	padding: 60px 40px;
+	padding: 60px 0;
+	background-color: var(--surface);
 	border-top: 1px solid var(--border);
+}
+
+.sectionWrap {
+	max-width: 1100px;
+	margin: auto;
 }
 
 .sectionLabel {
@@ -39,9 +44,8 @@
 }
 
 .card {
-	background: var(--surface);
-	border: 1px solid var(--border);
-	border-radius: 10px;
+	background: var(--bg);
+	border-radius: 16px;
 	height: 108px;
 	padding: 15px;
 	display: flex;
@@ -50,9 +54,10 @@
 	gap: 15px;
 	transition: all 0.2s;
 	cursor: pointer;
+	border: 1px solid var(--border);
 
 	&:hover {
-		background: var(--surface2);
+		background: var(--surface);
 		border-color: var(--border);
 	}
 }
@@ -86,10 +91,10 @@
 
 .pagination {
 	display: flex;
-	background-color: var(--surface);
+	background-color: var(--bg);
 	border: 1px solid var(--border);
 	padding: 10px;
-	border-radius: 10px;
+	border-radius: 100px;
 	align-items: center;
 	justify-content: center;
 	gap: 6px;
@@ -97,10 +102,13 @@
 }
 
 .pageBtn {
-	min-width: 34px;
+	width: 34px;
 	height: 34px;
-	padding: 0 10px;
-	border-radius: 8px;
+	padding: 0;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	border: 1px solid var(--border);
 	background: var(--surface);
 	color: var(--text);
@@ -140,7 +148,7 @@
 
 @include bp.tablet-lg {
 	.section {
-		padding: 60px 20px;
+		padding: 20px;
 	}
 
 	.grid {

@@ -194,9 +194,7 @@ export default function Footer({
 							isDark ? styles.dark : styles.light
 						}`}
 					>
-						<span className={styles.toggleThumb}>
-							{isDark ? <MoonIcon /> : <SunIcon />}
-						</span>
+						<span className={styles.toggleThumb}>{isDark}</span>
 					</span>
 					<span className={styles.toggleLabel}>
 						{isDark ? "Dark" : "Light"}
