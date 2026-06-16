@@ -55,16 +55,17 @@ function downloadViaIframe(url: string) {
 }
 
 export default function Hero() {
-	const { githubToken } = useAuth();
+	const { githubToken, loading: authLoading } = useAuth();
 	const [release, setRelease] = useState<GithubRelease | null>(null);
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
+		if (authLoading) return;
 		fetchLatestRelease(githubToken ?? undefined)
 			.then((data) => setRelease(data as GithubRelease | null))
 			.catch(() => setRelease(null))
 			.finally(() => setLoading(false));
-	}, [githubToken]);
+	}, [githubToken, authLoading]);
 
 	const version = release?.tag_name ?? "unknown";
 	const isPrerelease = release?.prerelease ?? false;

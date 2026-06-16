@@ -10,17 +10,18 @@ import { useAuth } from "@/lib/auth";
 const PAGE_SIZE = 12;
 
 export default function StarsSection() {
-	const { githubToken } = useAuth();
+	const { githubToken, loading: authLoading } = useAuth();
 	const [stargazers, setStargazers] = useState<Stargazer[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [page, setPage] = useState(1);
 
 	useEffect(() => {
+		if (authLoading) return;
 		fetchStargazers(githubToken ?? undefined)
 			.then(setStargazers)
 			.catch(() => setStargazers([]))
 			.finally(() => setLoading(false));
-	}, [githubToken]);
+	}, [githubToken, authLoading]);
 
 	const totalPages = Math.ceil(stargazers.length / PAGE_SIZE);
 	const pageItems = stargazers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
