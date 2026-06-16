@@ -27,75 +27,105 @@ export default function StarsSection() {
 
 	return (
 		<section className={styles.section}>
-			<div className={styles.sectionLabel}>COMMUNITY</div>
-			<div className={styles.sectionTitle}>Stargazers</div>
-			<p className={styles.sectionSub}>
-				{loading
-					? "Loading stargazers…"
-					: stargazers.length > 0
-						? `${stargazers.length} people gave this project a star on GitHub - thank you!`
-						: "Everyone who gave the project a star on GitHub - thank you!"}
-			</p>
-			<div className={styles.grid}>
-				{loading && <p className={styles.empty}>Loading…</p>}
+			<div className={styles.sectionWrap}>
+				<div className={styles.sectionLabel}>COMMUNITY</div>
+				<div className={styles.sectionTitle}>Stargazers</div>
+				<p className={styles.sectionSub}>
+					{loading
+						? "Loading stargazers…"
+						: stargazers.length > 0
+							? `${stargazers.length} people gave this project a star on GitHub - thank you!`
+							: "Everyone who gave the project a star on GitHub - thank you!"}
+				</p>
+				<div className={styles.grid}>
+					{loading && <p className={styles.empty}>Loading…</p>}
 
-				{!loading && stargazers.length === 0 && (
-					<p className={styles.empty}>No stars yet</p>
-				)}
+					{!loading && stargazers.length === 0 && (
+						<p className={styles.empty}>No stars yet</p>
+					)}
 
-				{!loading &&
-					pageItems.map((user) => {
-						return (
-							<a
-								key={user.login}
-								href={user.html_url}
-								target="_blank"
-								rel="noopener noreferrer"
-								className={styles.card}
-							>
-								<Image
-									src={user.avatar_url}
-									alt={user.login}
-									width={44}
-									height={44}
-									className={styles.avatarImg}
-									loading="lazy"
-								/>
-								<div className={styles.name}>{user.login}</div>
-							</a>
-						);
-					})}
-			</div>
-
-			{!loading && totalPages > 1 && (
-				<div className={styles.pagination}>
-					<button
-						className={styles.pageBtn}
-						onClick={() => setPage((p) => Math.max(1, p - 1))}
-						disabled={page === 1}
-					>
-						←
-					</button>
-
-					{Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-						<button
-							key={p}
-							className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ""}`}
-							onClick={() => setPage(p)}
-						>
-							{p}
-						</button>
-					))}
-
-					<button
-						className={styles.pageBtn}
-						onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-						disabled={page === totalPages}
-					>
-						→
-					</button>
+					{!loading &&
+						pageItems.map((user) => {
+							return (
+								<a
+									key={user.login}
+									href={user.html_url}
+									target="_blank"
+									rel="noopener noreferrer"
+									className={styles.card}
+								>
+									<Image
+										src={user.avatar_url}
+										alt={user.login}
+										width={44}
+										height={44}
+										className={styles.avatarImg}
+										loading="lazy"
+									/>
+									<div className={styles.name}>{user.login}</div>
+								</a>
+							);
+						})}
 				</div>
-			)}
+
+				{!loading && totalPages > 1 && (
+					<div className={styles.pagination}>
+						<button
+							className={styles.pageBtn}
+							onClick={() => setPage((p) => Math.max(1, p - 1))}
+							disabled={page === 1}
+						>
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 16 16"
+								fill="none"
+								xmlns="http://www.w3.org/2000/svg"
+							>
+								<path
+									d="M10 12L6 8L10 4"
+									stroke="currentColor"
+									strokeWidth="1.5"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								/>
+							</svg>
+						</button>
+
+						{Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+							<button
+								key={p}
+								className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ""}`}
+								onClick={() => setPage(p)}
+							>
+								{p}
+							</button>
+						))}
+
+						<button
+							className={styles.pageBtn}
+							onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+							disabled={page === totalPages}
+						>
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 16 16"
+								fill="none"
+								xmlns="http://www.w3.org/2000/svg"
+							>
+								<path
+									d="M6 4L10 8L6 12"
+									stroke="currentColor"
+									strokeWidth="1.5"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								/>
+							</svg>
+						</button>
+					</div>
+				)}
+			</div>
 		</section>
 	);
 }

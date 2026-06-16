@@ -1,13 +1,87 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import styles from "./ExperimentsView.module.scss";
+import Select from "@components/ui/Select";
 
 // Row height (item height + gap) must match the CSS values in experiments.module.scss
 const ROW_H = 36;
 const ITEM_MIN_W = 280;
 const GAP = 6;
-const OVERSCAN = 4; // extra rows to render above/below the visible area
+const OVERSCAN = 4;
+
+type Platform = "all" | "web" | "ios" | "android" | "other";
+
+const PLATFORM_OPTIONS: { value: Platform; label: string }[] = [
+	{ value: "all", label: "All" },
+	{ value: "web", label: "Web/Desktop" },
+	{ value: "ios", label: "iOS" },
+	{ value: "android", label: "Android" },
+	{ value: "other", label: "Other" },
+];
+
+function getPlatform(name: string): Platform {
+	if (name.startsWith("WebNext")) return "web";
+	const lower = name.toLowerCase();
+	if (lower.startsWith("ios")) return "ios";
+	if (lower.startsWith("android")) return "android";
+	return "other";
+}
+
+function ExperimentFlag({
+	name,
+	copied,
+	onCopy,
+}: {
+	name: string;
+	copied: boolean;
+	onCopy: () => void;
+}) {
+	const codeRef = useRef<HTMLElement>(null);
+	const textRef = useRef<HTMLSpanElement>(null);
+	const [containerW, setContainerW] = useState(0);
+	const [textW, setTextW] = useState(0);
+
+	useLayoutEffect(() => {
+		const code = codeRef.current;
+		const text = textRef.current;
+		if (!code || !text) return;
+
+		const measure = () => {
+			setContainerW(code.clientWidth);
+			setTextW(text.scrollWidth);
+		};
+
+		measure();
+		const ro = new ResizeObserver(measure);
+		ro.observe(code);
+		return () => ro.disconnect();
+	}, [name]);
+
+	const overflows = textW > containerW && containerW > 0;
+
+	return (
+		<code
+			ref={codeRef}
+			className={`${styles.flag} ${copied ? styles.flagCopied : ""}`}
+			onClick={onCopy}
+			style={
+				overflows
+					? ({
+							"--scroll-end": `${-(textW - containerW)}px`,
+						} as React.CSSProperties)
+					: undefined
+			}
+		>
+			<span
+				ref={textRef}
+				className={overflows ? styles.flagTextScroll : styles.flagText}
+			>
+				{name}
+			</span>
+		</code>
+	);
+}
 
 interface Props {
 	experiments: string[];
@@ -16,11 +90,12 @@ interface Props {
 
 export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 	const [query, setQuery] = useState("");
+	const [platform, setPlatform] = useState<Platform>("all");
 	const [localDate, setLocalDate] = useState<string | null>(null);
 
-	// Virtual scroll state
+	// Virtual scroll state — right panel is the scroll container
+	const rightRef = useRef<HTMLDivElement>(null);
 	const wrapRef = useRef<HTMLDivElement>(null);
-	const scrollerRef = useRef<HTMLElement | Window | null>(null);
 	const [cols, setCols] = useState(3);
 	const [scrollY, setScrollY] = useState(0);
 	const [viewH, setViewH] = useState(800);
@@ -40,46 +115,28 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 	}, [fetchedAt]);
 
 	useEffect(() => {
+		const scroller = rightRef.current;
 		const el = wrapRef.current;
-		if (!el) return;
-
-		let node: HTMLElement | null = el.parentElement;
-		let scroller: HTMLElement | Window = window;
-		while (node) {
-			const oy = getComputedStyle(node).overflowY;
-			if (
-				(oy === "auto" || oy === "scroll") &&
-				node.scrollHeight > node.clientHeight
-			) {
-				scroller = node;
-				break;
-			}
-			node = node.parentElement;
-		}
-		scrollerRef.current = scroller;
-
-		const isWin = scroller === window;
-		const getScrollTop = () =>
-			isWin ? window.scrollY : (scroller as HTMLElement).scrollTop;
-		const getViewH = () =>
-			isWin ? window.innerHeight : (scroller as HTMLElement).clientHeight;
+		if (!scroller || !el) return;
 
 		const measure = () => {
 			setCols(
 				Math.max(1, Math.floor((el.clientWidth + GAP) / (ITEM_MIN_W + GAP))),
 			);
-			const base = isWin
-				? 0
-				: (scroller as HTMLElement).getBoundingClientRect().top;
-			setListTop(el.getBoundingClientRect().top - base + getScrollTop());
-			setViewH(getViewH());
+			setListTop(
+				el.getBoundingClientRect().top -
+					scroller.getBoundingClientRect().top +
+					scroller.scrollTop,
+			);
+			setViewH(scroller.clientHeight);
 		};
-		const onScroll = () => setScrollY(getScrollTop());
+		const onScroll = () => setScrollY(scroller.scrollTop);
 
 		const ro = new ResizeObserver(measure);
 		ro.observe(el);
+		ro.observe(scroller);
 		measure();
-		setScrollY(getScrollTop());
+		setScrollY(scroller.scrollTop);
 		scroller.addEventListener("scroll", onScroll, { passive: true });
 		return () => {
 			ro.disconnect();
@@ -89,12 +146,21 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 
 	const filtered = useMemo(() => {
 		const q = query.trim().toLowerCase();
-		return q
-			? experiments.filter((e) => e.toLowerCase().includes(q))
-			: experiments;
-	}, [experiments, query]);
+		return experiments.filter(
+			(e) =>
+				(platform === "all" || getPlatform(e) === platform) &&
+				(!q || e.toLowerCase().includes(q)),
+		);
+	}, [experiments, query, platform]);
 
-	// Compute which rows are visible
+	const [copied, setCopied] = useState<string | null>(null);
+
+	const copy = (name: string) => {
+		void navigator.clipboard.writeText(name);
+		setCopied(name);
+		setTimeout(() => setCopied((prev) => (prev === name ? null : prev)), 1000);
+	};
+
 	const rows = Math.ceil(filtered.length / cols);
 	const relY = Math.max(0, scrollY - listTop);
 	const startRow = Math.max(0, Math.floor(relY / ROW_H) - OVERSCAN);
@@ -104,26 +170,50 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 	const spacerBottom = Math.max(0, (rows - endRow) * ROW_H);
 
 	return (
-		<>
-			<div className={styles.hero}>
-				<div className={styles.heroInner}>
+		<div className={styles.layout}>
+			{/* Left sidebar */}
+			<aside className={styles.sidebar}>
+				<div className={styles.sidebarBlock}>
 					<div className={styles.heroTitle}>
 						<h1>Experiments</h1>
-						<span className={styles.countBadge}>{experiments.length}</span>
 					</div>
 					<p className={styles.heroSub}>
-						Yandex Music A/B experiment flags extracted from the web app state
-						and JS bundle enums
+						Yandex Music A/B experiment flags fetched from the API
 					</p>
-					<div className={styles.fetchInfo}>
-						<span className={styles.fetchLabel}>Last fetched</span>
-						<span className={styles.fetchTime}>{localDate ?? fetchedAt}</span>
-					</div>
 				</div>
-			</div>
+				<div className={styles.sidebarBlock}>
+					<ul className={styles.platformStats}>
+						{(
+							[
+								{ label: "Total", value: "all" },
+								{ label: "Web/Desktop", value: "web" },
+								{ label: "iOS", value: "ios" },
+								{ label: "Android", value: "android" },
+								{ label: "Other", value: "other" },
+							] as { label: string; value: Platform }[]
+						).map(({ label, value }) => {
+							const count =
+								value === "all"
+									? experiments.length
+									: experiments.filter((e) => getPlatform(e) === value).length;
+							return (
+								<li key={value} className={styles.platformStat}>
+									<span className={styles.platformStatLabel}>{label}</span>
+									<span className={styles.platformStatCount}>{count}</span>
+								</li>
+							);
+						})}
+					</ul>
+				</div>
+				<div className={styles.sidebarBlock}>
+					<span className={styles.fetchLabel}>Last fetched</span>
+					<span className={styles.fetchTime}>{localDate ?? fetchedAt}</span>
+				</div>
+			</aside>
 
-			<div className={styles.toolbar}>
-				<div className={styles.toolbarInner}>
+			{/* Right panel: sticky toolbar + scrollable list */}
+			<div ref={rightRef} className={styles.right}>
+				<div className={styles.toolbar}>
 					<div className={styles.searchWrap}>
 						<svg
 							className={styles.searchIcon}
@@ -155,33 +245,44 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 							spellCheck={false}
 						/>
 					</div>
-					{query && (
-						<span className={styles.resultCount}>
-							{filtered.length} / {experiments.length}
-						</span>
-					)}
-				</div>
-			</div>
-
-			<main className={styles.main}>
-				{filtered.length === 0 ? (
-					<p className={styles.empty}>
-						No experiments match &quot;{query}&quot;
-					</p>
-				) : (
-					<div ref={wrapRef}>
-						<div style={{ height: spacerTop }} />
-						<ul className={styles.list}>
-							{visibleItems.map((name) => (
-								<li key={name} className={styles.item}>
-									<code className={styles.flag}>{name}</code>
-								</li>
-							))}
-						</ul>
-						<div style={{ height: spacerBottom }} />
+					<div className={styles.toolbarRight}>
+						{(query || platform !== "all") && (
+							<span className={styles.resultCount}>
+								{filtered.length} / {experiments.length}
+							</span>
+						)}
+						<Select
+							value={platform}
+							onChange={setPlatform}
+							options={PLATFORM_OPTIONS}
+						/>
 					</div>
-				)}
-			</main>
-		</>
+				</div>
+
+				<main className={styles.main}>
+					{filtered.length === 0 ? (
+						<p className={styles.empty}>
+							No experiments match &quot;{query}&quot;
+						</p>
+					) : (
+						<div ref={wrapRef}>
+							<div style={{ height: spacerTop }} />
+							<ul className={styles.list}>
+								{visibleItems.map((name) => (
+									<li key={name} className={styles.item}>
+										<ExperimentFlag
+											name={name}
+											copied={copied === name}
+											onCopy={() => copy(name)}
+										/>
+									</li>
+								))}
+							</ul>
+							<div style={{ height: spacerBottom }} />
+						</div>
+					)}
+				</main>
+			</div>
+		</div>
 	);
 }

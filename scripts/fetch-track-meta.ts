@@ -3,13 +3,12 @@ import { execSync } from "child_process";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
-// ── Read .env.local ──────────────────────────────────────────────────────────
-
+// Read .env.local / .env
 const __dir = dirname(fileURLToPath(import.meta.url));
 
-const envPath = join(__dir, "../.env.local");
-if (existsSync(envPath)) {
-	const lines = readFileSync(envPath, "utf8").split(/\r?\n/);
+function loadEnvFile(path: string) {
+	if (!existsSync(path)) return;
+	const lines = readFileSync(path, "utf8").split(/\r?\n/);
 	for (const line of lines) {
 		const trimmed = line.trim();
 		if (!trimmed || trimmed.startsWith("#")) continue;
@@ -21,8 +20,11 @@ if (existsSync(envPath)) {
 	}
 }
 
-// ── Config ───────────────────────────────────────────────────────────────────
+// .env.local takes priority over .env
+loadEnvFile(join(__dir, "../.env.local"));
+loadEnvFile(join(__dir, "../.env"));
 
+// Config
 const LEGACY_URL =
 	"https://raw.githubusercontent.com/Hazzz895/FckCensorData/refs/heads/main/list.json";
 
@@ -34,8 +36,7 @@ const OUTPUT_PATH = join(__dir, "../src/data/track-meta.json");
 const BATCH_SIZE = 50;
 const DELAY_MS = 350;
 
-// ── Token check ──────────────────────────────────────────────────────────────
-
+// Token check
 if (!YANDEX_TOKEN) {
 	console.error("[ERROR] YANDEX_TOKEN is not set.");
 	console.error("        Add to .env.local: YANDEX_TOKEN=y0_...");
@@ -49,8 +50,7 @@ console.log(
 	`[KEY] Token: ${YANDEX_TOKEN.slice(0, 8)}... (length: ${YANDEX_TOKEN.length})`,
 );
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
+// Types
 export interface TrackMeta {
 	title: string;
 	artist: string;
@@ -69,8 +69,7 @@ interface YandexTrack {
 	error?: string;
 }
 
-// ── Utils ────────────────────────────────────────────────────────────────────
-
+// Utils
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function coverUrl(raw?: string): string | undefined {
@@ -125,8 +124,7 @@ function fetchBatch(ids: string[]): MetaMap {
 	return result;
 }
 
-// ── Main flow ────────────────────────────────────────────────────────────────
-
+// Main flow
 async function main() {
 	// 1. Download legacy list
 	console.log("[DOWNLOAD] Loading legacy JSON...");
