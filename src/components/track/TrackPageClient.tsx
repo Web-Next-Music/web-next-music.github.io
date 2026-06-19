@@ -155,10 +155,6 @@ function TrackPageContent({
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
 
-	// Resolve the track id from the override (404 fallback), the ?id= query, or a
-	// prettified /track/<id> path. Hold it in state and ignore empty re-reads so
-	// the address-bar rewrite below (which drops ?id=) can't reset it to "" and
-	// flash "Track not found"; it still updates when navigating to another track.
 	const resolvedId =
 		idOverride ??
 		searchParams.get("id") ??
@@ -193,12 +189,6 @@ function TrackPageContent({
 
 	const router = useRouter();
 
-	// For a plain track-id visit (?id=…, no key/url), rewrite the address bar to
-	// the clean /track/<id> path without a navigation, so in-app soft-navigation
-	// keeps the player mounted (seamless) while still showing a pretty URL. Hard
-	// loads of /track/<id> are served by the 404.html fallback (UserProfileRouter).
-	// useLayoutEffect runs before paint, so the address bar never visibly shows
-	// the transient ?id=… before it is rewritten to the clean /track/<id>.
 	useLayoutEffect(() => {
 		if (typeof window === "undefined") return;
 		if (!id || idOverride || rawKey || directUrl) return;

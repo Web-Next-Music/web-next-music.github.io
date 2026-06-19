@@ -41,7 +41,7 @@ function buildHref(trackId: string, dbMeta?: TrackLikeMeta): string {
 		const decoded = decodeTrackKey(trackId);
 		if (decoded?.url) return `/track?key=${trackId}`;
 	}
-	return `/track?id=${trackId}`;
+	return `/track/${trackId}`;
 }
 
 function PlayBtn({

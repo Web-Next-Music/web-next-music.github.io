@@ -116,7 +116,7 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 								// trackId is an encoded key - use it directly as ?key=
 								router.push(`/track?key=${trackId}`);
 							} else if (trackId) {
-								router.push(`/track?id=${trackId}`);
+								router.push(`/track/${trackId}`);
 							}
 						}}
 					>

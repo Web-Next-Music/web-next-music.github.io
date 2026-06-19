@@ -344,7 +344,7 @@ function OfficialList({ tracks, query, playlists }: OfficialListProps) {
 						const globalIndex = renderRange.start + i;
 						const match = track.url.match(/\/(\d+)\.mp3$/);
 						const trackId = match?.[1];
-						const yandexHref = trackId ? `track?id=${trackId}` : track.url;
+						const yandexHref = trackId ? `track/${trackId}` : track.url;
 
 						return (
 							<Link
@@ -577,7 +577,7 @@ function LegacyList({ tracks, query, playlists }: LegacyListProps) {
 						return meta ? (
 							<Link
 								key={track.id}
-								href={`/track?id=${track.id}`}
+								href={`/track/${track.id}`}
 								className={styles.trackRow}
 								style={{ height: TRACK_HEIGHT }}
 							>
