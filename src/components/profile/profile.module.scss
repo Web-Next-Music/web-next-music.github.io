@@ -192,6 +192,7 @@
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
+	transform: translateZ(0);
 }
 
 .statItem:not(:last-child) {
