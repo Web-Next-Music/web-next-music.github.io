@@ -428,12 +428,14 @@ function TrackPageContent({
 	const handlePlay = useCallback(async () => {
 		if (!displayTrack || !player) return;
 		let playbackUrl = displayTrack.url;
-		try {
-			playbackUrl = await getExclusivePlaybackUrl();
-		} catch (error) {
-			console.error("Failed to prepare playback:", error);
-			setUgcState("error");
-			return;
+		if (isExclusive) {
+			try {
+				playbackUrl = await getExclusivePlaybackUrl();
+			} catch (error) {
+				console.error("Failed to prepare playback:", error);
+				setUgcState("error");
+				return;
+			}
 		}
 
 		player.play({
