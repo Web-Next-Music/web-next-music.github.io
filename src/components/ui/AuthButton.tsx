@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { syncGithubStar } from "@/lib/supabase/publicProfile";
 import { checkDDetectorAccess } from "@/lib/track/ddetector";
@@ -12,6 +13,7 @@ const ddetectorCache = new Map<string, boolean>();
 
 export default function AuthButton() {
 	const { user, loading, signOut, openAuthModal, isBanned } = useAuth();
+	const router = useRouter();
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const [githubStarred, setGithubStarred] = useState(() =>
 		user?.id ? (starredCache.get(user.id) ?? false) : false,
@@ -99,7 +101,20 @@ export default function AuthButton() {
 					<Link
 						href={`/profile/${user.id}`}
 						className={styles.dropdownLink}
-						onClick={() => setDropdownOpen(false)}
+						onClick={(e) => {
+							setDropdownOpen(false);
+							if (
+								e.button !== 0 ||
+								e.metaKey ||
+								e.ctrlKey ||
+								e.shiftKey ||
+								e.altKey
+							)
+								return;
+							e.preventDefault();
+							if (window.location.pathname === `/profile/${user.id}`) return;
+							router.push(`/profile?id=${user.id}`);
+						}}
 					>
 						<svg
 							width="16"

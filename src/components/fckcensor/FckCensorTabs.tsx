@@ -46,8 +46,7 @@ import {
 	type Playlist,
 } from "@/lib/supabase/playlists";
 import styles from "./FckCensorTabs.module.scss";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import TrackLink from "@/components/ui/TrackLink";
 import type {
 	PlayBtnProps,
 	SearchBarProps,
@@ -344,12 +343,13 @@ function OfficialList({ tracks, query, playlists }: OfficialListProps) {
 						const globalIndex = renderRange.start + i;
 						const match = track.url.match(/\/(\d+)\.mp3$/);
 						const trackId = match?.[1];
-						const yandexHref = trackId ? `track/${trackId}` : track.url;
+						const yandexHref = trackId ? `track?id=${trackId}` : track.url;
+						const linkHref = trackId ? `/track?id=${trackId}` : track.url;
 
 						return (
-							<Link
+							<TrackLink
 								key={track.url}
-								href={yandexHref}
+								href={linkHref}
 								className={styles.trackRow}
 								style={{ height: TRACK_HEIGHT }}
 							>
@@ -403,7 +403,7 @@ function OfficialList({ tracks, query, playlists }: OfficialListProps) {
 										}}
 									/>
 								</div>
-							</Link>
+							</TrackLink>
 						);
 					})}
 				</div>
@@ -575,14 +575,14 @@ function LegacyList({ tracks, query, playlists }: LegacyListProps) {
 						);
 
 						return meta ? (
-							<Link
+							<TrackLink
 								key={track.id}
-								href={`/track/${track.id}`}
+								href={`/track?id=${track.id}`}
 								className={styles.trackRow}
 								style={{ height: TRACK_HEIGHT }}
 							>
 								{inner}
-							</Link>
+							</TrackLink>
 						) : (
 							<a
 								key={track.id}

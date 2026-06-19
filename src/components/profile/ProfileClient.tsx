@@ -67,7 +67,7 @@ function trackHref(trackId: string, dbMeta?: TrackLikeMeta): string {
 		}
 	}
 
-	return `/track/${trackId}`;
+	return `/track?id=${trackId}`;
 }
 
 function resolveTrackMeta(
