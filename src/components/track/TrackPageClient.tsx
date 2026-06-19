@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import {
+	useEffect,
+	useLayoutEffect,
+	useState,
+	useRef,
+	useCallback,
+	Suspense,
+} from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import LikeButton from "@/components/ui/LikeButton";
@@ -138,10 +145,37 @@ async function handleDownload(
 	URL.revokeObjectURL(objectUrl);
 }
 
-function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
+function TrackPageContent({
+	isHiddenMode,
+	idOverride,
+}: {
+	isHiddenMode: boolean;
+	idOverride?: string;
+}) {
 	const searchParams = useSearchParams();
+	const pathname = usePathname();
 
-	const id = searchParams.get("id") ?? "";
+	// Resolve the track id from the override (404 fallback), the ?id= query, or a
+	// prettified /track/<id> path. Hold it in state and ignore empty re-reads so
+	// the address-bar rewrite below (which drops ?id=) can't reset it to "" and
+	// flash "Track not found"; it still updates when navigating to another track.
+	const resolvedId =
+		idOverride ??
+		searchParams.get("id") ??
+		pathname?.match(/^\/track\/([^/]+)\/?$/)?.[1] ??
+		"";
+	const [id, setId] = useState(resolvedId);
+	const hasOtherSource = !!(searchParams.get("key") || searchParams.get("url"));
+	useEffect(() => {
+		if (resolvedId) {
+			if (resolvedId !== id) setId(resolvedId);
+		} else if (hasOtherSource && id) {
+			// Genuine switch to a key/url track — clear the stale id. (A bare empty
+			// with no key/url is the transient state from our own path rewrite, so
+			// we keep the current id in that case.)
+			setId("");
+		}
+	}, [resolvedId, hasOtherSource, id]);
 
 	// Single encoded key. A "-e" suffix marks exclusive (no-download) mode.
 	const rawKey = searchParams.get("key") ?? "";
@@ -158,6 +192,19 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 	const paramToken = keyData?.token ?? searchParams.get("token") ?? "";
 
 	const router = useRouter();
+
+	// For a plain track-id visit (?id=…, no key/url), rewrite the address bar to
+	// the clean /track/<id> path without a navigation, so in-app soft-navigation
+	// keeps the player mounted (seamless) while still showing a pretty URL. Hard
+	// loads of /track/<id> are served by the 404.html fallback (UserProfileRouter).
+	// useLayoutEffect runs before paint, so the address bar never visibly shows
+	// the transient ?id=… before it is rewritten to the clean /track/<id>.
+	useLayoutEffect(() => {
+		if (typeof window === "undefined") return;
+		if (!id || idOverride || rawKey || directUrl) return;
+		if (window.location.pathname !== "/track") return;
+		window.history.replaceState(null, "", `/track/${id}`);
+	}, [id, idOverride, rawKey, directUrl]);
 
 	const [storeReady, setStoreReady] = useState(() => getStoreSnapshot().loaded);
 	const [track, setTrack] = useState<CachedTrack | null>(null);
@@ -870,7 +917,9 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 	);
 }
 
-export default function TrackPage() {
+export default function TrackPage({
+	idOverride,
+}: { idOverride?: string } = {}) {
 	const searchParams = useSearchParams();
 	// Token can come from the encoded key OR as a plain ?token= param (old clients)
 	const keyToken = (() => {
@@ -887,7 +936,10 @@ export default function TrackPage() {
 			<Header isHiddenMode={isHiddenMode} />
 			<main>
 				<Suspense fallback={<div>Loading...</div>}>
-					<TrackPageContent isHiddenMode={isHiddenMode} />
+					<TrackPageContent
+						isHiddenMode={isHiddenMode}
+						idOverride={idOverride}
+					/>
 				</Suspense>
 			</main>
 			<Footer isHiddenMode={isHiddenMode} />
