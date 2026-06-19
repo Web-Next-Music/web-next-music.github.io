@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/lib/auth";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import NotFoundView from "@/components/not-found/NotFoundView";
 import TrackPageClient from "@/components/track/TrackPageClient";
-import ProfileClient from "./ProfileClient";
-import PublicProfileClient from "./PublicProfileClient";
+import ProfilePageClient from "./ProfilePageClient";
 import styles from "./profile.module.scss";
 
 function ProfileShell({ children }: { children: React.ReactNode }) {
@@ -35,7 +33,6 @@ function LoadingDots() {
 
 export default function UserProfileRouter() {
 	const pathname = usePathname();
-	const { user, loading } = useAuth();
 	const [mounted, setMounted] = useState(false);
 
 	useEffect(() => {
@@ -63,15 +60,5 @@ export default function UserProfileRouter() {
 
 	if (!id) return <NotFoundView />;
 
-	return (
-		<ProfileShell>
-			{loading ? (
-				<LoadingDots />
-			) : user && id === user.id ? (
-				<ProfileClient />
-			) : (
-				<PublicProfileClient userId={id} />
-			)}
-		</ProfileShell>
-	);
+	return <ProfilePageClient idOverride={id} />;
 }
