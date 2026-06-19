@@ -4,7 +4,6 @@
 	display: grid;
 	grid-template-columns: 300px 1fr;
 	height: calc(100vh - var(--mini-player-h) - 60px);
-	margin-top: var(--mini-player-h);
 	overflow: hidden;
 	max-width: 1200px;
 	margin-left: auto;
