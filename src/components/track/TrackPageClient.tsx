@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import {
+	useEffect,
+	useLayoutEffect,
+	useState,
+	useRef,
+	useCallback,
+	Suspense,
+} from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import LikeButton from "@/components/ui/LikeButton";
@@ -138,10 +145,33 @@ async function handleDownload(
 	URL.revokeObjectURL(objectUrl);
 }
 
-function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
+function TrackPageContent({
+	isHiddenMode,
+	idOverride,
+}: {
+	isHiddenMode: boolean;
+	idOverride?: string;
+}) {
 	const searchParams = useSearchParams();
+	const pathname = usePathname();
 
-	const id = searchParams.get("id") ?? "";
+	const resolvedId =
+		idOverride ??
+		searchParams.get("id") ??
+		pathname?.match(/^\/track\/([^/]+)\/?$/)?.[1] ??
+		"";
+	const [id, setId] = useState(resolvedId);
+	const hasOtherSource = !!(searchParams.get("key") || searchParams.get("url"));
+	useEffect(() => {
+		if (resolvedId) {
+			if (resolvedId !== id) setId(resolvedId);
+		} else if (hasOtherSource && id) {
+			// Genuine switch to a key/url track — clear the stale id. (A bare empty
+			// with no key/url is the transient state from our own path rewrite, so
+			// we keep the current id in that case.)
+			setId("");
+		}
+	}, [resolvedId, hasOtherSource, id]);
 
 	// Single encoded key. A "-e" suffix marks exclusive (no-download) mode.
 	const rawKey = searchParams.get("key") ?? "";
@@ -158,6 +188,13 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 	const paramToken = keyData?.token ?? searchParams.get("token") ?? "";
 
 	const router = useRouter();
+
+	useLayoutEffect(() => {
+		if (typeof window === "undefined") return;
+		if (!id || idOverride || rawKey || directUrl) return;
+		if (window.location.pathname !== "/track") return;
+		window.history.replaceState(null, "", `/track/${id}`);
+	}, [id, idOverride, rawKey, directUrl]);
 
 	const [storeReady, setStoreReady] = useState(() => getStoreSnapshot().loaded);
 	const [track, setTrack] = useState<CachedTrack | null>(null);
@@ -381,12 +418,14 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 	const handlePlay = useCallback(async () => {
 		if (!displayTrack || !player) return;
 		let playbackUrl = displayTrack.url;
-		try {
-			playbackUrl = await getExclusivePlaybackUrl();
-		} catch (error) {
-			console.error("Failed to prepare playback:", error);
-			setUgcState("error");
-			return;
+		if (isExclusive) {
+			try {
+				playbackUrl = await getExclusivePlaybackUrl();
+			} catch (error) {
+				console.error("Failed to prepare playback:", error);
+				setUgcState("error");
+				return;
+			}
 		}
 
 		player.play({
@@ -870,7 +909,9 @@ function TrackPageContent({ isHiddenMode }: { isHiddenMode: boolean }) {
 	);
 }
 
-export default function TrackPage() {
+export default function TrackPage({
+	idOverride,
+}: { idOverride?: string } = {}) {
 	const searchParams = useSearchParams();
 	// Token can come from the encoded key OR as a plain ?token= param (old clients)
 	const keyToken = (() => {
@@ -887,7 +928,10 @@ export default function TrackPage() {
 			<Header isHiddenMode={isHiddenMode} />
 			<main>
 				<Suspense fallback={<div>Loading...</div>}>
-					<TrackPageContent isHiddenMode={isHiddenMode} />
+					<TrackPageContent
+						isHiddenMode={isHiddenMode}
+						idOverride={idOverride}
+					/>
 				</Suspense>
 			</main>
 			<Footer isHiddenMode={isHiddenMode} />

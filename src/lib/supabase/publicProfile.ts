@@ -186,6 +186,36 @@ export async function getPublicProfile(
 	return { profile, banned: row.is_banned };
 }
 
+export async function getPublicProfileByUserId(
+	userId: string,
+): Promise<PublicProfileResult | null> {
+	const sb = getSupabase();
+	if (!sb) return null;
+
+	const { data, error } = await sb.rpc("resolve_public_profile_by_user_id", {
+		p_user_id: userId,
+	});
+
+	if (error)
+		console.error("[profile] getPublicProfileByUserId:", error.message);
+
+	const row = Array.isArray(data) ? data[0] : data;
+	if (!row) return null;
+
+	const profile: UserProfile = {
+		user_id: row.user_id,
+		github_id: row.github_id,
+		github_login: row.github_login,
+		display_name: row.display_name,
+		avatar_url: row.avatar_url,
+		bio: row.bio,
+		github_starred: row.github_starred,
+		created_at: row.created_at ?? null,
+	};
+
+	return { profile, banned: row.is_banned };
+}
+
 export async function syncGithubStarForProfile(
 	githubId: string,
 ): Promise<boolean | null> {

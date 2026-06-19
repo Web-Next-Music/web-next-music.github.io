@@ -1,29 +1,17 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import ProfileRouter from "@/components/profile/ProfileRouter";
+import ProfilePageClient from "@components/profile/ProfilePageClient";
 
 export const metadata: Metadata = {
-	openGraph: {
-		title: "User Profile - Next Music",
-		description:
-			"Web client for Yandex Music with support for themes, addons, Discord Rich Presence (RPC) and OBS widget.",
-		images: ["/preview.png"],
-		type: "profile",
-	},
+	title: "Profile · Next Music",
+	description: null,
+	openGraph: null,
 };
 
-export default function ProfilePage() {
+export default function Page() {
 	return (
-		<>
-			<Header />
-			<main>
-				<Suspense>
-					<ProfileRouter />
-				</Suspense>
-			</main>
-			<Footer />
-		</>
+		<Suspense fallback={<div />}>
+			<ProfilePageClient />
+		</Suspense>
 	);
 }

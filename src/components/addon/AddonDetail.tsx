@@ -1,6 +1,11 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import React, {
+	useState,
+	useEffect,
+	useLayoutEffect,
+	useCallback,
+} from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
 	getCachedData,
 	saveToCache,
@@ -16,16 +21,29 @@ function resolveSlug(slug: string, exts: Extension[]): Extension | null {
 	if (!slug) return null;
 	const needle = slug.toLowerCase();
 	return (
+		exts.find((e) => e.name.toLowerCase() === needle) ??
 		exts.find((e) => e.name.toLowerCase().replace(/\s+/g, "-") === needle) ??
 		exts.find((e) => e.name.toLowerCase().includes(needle)) ??
 		null
 	);
 }
 
-export default function AddonDetail() {
+export default function AddonDetail({
+	nameOverride,
+}: {
+	nameOverride?: string;
+} = {}) {
 	const searchParams = useSearchParams();
+	const pathname = usePathname();
 	const router = useRouter();
-	const name = searchParams.get("name");
+	// Resolve the addon name from the override (404 fallback), the ?name= query,
+	// or a prettified /addon/<name> path.
+	const name =
+		nameOverride ??
+		searchParams.get("name") ??
+		(pathname?.match(/^\/addon\/(.+?)\/?$/)?.[1]
+			? decodeURIComponent(pathname.match(/^\/addon\/(.+?)\/?$/)![1])
+			: null);
 
 	const [extension, setExtension] = useState<Extension | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -102,6 +120,21 @@ export default function AddonDetail() {
 	useEffect(() => {
 		loadAddon();
 	}, [loadAddon]);
+
+	// Once resolved, rewrite the address bar to the clean /addon/<name> path
+	// (using the real addon name) without a navigation, so in-app soft-navigation
+	// stays client-side while showing a pretty URL. Hard loads of /addon/<name>
+	// are served by the 404.html fallback (UserProfileRouter).
+	useLayoutEffect(() => {
+		if (typeof window === "undefined") return;
+		if (nameOverride || !extension) return;
+		if (window.location.pathname !== "/addon") return;
+		window.history.replaceState(
+			null,
+			"",
+			`/addon/${encodeURIComponent(extension.name)}`,
+		);
+	}, [extension, nameOverride]);
 
 	const handleBack = useCallback(() => {
 		router.push("/store");

@@ -12,12 +12,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	const paramToken = searchParams.get("token") ?? "";
 	const isHiddenMode = paramToken === process.env.NEXT_PUBLIC_HIDDEN_MODE_TOKEN;
 
+	const audioRef = useRef<HTMLAudioElement>(null);
+	const currentTrackUrlRef = useRef<string | null>(null);
+
 	const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null);
 	const [isPlaying, setIsPlaying] = useState(false);
-	const audioRef = useRef<HTMLAudioElement>(null);
-	const isRestoringRef = useRef(false);
-	const currentTrackUrlRef = useRef<string | null>(null);
-	const pendingSeekTimeRef = useRef<number>(0);
 
 	useRichPresenceWS(nowPlaying, isPlaying, audioRef);
 
@@ -52,21 +51,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		if (currentTrackUrlRef.current !== nowPlaying.url) {
 			currentTrackUrlRef.current = nowPlaying.url;
 			audio.src = nowPlaying.url;
-			if (isRestoringRef.current) {
-				const seekTime = pendingSeekTimeRef.current;
-				audio.addEventListener(
-					"loadedmetadata",
-					() => {
-						audio.currentTime = seekTime;
-						audio.play().catch(console.error);
-						isRestoringRef.current = false;
-					},
-					{ once: true },
-				);
-			} else {
-				audio.currentTime = 0;
-				audio.play().catch(console.error);
-			}
+			audio.currentTime = 0;
+			audio.play().catch(console.error);
 		}
 	}, [nowPlaying]);
 

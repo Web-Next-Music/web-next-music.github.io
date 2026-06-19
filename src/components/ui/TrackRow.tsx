@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
+import TrackLink from "./TrackLink";
 import {
 	Loader as LoaderIcon,
 	Pause as PauseIcon,
@@ -264,7 +264,7 @@ export default function TrackRow({
 	const href = buildHref(trackId, dbMeta);
 
 	return (
-		<Link
+		<TrackLink
 			href={href}
 			className={`${styles.row} ${isThis ? styles.rowActive : ""}`}
 		>
@@ -328,6 +328,6 @@ export default function TrackRow({
 					dbMeta={dbMeta}
 				/>
 			</div>
-		</Link>
+		</TrackLink>
 	);
 }
