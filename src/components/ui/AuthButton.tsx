@@ -97,7 +97,7 @@ export default function AuthButton() {
 						{user.user_metadata?.user_name ?? user.email}
 					</p>
 					<Link
-						href={`/profile?id=${user.user_metadata?.provider_id ?? user.user_metadata?.sub ?? ""}`}
+						href={`/profile/${user.id}`}
 						className={styles.dropdownLink}
 						onClick={() => setDropdownOpen(false)}
 					>

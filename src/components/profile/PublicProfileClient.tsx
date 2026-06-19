@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { config } from "@/lib/config";
 import {
-	getPublicProfile,
+	getPublicProfileByUserId,
 	getUserPinnedPlaylists,
 	getUserStats,
 	syncGithubStarForProfile,
@@ -129,11 +129,7 @@ function PublicPlaylistSection({ playlist }: { playlist: Playlist }) {
 	);
 }
 
-export default function PublicProfileClient({
-	githubId,
-}: {
-	githubId: string;
-}) {
+export default function PublicProfileClient({ userId }: { userId: string }) {
 	const [profile, setProfile] = useState<UserProfile | null | "loading">(
 		"loading",
 	);
@@ -147,7 +143,7 @@ export default function PublicProfileClient({
 	const [exactDate, setExactDate] = useState(false);
 
 	useEffect(() => {
-		getPublicProfile(githubId).then((result) => {
+		getPublicProfileByUserId(userId).then((result) => {
 			if (!result) {
 				setProfile(null);
 				return;
@@ -157,10 +153,10 @@ export default function PublicProfileClient({
 			setBanned(result.banned);
 
 			const name = result.banned
-				? githubId
+				? userId
 				: (result.profile.display_name ??
 					result.profile.github_login ??
-					githubId);
+					userId);
 			document.title = `${name} - Next Music`;
 
 			if (!result.banned) {
@@ -172,15 +168,17 @@ export default function PublicProfileClient({
 					setPlaylists(playlists);
 				});
 
-				syncGithubStarForProfile(githubId).then((s) => {
-					if (s !== null) setStarred(s);
-				});
+				if (result.profile.github_id) {
+					syncGithubStarForProfile(result.profile.github_id).then((s) => {
+						if (s !== null) setStarred(s);
+					});
+				}
 			}
 		});
 		return () => {
 			document.title = "Next Music";
 		};
-	}, [githubId]);
+	}, [userId]);
 
 	if (profile === "loading") {
 		return (
@@ -203,8 +201,8 @@ export default function PublicProfileClient({
 	}
 
 	const displayName = banned
-		? githubId
-		: (profile.display_name ?? profile.github_login ?? githubId);
+		? userId
+		: (profile.display_name ?? profile.github_login ?? userId);
 
 	return (
 		<div className={`${styles.page} ${styles.publicPage}`}>
