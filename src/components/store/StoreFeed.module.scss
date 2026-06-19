@@ -36,7 +36,7 @@
 	background: var(--bg);
 	position: sticky;
 	top: calc(60px + var(--mini-player-h));
-	z-index: 101;
+	z-index: 10;
 }
 
 .tabsInner {
@@ -103,7 +103,7 @@
 	border-bottom: 1px solid var(--border);
 	position: sticky;
 	top: calc(108px + var(--mini-player-h));
-	z-index: 100;
+	z-index: 10;
 }
 
 .toolbarInner {
