@@ -6,6 +6,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import NotFoundView from "@/components/not-found/NotFoundView";
 import TrackPageClient from "@/components/track/TrackPageClient";
+import AddonDetail from "@/components/addon/AddonDetail";
 import ProfilePageClient from "./ProfilePageClient";
 import styles from "./profile.module.scss";
 
@@ -53,6 +54,15 @@ export default function UserProfileRouter() {
 	const trackMatch = pathname?.match(/^\/track\/([^/]+)\/?$/);
 	if (trackMatch) {
 		return <TrackPageClient idOverride={decodeURIComponent(trackMatch[1])} />;
+	}
+
+	const addonMatch = pathname?.match(/^\/addon\/(.+?)\/?$/);
+	if (addonMatch) {
+		return (
+			<ProfileShell>
+				<AddonDetail nameOverride={decodeURIComponent(addonMatch[1])} />
+			</ProfileShell>
+		);
 	}
 
 	const match = pathname?.match(/^\/profile\/([^/]+)\/?$/);

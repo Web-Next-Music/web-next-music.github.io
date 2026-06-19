@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Blocks, Palette, Download, Search } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import Select from "@components/ui/Select";
@@ -167,6 +168,7 @@ function ExtCard({
 }
 
 export default function NextMusicStore() {
+	const router = useRouter();
 	const { githubToken, loading: authLoading } = useAuth();
 	const { extensions, loading, loadingMsg, error, fetchExtensions } =
 		useExtensions(githubToken, authLoading);
@@ -316,7 +318,7 @@ export default function NextMusicStore() {
 												const slug = ext.name
 													.toLowerCase()
 													.replace(/\s+/g, "-");
-												window.location.href = `/addon?name=${slug}`;
+												router.push(`/addon?name=${slug}`);
 											}}
 											onDownload={(e) => {
 												e.stopPropagation();
