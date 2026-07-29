@@ -1,18 +1,16 @@
 import type { Extension, ReleaseAsset, Tag } from "@/types/addon";
 import type { GHItem, GHReleaseAsset, GHLatestRelease } from "@/types/github";
 import { config } from "@/lib/config";
+import {
+	ghFetch,
+	repoTree,
+	CONTENTS_TTL,
+	UPDATE_TTL,
+} from "@/lib/addons/ghRequest";
 
 const OWNER = config.github.extensions.owner;
 const REPO = config.github.extensions.repo;
 const GH = "https://api.github.com";
-
-function ghHeaders(token?: string): Record<string, string> {
-	const h: Record<string, string> = {
-		Accept: "application/vnd.github.v3+json",
-	};
-	if (token) h["Authorization"] = `Bearer ${token}`;
-	return h;
-}
 
 async function ghContents(
 	owner: string,
@@ -23,10 +21,7 @@ async function ghContents(
 	const url = path
 		? `${GH}/repos/${owner}/${repo}/contents/${path}`
 		: `${GH}/repos/${owner}/${repo}/contents`;
-	const res = await fetch(url, { headers: ghHeaders(token) });
-	if (!res.ok)
-		throw new Error(`ghContents ${res.status}: ${owner}/${repo}/${path}`);
-	return res.json() as Promise<GHItem[]>;
+	return ghFetch<GHItem[]>(url, { token, ttl: CONTENTS_TTL });
 }
 
 async function rawFetch(
@@ -35,11 +30,10 @@ async function rawFetch(
 	branch: string,
 	file: string,
 ): Promise<string> {
-	const res = await fetch(
+	return ghFetch<string>(
 		`https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${file}`,
+		{ ttl: CONTENTS_TTL, api: false },
 	);
-	if (!res.ok) throw new Error(`raw 404: ${file}`);
-	return res.text();
 }
 
 function parseGitmodules(text: string): Record<string, string> {
@@ -88,6 +82,60 @@ function pickImg(list: GHItem[]): string | null {
 		list.find((i) => i.type === "file" && isImg(i.name))?.download_url ||
 		null
 	);
+}
+
+function pickImgPath(paths: string[]): string | null {
+	return (
+		paths.find(
+			(p) =>
+				/^(image|icon|logo|preview)\./i.test(p.split("/").pop()!) && isImg(p),
+		) ||
+		paths.find((p) => isImg(p)) ||
+		null
+	);
+}
+
+function rawUrl(owner: string, repo: string, filePath: string): string {
+	const encoded = filePath.split("/").map(encodeURIComponent).join("/");
+	return `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/${encoded}`;
+}
+
+function metaFromTree(
+	owner: string,
+	repo: string,
+	paths: string[],
+	folderPath: string,
+) {
+	const prefix = folderPath ? folderPath + "/" : "";
+	const scoped = paths.filter((p) => p.startsWith(prefix));
+	const rel = (p: string) => p.slice(prefix.length);
+
+	const branding = scoped.filter((p) =>
+		rel(p)
+			.split("/")
+			.slice(0, -1)
+			.some((seg) => /^branding$/i.test(seg)),
+	);
+
+	const logoPath = pickImgPath(branding) || pickImgPath(scoped);
+	const readmePath = scoped.find(
+		(p) => !rel(p).includes("/") && /^readme\.md$/i.test(rel(p)),
+	);
+	const userJsPath = scoped.find(
+		(p) => !rel(p).includes("/") && /^user\.js$/i.test(rel(p)),
+	);
+
+	const rawBase =
+		owner === OWNER && folderPath
+			? `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/${folderPath}/`
+			: `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/`;
+
+	return {
+		logo: logoPath ? rawUrl(owner, repo, logoPath) : null,
+		readmeUrl: readmePath ? rawUrl(owner, repo, readmePath) : null,
+		readmeBaseUrl: rawBase,
+		userJsUrl: userJsPath ? rawUrl(owner, repo, userJsPath) : null,
+	};
 }
 
 async function findLogoRecursive(
@@ -148,8 +196,12 @@ async function getFolderMeta(
 	owner: string,
 	repo: string,
 	folderPath: string,
-	token?: string,
+	token: string | undefined,
+	treePaths: string[] | null,
 ) {
+	if (treePaths) {
+		return metaFromTree(owner, repo, treePaths, folderPath);
+	}
 	try {
 		const items = await ghContents(owner, repo, folderPath, token);
 
@@ -210,11 +262,10 @@ async function getAllReleaseAssets(
 	token?: string,
 ): Promise<ReleaseAsset[]> {
 	try {
-		const res = await fetch(`${GH}/repos/${owner}/${repo}/releases/latest`, {
-			headers: ghHeaders(token),
-		});
-		if (!res.ok) return [];
-		const release = (await res.json()) as GHLatestRelease;
+		const release = await ghFetch<GHLatestRelease>(
+			`${GH}/repos/${owner}/${repo}/releases/latest`,
+			{ token, ttl: UPDATE_TTL },
+		);
 		if (!release.assets?.length) return [];
 		return release.assets.map((a: GHReleaseAsset) => ({
 			name: a.name,
@@ -334,6 +385,20 @@ export async function loadExtensions(
 
 	onProgress?.(`Found ${entries.length} extensions, loading metadata…`);
 
+	const mainTreePromise = repoTree(OWNER, REPO, token);
+	const treeCache = new Map<string, Promise<string[] | null>>();
+	treeCache.set(`${OWNER}/${REPO}`, mainTreePromise);
+
+	function getTree(owner: string, repo: string): Promise<string[] | null> {
+		const key = `${owner}/${repo}`;
+		let p = treeCache.get(key);
+		if (!p) {
+			p = repoTree(owner, repo, token);
+			treeCache.set(key, p);
+		}
+		return p;
+	}
+
 	const results: Extension[] = [];
 	let i = 0;
 
@@ -342,10 +407,17 @@ export async function loadExtensions(
 			const idx = i++;
 			const entry = entries[idx];
 			try {
-				const [meta, releaseAssets] = await Promise.all([
-					getFolderMeta(entry.owner, entry.repo, entry.folderPath, token),
+				const [treePaths, releaseAssets] = await Promise.all([
+					getTree(entry.owner, entry.repo),
 					getAllReleaseAssets(entry.owner, entry.repo, token),
 				]);
+				const meta = await getFolderMeta(
+					entry.owner,
+					entry.repo,
+					entry.folderPath,
+					token,
+					treePaths,
+				);
 				const { tags, clients } = deriveTagsAndClients(
 					releaseAssets,
 					entry.name,

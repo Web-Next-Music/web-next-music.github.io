@@ -37,3 +37,13 @@ export interface RepoRelease {
 	html_url: string;
 	assets: ReleaseAsset[];
 }
+
+export interface GHTreeNode {
+	path: string;
+	type: "blob" | "tree" | "commit";
+}
+
+export interface GHTreeResponse {
+	tree: GHTreeNode[];
+	truncated: boolean;
+}

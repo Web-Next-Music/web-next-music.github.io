@@ -93,7 +93,7 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 	const [platform, setPlatform] = useState<Platform>("all");
 	const [localDate, setLocalDate] = useState<string | null>(null);
 
-	// Virtual scroll state — right panel is the scroll container
+	// Virtual scroll state - right panel is the scroll container
 	const rightRef = useRef<HTMLDivElement>(null);
 	const wrapRef = useRef<HTMLDivElement>(null);
 	const [cols, setCols] = useState(3);
