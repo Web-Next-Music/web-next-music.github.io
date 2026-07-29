@@ -166,9 +166,6 @@ function TrackPageContent({
 		if (resolvedId) {
 			if (resolvedId !== id) setId(resolvedId);
 		} else if (hasOtherSource && id) {
-			// Genuine switch to a key/url track — clear the stale id. (A bare empty
-			// with no key/url is the transient state from our own path rewrite, so
-			// we keep the current id in that case.)
 			setId("");
 		}
 	}, [resolvedId, hasOtherSource, id]);

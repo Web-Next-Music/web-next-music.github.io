@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { Extension, Tag } from "@/lib/addons/addonCache";
 import { MarkdownRenderer } from "./MarkdownRenderer";
+import { ghFetch, CONTENTS_TTL } from "@/lib/addons/ghRequest";
 import styles from "./StoreFeed.module.scss";
 
 const TAG_CLASS: Record<Tag, string> = {
@@ -125,30 +126,37 @@ export function ExtensionPage({
 
 	useEffect(() => {
 		if (!ext.readmeUrl) return;
-		const ac = new AbortController();
+		let cancelled = false;
 		setReadme(null);
 		setReadmeLoading(true);
-		fetch(ext.readmeUrl, { signal: ac.signal })
-			.then((r) => r.text())
-			.then(setReadme)
-			.catch((e) => {
-				if (e.name !== "AbortError") setReadme("*Failed to load README.*");
+		ghFetch<string>(ext.readmeUrl, { ttl: CONTENTS_TTL, api: false })
+			.then((text) => {
+				if (!cancelled) setReadme(text);
 			})
-			.finally(() => setReadmeLoading(false));
-		return () => ac.abort();
+			.catch(() => {
+				if (!cancelled) setReadme("*Failed to load README.*");
+			})
+			.finally(() => {
+				if (!cancelled) setReadmeLoading(false);
+			});
+		return () => {
+			cancelled = true;
+		};
 	}, [ext.readmeUrl]);
 
 	useEffect(() => {
 		if (!showUserJs || userJsContent !== null || !ext.userJsUrl) return;
-		const ac = new AbortController();
-		fetch(ext.userJsUrl, { signal: ac.signal })
-			.then((r) => r.text())
-			.then(setUserJsContent)
-			.catch((e) => {
-				if (e.name !== "AbortError")
-					setUserJsContent("// Failed to load user.js");
+		let cancelled = false;
+		ghFetch<string>(ext.userJsUrl, { ttl: CONTENTS_TTL, api: false })
+			.then((text) => {
+				if (!cancelled) setUserJsContent(text);
+			})
+			.catch(() => {
+				if (!cancelled) setUserJsContent("// Failed to load user.js");
 			});
-		return () => ac.abort();
+		return () => {
+			cancelled = true;
+		};
 	}, [showUserJs, ext.userJsUrl, userJsContent]);
 
 	useEffect(() => {
