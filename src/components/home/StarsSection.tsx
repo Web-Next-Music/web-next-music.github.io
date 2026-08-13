@@ -5,23 +5,20 @@ import styles from "./StarsSection.module.scss";
 import Image from "next/image";
 import type { Stargazer } from "@/types/github";
 import { fetchStargazers } from "@/lib/github";
-import { useAuth } from "@/lib/auth";
 
 const PAGE_SIZE = 12;
 
 export default function StarsSection() {
-	const { githubToken, loading: authLoading } = useAuth();
 	const [stargazers, setStargazers] = useState<Stargazer[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [page, setPage] = useState(1);
 
 	useEffect(() => {
-		if (authLoading) return;
-		fetchStargazers(githubToken ?? undefined)
+		fetchStargazers()
 			.then(setStargazers)
 			.catch(() => setStargazers([]))
 			.finally(() => setLoading(false));
-	}, [githubToken, authLoading]);
+	}, []);
 
 	const totalPages = Math.ceil(stargazers.length / PAGE_SIZE);
 	const pageItems = stargazers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
