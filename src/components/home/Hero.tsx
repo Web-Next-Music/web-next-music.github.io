@@ -67,8 +67,6 @@ export default function Hero() {
 			.finally(() => setLoading(false));
 	}, [githubToken, authLoading]);
 
-	const version = release?.tag_name ?? "unknown";
-	const isPrerelease = release?.prerelease ?? false;
 	const assets = release?.assets ?? [];
 
 	const winAsset = findAsset(assets, ".exe");
@@ -120,15 +118,6 @@ export default function Hero() {
 	return (
 		<section className={styles.hero}>
 			<div className={styles.heroLeft}>
-				<div className={styles.badge}>
-					{loading ? (
-						<span className={styles.skeletonBadge} />
-					) : (
-						<>
-							{version} - {isPrerelease ? "pre-release" : "latest release"}
-						</>
-					)}
-				</div>
 				<h1 className={styles.title}>
 					Next Music
 					<br />
