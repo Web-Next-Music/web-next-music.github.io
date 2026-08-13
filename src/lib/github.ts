@@ -26,25 +26,21 @@ async function fetchWithFallback(
 	return null;
 }
 
-export async function fetchStargazers(token?: string): Promise<Stargazer[]> {
-	const all: Stargazer[] = [];
-	let page = 1;
-
-	while (true) {
-		const res = await fetchWithFallback(
-			`/repos/${REPO}/stargazers?per_page=100&page=${page}`,
-			token,
-		);
-		if (!res) break;
-
-		const data: Stargazer[] = await res.json();
-		if (!data.length) break;
-		all.push(...data);
-		if (data.length < 100) break;
-		page++;
+export async function fetchStargazers(): Promise<Stargazer[]> {
+	if (!config.supabase.url) return [];
+	try {
+		const res = await fetch(`${config.supabase.url}/functions/v1/stargazers`, {
+			headers: {
+				apikey: config.supabase.anonKey ?? "",
+				Authorization: `Bearer ${config.supabase.anonKey ?? ""}`,
+			},
+		});
+		if (!res.ok) return [];
+		const json = await res.json();
+		return Array.isArray(json.stargazers) ? json.stargazers : [];
+	} catch {
+		return [];
 	}
-
-	return all;
 }
 
 export async function fetchLatestRelease(
