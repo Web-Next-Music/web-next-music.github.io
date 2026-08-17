@@ -36,8 +36,8 @@ export default function Select<T extends string>({
 			if (!triggerRef.current) return;
 			const rect = triggerRef.current.getBoundingClientRect();
 			setListStyle({
-				position: "fixed",
-				top: rect.bottom + 6,
+				position: "absolute",
+				top: rect.bottom + window.scrollY + 6,
 				right: window.innerWidth - rect.right,
 				minWidth: 140,
 				zIndex: 9999,
