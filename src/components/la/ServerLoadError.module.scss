@@ -1,69 +1,20 @@
-.box {
-	display: flex;
-	gap: 14px;
-	background: rgba(239, 68, 68, 0.06);
-	border: 1px solid rgba(239, 68, 68, 0.22);
-	border-radius: 12px;
-	padding: 18px 20px;
-}
-
-.icon {
-	flex-shrink: 0;
-	width: 34px;
-	height: 34px;
-	border-radius: 10px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: rgba(239, 68, 68, 0.12);
-	color: #ef4444;
-}
-
-.body {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	min-width: 0;
-}
-
-.title {
-	font-family: var(--font-base);
-	font-weight: 700;
-	font-size: 0.86rem;
-	color: #ef4444;
-}
-
-.hint {
-	font-family: var(--font-base);
-	font-size: 0.75rem;
-	line-height: 1.55;
-	color: var(--muted);
-}
-
 .hintLink {
 	color: inherit;
 	text-decoration: underline;
-	text-decoration-color: rgba(239, 68, 68, 0.4);
+	text-decoration-color: var(--tone-border-strong);
 	text-underline-offset: 2px;
 
 	&:hover {
-		color: #ef4444;
+		color: var(--tone-color);
 	}
-}
-
-.actions {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	margin-top: 2px;
 }
 
 .retryBtn {
 	background: transparent;
-	border: 1px solid rgba(239, 68, 68, 0.4);
+	border: 1px solid var(--tone-border-strong);
 	border-radius: 8px;
 	padding: 6px 14px;
-	color: #ef4444;
+	color: var(--tone-color);
 	cursor: pointer;
 	font-family: var(--font-base);
 	font-size: 0.72rem;
@@ -71,6 +22,6 @@
 	transition: background 0.15s ease;
 
 	&:hover {
-		background: rgba(239, 68, 68, 0.1);
+		background: var(--tone-hover);
 	}
 }

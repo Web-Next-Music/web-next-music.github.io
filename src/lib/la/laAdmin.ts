@@ -49,10 +49,12 @@ async function withSchemeFallback<T>(
 	path: string,
 	init: RequestInit | undefined,
 	preferred?: LaScheme,
+	allowFallback = true,
 ): Promise<LaResult<T> | null> {
-	const order: LaScheme[] = preferred
-		? [preferred, preferred === "https" ? "http" : "https"]
-		: ["https", "http"];
+	const primary = preferred ?? "https";
+	const order: LaScheme[] = allowFallback
+		? [primary, primary === "https" ? "http" : "https"]
+		: [primary];
 
 	for (const scheme of order) {
 		const data = await fetchJson<T>(
@@ -90,6 +92,7 @@ export function fetchLaSettings(
 		"/api/admin/settings",
 		{ headers: { Authorization: `Bearer ${token}` } },
 		preferred,
+		false,
 	);
 }
 
@@ -113,5 +116,6 @@ export function updateLaSettings(
 			body: JSON.stringify(patch),
 		},
 		preferred,
+		false,
 	);
 }

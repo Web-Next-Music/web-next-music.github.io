@@ -5,6 +5,8 @@ import { useSearchParams } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Select from "@/components/ui/Select";
+import Callout from "@/components/ui/Callout";
+import Button from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth";
 import {
 	fetchLaSettings,
@@ -32,6 +34,11 @@ export default function LaSettingsClient() {
 	const [scheme, setScheme] = useState<LaScheme | null>(null);
 	const [loadingSettings, setLoadingSettings] = useState(false);
 	const [notAvailable, setNotAvailable] = useState(false);
+	const [confirmed, setConfirmed] = useState(false);
+
+	useEffect(() => {
+		setConfirmed(false);
+	}, [server, port]);
 	const [tags, setTags] = useState<string[]>([]);
 	const [draft, setDraft] = useState<LaSettingsPatch>({});
 	const [saving, setSaving] = useState(false);
@@ -51,22 +58,42 @@ export default function LaSettingsClient() {
 		});
 	}, [server, port]);
 
-	const load = useCallback(() => {
-		if (!server || !port || !githubToken) return;
+	const load = useCallback(async () => {
+		if (!server || !port || !githubToken || !confirmed) return;
 		setLoadingSettings(true);
 		setNotAvailable(false);
-		fetchLaSettings(server, port, githubToken, scheme ?? undefined)
-			.then((result) => {
-				if (!result) {
-					setNotAvailable(true);
-					return;
-				}
-				setSettings(result.data);
-				setDraft(result.data);
-				setScheme(result.scheme);
-			})
-			.finally(() => setLoadingSettings(false));
-	}, [server, port, githubToken, scheme]);
+
+		let activeScheme = scheme;
+		if (!activeScheme) {
+			const info = await fetchLaPublicInfo(server, port);
+			if (info) {
+				setPublicInfo(info.data);
+				activeScheme = info.scheme;
+				setScheme(info.scheme);
+			}
+		}
+
+		if (!activeScheme) {
+			setNotAvailable(true);
+			setLoadingSettings(false);
+			return;
+		}
+
+		const result = await fetchLaSettings(
+			server,
+			port,
+			githubToken,
+			activeScheme,
+		);
+		if (!result) {
+			setNotAvailable(true);
+		} else {
+			setSettings(result.data);
+			setDraft(result.data);
+			setScheme(result.scheme);
+		}
+		setLoadingSettings(false);
+	}, [server, port, githubToken, scheme, confirmed]);
 
 	useEffect(() => {
 		load();
@@ -162,20 +189,50 @@ export default function LaSettingsClient() {
 							</div>
 						)}
 
-						{!authLoading && user && loadingSettings && (
+						{!authLoading && user && !confirmed && (
+							<div className={styles.confirmBlock}>
+								<Callout
+									tone="warning"
+									icon={
+										<svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+											<path
+												d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+												stroke="currentColor"
+												strokeWidth="2"
+												strokeLinecap="round"
+												strokeLinejoin="round"
+											/>
+										</svg>
+									}
+								>
+									Continuing will send your GitHub credentials to{" "}
+									<strong>{address}</strong> to check admin access. Only
+									continue if you trust this server
+								</Callout>
+								<div className={styles.confirmActions}>
+									<Button onClick={() => setConfirmed(true)}>Continue</Button>
+								</div>
+							</div>
+						)}
+
+						{!authLoading && user && confirmed && loadingSettings && (
 							<div className={storeStyles.skeletonCard} />
 						)}
 
-						{!authLoading && user && !loadingSettings && notAvailable && (
-							<ServerLoadError
-								server={server}
-								port={port}
-								scheme={scheme ?? "https"}
-								onRetry={load}
-							/>
-						)}
+						{!authLoading &&
+							user &&
+							confirmed &&
+							!loadingSettings &&
+							notAvailable && (
+								<ServerLoadError
+									server={server}
+									port={port}
+									scheme={scheme ?? "https"}
+									onRetry={load}
+								/>
+							)}
 
-						{settings && !loadingSettings && (
+						{confirmed && settings && !loadingSettings && (
 							<>
 								<div className={styles.section}>
 									<div className={styles.sectionTitle}>General</div>
@@ -258,9 +315,7 @@ export default function LaSettingsClient() {
 									</div>
 
 									<div className={styles.toggleRow}>
-										<span className={styles.label}>
-											Allow dev clients
-										</span>
+										<span className={styles.label}>Allow dev clients</span>
 										<label className={styles.switch}>
 											<input
 												type="checkbox"
@@ -278,14 +333,13 @@ export default function LaSettingsClient() {
 								</div>
 
 								<div className={styles.saveBar}>
-									<button
-										type="button"
+									<Button
 										className={styles.saveBtn}
 										disabled={saving}
 										onClick={save}
 									>
 										{saving ? "Saving…" : "Save"}
-									</button>
+									</Button>
 									{saveError && (
 										<span className={styles.status}>{saveError}</span>
 									)}
