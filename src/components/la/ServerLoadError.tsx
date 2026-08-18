@@ -16,7 +16,9 @@ export default function ServerLoadError({
 	scheme,
 	onRetry,
 }: Props) {
-	const directUrl = `${scheme}://${server}:${port}`;
+	const directUrl = port
+		? `${scheme}://${server}:${port}`
+		: `${scheme}://${server}`;
 
 	return (
 		<Callout
