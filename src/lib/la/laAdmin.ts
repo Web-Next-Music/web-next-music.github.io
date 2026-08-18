@@ -43,9 +43,17 @@ async function fetchJson<T>(
 	}
 }
 
+function serverOrigin(
+	scheme: LaScheme,
+	server: string,
+	port?: string | number,
+): string {
+	return port ? `${scheme}://${server}:${port}` : `${scheme}://${server}`;
+}
+
 async function withSchemeFallback<T>(
 	server: string,
-	port: string | number,
+	port: string | number | undefined,
 	path: string,
 	init: RequestInit | undefined,
 	preferred?: LaScheme,
@@ -58,7 +66,7 @@ async function withSchemeFallback<T>(
 
 	for (const scheme of order) {
 		const data = await fetchJson<T>(
-			`${scheme}://${server}:${port}${path}`,
+			`${serverOrigin(scheme, server, port)}${path}`,
 			init,
 		);
 		if (data) return { data, scheme };
@@ -68,7 +76,7 @@ async function withSchemeFallback<T>(
 
 export function fetchLaPublicInfo(
 	server: string,
-	port: string | number,
+	port: string | number | undefined,
 	preferred?: LaScheme,
 ): Promise<LaResult<LaPublicInfo> | null> {
 	return withSchemeFallback<LaPublicInfo>(
@@ -82,14 +90,14 @@ export function fetchLaPublicInfo(
 
 export function fetchLaSettings(
 	server: string,
-	port: string | number,
+	port: string | number | undefined,
 	token: string,
 	preferred?: LaScheme,
 ): Promise<LaResult<LaSettingsView> | null> {
 	return withSchemeFallback<LaSettingsView>(
 		server,
 		port,
-		"/api/admin/settings",
+		"/api/settings",
 		{ headers: { Authorization: `Bearer ${token}` } },
 		preferred,
 		false,
@@ -98,7 +106,7 @@ export function fetchLaSettings(
 
 export function updateLaSettings(
 	server: string,
-	port: string | number,
+	port: string | number | undefined,
 	token: string,
 	patch: LaSettingsPatch,
 	preferred?: LaScheme,
@@ -106,7 +114,7 @@ export function updateLaSettings(
 	return withSchemeFallback<LaSettingsView>(
 		server,
 		port,
-		"/api/admin/settings",
+		"/api/settings",
 		{
 			method: "PATCH",
 			headers: {

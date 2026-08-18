@@ -68,8 +68,8 @@ export default function LaSettingsClient() {
 	}, [githubToken]);
 
 	useEffect(() => {
-		if (!server || !port) return;
-		fetchLaPublicInfo(server, port).then((result) => {
+		if (!server) return;
+		fetchLaPublicInfo(server, port || undefined).then((result) => {
 			if (!result) return;
 			setPublicInfo(result.data);
 			setScheme(result.scheme);
@@ -77,13 +77,18 @@ export default function LaSettingsClient() {
 	}, [server, port]);
 
 	const load = useCallback(async () => {
-		if (!server || !port || !githubToken || !confirmed) return;
+		if (!server || !confirmed) return;
+		if (!githubToken) {
+			setNotAvailable(false);
+			setLoadingSettings(false);
+			return;
+		}
 		setLoadingSettings(true);
 		setNotAvailable(false);
 
 		let activeScheme = scheme;
 		if (!activeScheme) {
-			const info = await fetchLaPublicInfo(server, port);
+			const info = await fetchLaPublicInfo(server, port || undefined);
 			if (info) {
 				setPublicInfo(info.data);
 				activeScheme = info.scheme;
@@ -99,7 +104,7 @@ export default function LaSettingsClient() {
 
 		const result = await fetchLaSettings(
 			server,
-			port,
+			port || undefined,
 			githubToken,
 			activeScheme,
 		);
@@ -117,15 +122,15 @@ export default function LaSettingsClient() {
 		load();
 	}, [load]);
 
-	const missingParams = !server || !port;
+	const missingParams = !server;
 
 	const save = async () => {
-		if (!server || !port || !githubToken) return;
+		if (!server || !githubToken) return;
 		setSaving(true);
 		setSaveError(null);
 		const result = await updateLaSettings(
 			server,
-			port,
+			port || undefined,
 			githubToken,
 			draft,
 			scheme ?? undefined,
@@ -189,8 +194,8 @@ export default function LaSettingsClient() {
 
 				{missingParams && (
 					<div className={styles.notice}>
-						Open this page with <code>?server=host&amp;port=port</code> to
-						manage a server
+						Open this page with <code>?server=host</code> (optionally{" "}
+						<code>&amp;port=port</code>) to manage a server
 					</div>
 				)}
 
@@ -210,6 +215,7 @@ export default function LaSettingsClient() {
 							<div className={styles.confirmBlock}>
 								<Callout
 									tone="warning"
+									title="Confirm connection"
 									icon={
 										<svg width="18" height="18" viewBox="0 0 24 24" fill="none">
 											<path
@@ -228,6 +234,34 @@ export default function LaSettingsClient() {
 								</Callout>
 								<div className={styles.confirmActions}>
 									<Button onClick={() => setConfirmed(true)}>Continue</Button>
+								</div>
+							</div>
+						)}
+
+						{!authLoading && user && confirmed && !githubToken && (
+							<div className={styles.confirmBlock}>
+								<Callout
+									tone="warning"
+									title="GitHub session expired"
+									icon={
+										<svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+											<path
+												d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+												stroke="currentColor"
+												strokeWidth="2"
+												strokeLinecap="round"
+												strokeLinejoin="round"
+											/>
+										</svg>
+									}
+								>
+									Your GitHub session needs to be refreshed before we can check
+									admin access on <strong>{address}</strong>
+								</Callout>
+								<div className={styles.confirmActions}>
+									<Button disabled={signingIn} onClick={handleSignIn}>
+										{signingIn ? "Connecting…" : "Reconnect GitHub"}
+									</Button>
 								</div>
 							</div>
 						)}
