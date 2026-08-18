@@ -20,13 +20,11 @@ export default function Callout({
 }: Props) {
 	return (
 		<div className={`${styles.box} ${styles[tone]}`}>
-			<div className={styles.top}>
+			<div className={styles.header}>
 				<div className={styles.icon}>{icon}</div>
-				<div className={styles.body}>
-					{title && <div className={styles.title}>{title}</div>}
-					<div className={styles.text}>{children}</div>
-				</div>
+				{title && <div className={styles.title}>{title}</div>}
 			</div>
+			<div className={styles.text}>{children}</div>
 			{actions && <div className={styles.actions}>{actions}</div>}
 		</div>
 	);

@@ -1,23 +1,25 @@
 .box {
 	display: flex;
 	flex-direction: column;
-	gap: 18px;
+	gap: 14px;
 	border-radius: 12px;
 	padding: 18px;
 	background: var(--tone-bg);
 	border: 1px solid var(--tone-border);
 }
 
-.top {
+.header {
 	display: flex;
-	gap: 14px;
+	align-items: center;
+	gap: 12px;
 }
 
 .actions {
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	margin-left: 48px;
+	padding-top: 18px;
+	border-top: 1px solid var(--tone-border);
 }
 
 .danger {
@@ -48,13 +50,6 @@
 	justify-content: center;
 	background: var(--tone-bg-strong);
 	color: var(--tone-color);
-}
-
-.body {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-	min-width: 0;
 }
 
 .title {
