@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import Select from "@/components/ui/Select";
 import Callout from "@/components/ui/Callout";
 import Button from "@/components/ui/Button";
+import SignInCard from "@/components/ui/SignInCard";
 import { useAuth } from "@/lib/auth";
 import {
 	fetchLaSettings,
@@ -27,7 +28,12 @@ export default function LaSettingsClient() {
 	const server = searchParams.get("server") ?? "";
 	const port = searchParams.get("port") ?? "";
 
-	const { user, loading: authLoading, githubToken, openAuthModal } = useAuth();
+	const {
+		user,
+		loading: authLoading,
+		githubToken,
+		signInWithGitHub,
+	} = useAuth();
 
 	const [settings, setSettings] = useState<LaSettingsView | null>(null);
 	const [publicInfo, setPublicInfo] = useState<LaPublicInfo | null>(null);
@@ -35,6 +41,18 @@ export default function LaSettingsClient() {
 	const [loadingSettings, setLoadingSettings] = useState(false);
 	const [notAvailable, setNotAvailable] = useState(false);
 	const [confirmed, setConfirmed] = useState(false);
+	const [signingIn, setSigningIn] = useState(false);
+	const [signInError, setSignInError] = useState<string | null>(null);
+
+	const handleSignIn = useCallback(async () => {
+		setSigningIn(true);
+		setSignInError(null);
+		const err = await signInWithGitHub();
+		if (err) {
+			setSignInError(err);
+			setSigningIn(false);
+		}
+	}, [signInWithGitHub]);
 
 	useEffect(() => {
 		setConfirmed(false);
@@ -133,38 +151,41 @@ export default function LaSettingsClient() {
 	];
 
 	const address = port ? `${server}:${port}` : server;
+	const signedOut = !missingParams && !authLoading && !user;
 
 	return (
 		<>
 			<Header />
 			<div className={styles.page}>
-				<div className={styles.hero}>
-					{(settings?.serverCoverUrl || publicInfo?.cover) && (
-						// eslint-disable-next-line @next/next/no-img-element
-						<img
-							src={settings?.serverCoverUrl || publicInfo?.cover}
-							alt=""
-							className={styles.avatar}
-						/>
-					)}
-					<div className={styles.heroMain}>
-						<h1 className={styles.title}>
-							{settings?.name ||
-								publicInfo?.name ||
-								(missingParams ? "Server settings" : address)}
-						</h1>
-						{!missingParams && (settings?.name || publicInfo?.name) && (
-							<span className={styles.address}>{address}</span>
+				{!signedOut && (
+					<div className={styles.hero}>
+						{(settings?.serverCoverUrl || publicInfo?.cover) && (
+							// eslint-disable-next-line @next/next/no-img-element
+							<img
+								src={settings?.serverCoverUrl || publicInfo?.cover}
+								alt=""
+								className={styles.avatar}
+							/>
+						)}
+						<div className={styles.heroMain}>
+							<h1 className={styles.title}>
+								{settings?.name ||
+									publicInfo?.name ||
+									(missingParams ? "Server settings" : address)}
+							</h1>
+							{!missingParams && (settings?.name || publicInfo?.name) && (
+								<span className={styles.address}>{address}</span>
+							)}
+						</div>
+						{publicInfo?.version && (
+							<span className={styles.versionBadge}>
+								{publicInfo.version.startsWith("v")
+									? publicInfo.version
+									: `v${publicInfo.version}`}
+							</span>
 						)}
 					</div>
-					{publicInfo?.version && (
-						<span className={styles.versionBadge}>
-							{publicInfo.version.startsWith("v")
-								? publicInfo.version
-								: `v${publicInfo.version}`}
-						</span>
-					)}
-				</div>
+				)}
 
 				{missingParams && (
 					<div className={styles.notice}>
@@ -173,21 +194,17 @@ export default function LaSettingsClient() {
 					</div>
 				)}
 
-				{!missingParams && (
+				{signedOut && (
+					<SignInCard
+						loading={signingIn}
+						error={signInError}
+						onSignIn={handleSignIn}
+					/>
+				)}
+
+				{!missingParams && !signedOut && (
 					<div className={styles.card}>
 						{authLoading && <div className={storeStyles.skeletonCard} />}
-
-						{!authLoading && !user && (
-							<div className={styles.signInBox}>
-								<button
-									type="button"
-									className={styles.signInBtn}
-									onClick={openAuthModal}
-								>
-									Sign in with GitHub
-								</button>
-							</div>
-						)}
 
 						{!authLoading && user && !confirmed && (
 							<div className={styles.confirmBlock}>
