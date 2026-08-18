@@ -1,0 +1,116 @@
+@font-face {
+	font-family: "Lucky Star";
+	src: url("/fonts/luckystar.otf") format("opentype");
+	font-display: swap;
+}
+
+.card {
+	position: relative;
+	display: flex;
+	align-items: flex-end;
+	justify-content: flex-end;
+	overflow: hidden;
+	width: 100%;
+	max-width: 420px;
+	height: 220px;
+	border-radius: 16px;
+	box-shadow: 0 0 10px 0 #0009;
+	padding: 20px;
+	margin: auto;
+	background:
+		linear-gradient(135deg, var(--surface) 0%, #0000 30%, var(--surface) 100%),
+		url("/ui/Kagami.webp") center / cover no-repeat;
+}
+
+.image {
+	position: absolute;
+	height: 100%;
+}
+
+.closeBtn {
+	position: absolute;
+	top: 14px;
+	right: 14px;
+	z-index: 2;
+	backdrop-filter: blur(30px);
+	background: transparent;
+	border: none;
+	box-shadow: inset 0 0 0 1px var(--border);
+	border-radius: 6px;
+	color: var(--text);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	box-shadow: 0 0 10px 0 #0009;
+	transition:
+		color 0.15s,
+		box-shadow 0.15s;
+
+	&:hover {
+		color: var(--accent);
+		box-shadow: inset 0 0 0 1px var(--border);
+	}
+}
+
+.copy {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 8px;
+	text-align: right;
+	max-width: 260px;
+}
+
+.title {
+	position: absolute;
+	top: 16px;
+	left: 20px;
+	z-index: 1;
+	font-family: "Lucky Star";
+	font-weight: 400;
+	font-size: 36px;
+	color: var(--text);
+}
+
+.githubBtn {
+	display: inline-flex;
+	align-items: center;
+	gap: 9px;
+	padding: 11px 20px;
+	border-radius: 8px;
+	border: none;
+	box-shadow: inset 0 0 0 1px var(--border);
+	backdrop-filter: blur(30px);
+	background: transparent;
+	color: var(--text);
+	font-family: var(--font-heading-large);
+	font-size: 14px;
+	font-weight: 700;
+	cursor: pointer;
+	box-shadow: 0 0 10px 0 #0009;
+	transition:
+		background 0.15s,
+		color 0.15s;
+
+	&:hover:not(:disabled) {
+		color: var(--accent);
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+	}
+}
+
+.error {
+	font-size: 13px;
+	color: #f87171;
+	background: rgba(248, 113, 113, 0.1);
+	border: 1px solid rgba(248, 113, 113, 0.25);
+	border-radius: 8px;
+	padding: 8px 12px;
+}

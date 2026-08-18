@@ -1,0 +1,246 @@
+.page {
+	max-width: 640px;
+	margin: 0 auto;
+	padding: 20px;
+}
+
+.hero {
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	align-items: center;
+	gap: 16px;
+	margin-bottom: 28px;
+}
+
+.avatar {
+	flex-shrink: 0;
+	width: 70px;
+	height: 70px;
+	border-radius: 10px;
+	object-fit: cover;
+	border: 1px solid var(--border);
+	background: var(--surface);
+}
+
+.heroMain {
+	flex: 1;
+	min-width: 0;
+}
+
+.versionBadge {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-family: var(--font-base);
+	font-size: 0.72rem;
+	font-weight: 700;
+	color: var(--muted);
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	padding: 6px 13px;
+	white-space: nowrap;
+	margin-top: 6px;
+}
+
+.title {
+	font-weight: 800;
+	font-size: 1.7rem;
+	letter-spacing: -0.02em;
+	line-height: 1.15;
+	margin: 0 0 6px;
+	word-break: break-word;
+}
+
+.address {
+	display: inline-flex;
+	align-items: center;
+	font-family: var(--font-base);
+	font-size: 0.82rem;
+	color: var(--muted);
+	letter-spacing: 0.01em;
+}
+
+.card {
+	display: flex;
+	flex-direction: column;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 16px;
+	padding: 20px;
+	gap: 20px;
+}
+
+.notice {
+	font-family: var(--font-base);
+	font-size: 0.78rem;
+	color: var(--muted);
+	background: var(--surface2, var(--surface));
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	padding: 16px 18px;
+}
+
+.confirmBlock {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+.confirmActions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding-top: 18px;
+	border-top: 1px solid var(--border);
+}
+
+.section {
+	background: var(--surface2, var(--surface));
+	border: 1px solid var(--border);
+	border-radius: 14px;
+	padding: 20px;
+}
+
+.sectionTitle {
+	font-family: var(--font-base);
+	font-size: 1.05rem;
+	font-weight: 800;
+	color: var(--text, inherit);
+	letter-spacing: -0.01em;
+	margin-bottom: 18px;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-bottom: 18px;
+	padding-bottom: 18px;
+	border-bottom: 1px solid var(--border);
+
+	&:last-child {
+		margin-bottom: 0;
+		padding-bottom: 0;
+		border-bottom: none;
+	}
+}
+
+.label {
+	font-family: var(--font-base);
+	font-size: 0.72rem;
+	font-weight: 700;
+	color: var(--muted);
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+
+.input {
+	background: var(--surface2, var(--surface));
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	padding: 10px 12px;
+	color: inherit;
+	font-family: var(--font-base);
+	font-size: 0.84rem;
+	outline: none;
+	transition: border-color 0.15s ease;
+
+	&:focus {
+		border-color: var(--accent);
+	}
+}
+
+.textarea {
+	composes: input;
+	resize: vertical;
+	min-height: 76px;
+	line-height: 1.5;
+}
+
+.row {
+	display: flex;
+	gap: 12px;
+
+	> * {
+		flex: 1;
+	}
+}
+
+.toggleRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 18px;
+}
+
+.switch {
+	position: relative;
+	display: inline-block;
+	flex-shrink: 0;
+	width: 40px;
+	height: 22px;
+
+	input {
+		position: absolute;
+		inset: 0;
+		margin: 0;
+		opacity: 0;
+		cursor: pointer;
+		z-index: 1;
+	}
+}
+
+.switchTrack {
+	position: absolute;
+	inset: 0;
+	background: var(--border);
+	border-radius: 999px;
+	transition: background 0.2s ease;
+
+	&::before {
+		content: "";
+		position: absolute;
+		top: 2px;
+		left: 2px;
+		width: 18px;
+		height: 18px;
+		border-radius: 50%;
+		background: #fff;
+		transition: transform 0.2s ease;
+	}
+}
+
+.switch input:checked + .switchTrack {
+	background: var(--accent);
+}
+
+.switch input:checked + .switchTrack::before {
+	transform: translateX(18px);
+}
+
+.saveBar {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding-top: 22px;
+	border-top: 1px solid var(--border);
+}
+
+.saveBtn {
+	min-width: 180px;
+}
+
+.status {
+	font-family: var(--font-base);
+	font-size: 0.75rem;
+	color: var(--muted);
+}
+
+.statusOk {
+	composes: status;
+	color: var(--accent);
+	font-weight: 700;
+}

@@ -1,0 +1,27 @@
+.hintLink {
+	color: inherit;
+	text-decoration: underline;
+	text-decoration-color: var(--tone-border-strong);
+	text-underline-offset: 2px;
+
+	&:hover {
+		color: var(--tone-color);
+	}
+}
+
+.retryBtn {
+	background: transparent;
+	border: 1px solid var(--tone-border-strong);
+	border-radius: 8px;
+	padding: 6px 14px;
+	color: var(--tone-color);
+	cursor: pointer;
+	font-family: var(--font-base);
+	font-size: 0.72rem;
+	font-weight: 700;
+	transition: background 0.15s ease;
+
+	&:hover {
+		background: var(--tone-hover);
+	}
+}

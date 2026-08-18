@@ -1,0 +1,76 @@
+.box {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+	border-radius: 12px;
+	padding: 18px;
+	background: var(--tone-bg);
+	border: 1px solid var(--tone-border);
+}
+
+.top {
+	display: flex;
+	gap: 14px;
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-left: 48px;
+}
+
+.danger {
+	--tone-color: #ef4444;
+	--tone-bg: rgba(239, 68, 68, 0.06);
+	--tone-border: rgba(239, 68, 68, 0.22);
+	--tone-border-strong: rgba(239, 68, 68, 0.4);
+	--tone-bg-strong: rgba(239, 68, 68, 0.12);
+	--tone-hover: rgba(239, 68, 68, 0.1);
+}
+
+.warning {
+	--tone-color: #eab308;
+	--tone-bg: rgba(234, 179, 8, 0.06);
+	--tone-border: rgba(234, 179, 8, 0.22);
+	--tone-border-strong: rgba(234, 179, 8, 0.4);
+	--tone-bg-strong: rgba(234, 179, 8, 0.12);
+	--tone-hover: rgba(234, 179, 8, 0.1);
+}
+
+.icon {
+	flex-shrink: 0;
+	width: 34px;
+	height: 34px;
+	border-radius: 10px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--tone-bg-strong);
+	color: var(--tone-color);
+}
+
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	min-width: 0;
+}
+
+.title {
+	font-family: var(--font-base);
+	font-weight: 700;
+	font-size: 0.86rem;
+	color: var(--tone-color);
+}
+
+.text {
+	font-family: var(--font-base);
+	font-size: 0.75rem;
+	line-height: 1.55;
+	color: var(--muted);
+
+	strong {
+		color: var(--text, inherit);
+	}
+}
