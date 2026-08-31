@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import styles from "./AppPreview.module.scss";
-import type { WsPayload } from "@/types/player";
 import type { CardShellProps } from "@/types/ui";
 
 const STATIC_CARDS = [
@@ -35,11 +33,6 @@ const STATIC_CARDS = [
 		progress: 85,
 	},
 ];
-
-function fmt(sec: number): string {
-	const s = Math.floor(Math.max(0, sec));
-	return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
-}
 
 function CardShell({
 	delay = 0,
@@ -106,197 +99,13 @@ function CoverImg({ src, alt }: { src: string; alt: string }) {
 	);
 }
 
-function CoverPlaceholder() {
-	return (
-		<div className={styles.coverPlaceholder}>
-			<svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-				<path
-					d="M9 18V5l12-2v13"
-					stroke="var(--muted)"
-					strokeWidth="1.5"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-				/>
-				<circle cx="6" cy="18" r="3" stroke="var(--muted)" strokeWidth="1.5" />
-				<circle cx="18" cy="16" r="3" stroke="var(--muted)" strokeWidth="1.5" />
-			</svg>
-		</div>
-	);
-}
-
-function LiveCard() {
-	const positionRef = useRef(0);
-	const durationRef = useRef(0);
-	const isPlayingRef = useRef(false);
-	const lastTickTimeRef = useRef<number | null>(null);
-	const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
-	const wsRef = useRef<WebSocket | null>(null);
-	const reconnRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-	const [data, setData] = useState<WsPayload | null>(null);
-	const [connected, setConnected] = useState(false);
-	const [, forceUpdate] = useState(0);
-
-	function startTick() {
-		if (tickRef.current) clearInterval(tickRef.current);
-		lastTickTimeRef.current = performance.now();
-		tickRef.current = setInterval(() => {
-			if (!isPlayingRef.current) return;
-			const now = performance.now();
-			const elapsed = (now - (lastTickTimeRef.current ?? now)) / 1000;
-			lastTickTimeRef.current = now;
-			positionRef.current = Math.min(
-				positionRef.current + elapsed,
-				durationRef.current,
-			);
-			forceUpdate((n) => n + 1);
-		}, 500);
-	}
-
-	function stopTick() {
-		if (tickRef.current) {
-			clearInterval(tickRef.current);
-			tickRef.current = null;
-		}
-		lastTickTimeRef.current = null;
-	}
-
-	function applyPayload(raw: WsPayload) {
-		positionRef.current = raw.positionSec ?? 0;
-		durationRef.current = raw.durationSec ?? 0;
-		isPlayingRef.current = raw.playerState === "playing";
-		setData(raw);
-
-		if (isPlayingRef.current) {
-			startTick();
-		} else {
-			stopTick();
-			forceUpdate((n) => n + 1);
-		}
-	}
-
-	useEffect(() => {
-		function onVisibilityChange() {
-			if (document.visibilityState === "visible") {
-				lastTickTimeRef.current = performance.now();
-			} else {
-				lastTickTimeRef.current = null;
-			}
-		}
-		document.addEventListener("visibilitychange", onVisibilityChange);
-		return () =>
-			document.removeEventListener("visibilitychange", onVisibilityChange);
-	}, []);
-
-	useEffect(() => {
-		function connect() {
-			if (wsRef.current && wsRef.current.readyState < 2) return;
-			let ws: WebSocket;
-			try {
-				ws = new WebSocket("ws://127.0.0.1:6972");
-			} catch {
-				reconnRef.current = setTimeout(connect, 3000);
-				return;
-			}
-			wsRef.current = ws;
-
-			ws.onopen = () => setConnected(true);
-
-			ws.onmessage = (e: MessageEvent) => {
-				try {
-					applyPayload(JSON.parse(e.data as string) as WsPayload);
-				} catch (err) {
-					console.error("[NM-WS] parse error:", err, e.data);
-				}
-			};
-
-			ws.onerror = () => {};
-
-			ws.onclose = () => {
-				setConnected(false);
-				isPlayingRef.current = false;
-				stopTick();
-				reconnRef.current = setTimeout(connect, 3000);
-			};
-		}
-
-		connect();
-		return () => {
-			wsRef.current?.close();
-			if (reconnRef.current) clearTimeout(reconnRef.current);
-			stopTick();
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
-	const pos = positionRef.current;
-	const dur = durationRef.current;
-	const isPlaying = isPlayingRef.current;
-	const progress = dur > 0 ? Math.min((pos / dur) * 100, 100) : 0;
-
-	if (!data) {
-		const c = STATIC_CARDS[0];
-		return (
-			<CardShell
-				delay={0}
-				statusDot={
-					<span
-						className={styles.dot}
-						style={{ background: "var(--border)" }}
-						title="Offline"
-					/>
-				}
-				cover={<CoverImg src={c.cover} alt={c.title} />}
-				title={c.title}
-				artist={c.artist}
-				timeRow={
-					<ProgressRow
-						elapsed={c.elapsed}
-						progress={c.progress}
-						total={c.total}
-					/>
-				}
-			/>
-		);
-	}
-
-	return (
-		<CardShell
-			delay={0}
-			live={connected && isPlaying}
-			statusDot={
-				<span
-					className={`${styles.dot} ${
-						!connected ? "" : isPlaying ? styles.dotLive : styles.dotPaused
-					}`}
-					style={!connected ? { background: "var(--border)" } : undefined}
-					title={!connected ? "Offline" : isPlaying ? "Playing" : "Paused"}
-				/>
-			}
-			cover={
-				data.img ? (
-					<CoverImg src={data.img} alt={data.title ?? ""} />
-				) : (
-					<CoverPlaceholder />
-				)
-			}
-			title={data.title ?? "-"}
-			artist={data.artists || "-"}
-			timeRow={
-				<ProgressRow elapsed={fmt(pos)} progress={progress} total={fmt(dur)} />
-			}
-		/>
-	);
-}
-
 export default function AppPreview() {
 	return (
 		<div className={styles.stack}>
-			<LiveCard />
-			{STATIC_CARDS.slice(1).map((c, i) => (
+			{STATIC_CARDS.map((c, i) => (
 				<CardShell
 					key={i}
-					delay={(i + 1) * 0.08}
+					delay={i * 0.08}
 					cover={<CoverImg src={c.cover} alt={c.title} />}
 					title={c.title}
 					artist={c.artist}
