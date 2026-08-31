@@ -20,13 +20,13 @@
 		transform 0.2s;
 
 	&:hover {
-		border-color: rgba(43, 254, 245, 0.25);
+		border-color: var(--accent-border);
 		transform: translateX(-3px);
 	}
 }
 
 .cardLive {
-	border-color: rgba(43, 254, 245, 0.2);
+	border-color: var(--accent-border);
 }
 
 @keyframes slideIn {

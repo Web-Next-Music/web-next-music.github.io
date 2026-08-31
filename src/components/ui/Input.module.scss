@@ -1,0 +1,90 @@
+@use "../../styles/mixins" as mx;
+
+.wrap {
+	position: relative;
+	display: flex;
+	align-items: center;
+	width: 100%;
+}
+
+.input {
+	width: 100%;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	color: var(--text);
+	font-family: var(--font-base);
+	font-weight: 700;
+	outline: none;
+	transition: border-color var(--dur-slow) var(--ease-out);
+
+	&::placeholder {
+		color: var(--muted);
+	}
+
+	&:focus {
+		border-color: var(--accent-border-strong);
+	}
+
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+}
+
+.size-sm {
+	height: var(--control-h-sm);
+	padding: 0 var(--space-3);
+	font-size: var(--fs-xs);
+}
+
+.size-md {
+	height: var(--control-h-md);
+	padding: 0 var(--space-3);
+	font-size: var(--fs-sm);
+}
+
+.radius-sm {
+	border-radius: var(--radius-sm);
+}
+
+.radius-lg {
+	border-radius: var(--radius-xl);
+}
+
+.radius-pill {
+	border-radius: var(--radius-pill);
+}
+
+.hasLeft {
+	padding-left: 34px;
+}
+
+.hasRight {
+	padding-right: 34px;
+}
+
+.invalid {
+	border-color: var(--danger-border-strong);
+
+	&:focus {
+		border-color: var(--danger);
+	}
+}
+
+.icon {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	color: var(--muted);
+}
+
+.iconLeft {
+	left: var(--space-3);
+	pointer-events: none;
+}
+
+.iconRight {
+	right: var(--space-2);
+}

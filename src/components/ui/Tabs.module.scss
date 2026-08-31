@@ -1,0 +1,159 @@
+@use "../../styles/mixins" as mx;
+@use "../../styles/breakpoints" as bp;
+
+.bar {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.scrollable {
+	@include mx.hide-scrollbar;
+	overflow-x: auto;
+	flex-wrap: nowrap;
+}
+
+.tab {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2);
+	border: 1px solid transparent;
+	background: transparent;
+	font-family: var(--font-heading-large);
+	font-weight: 700;
+	color: var(--muted);
+	cursor: pointer;
+	white-space: nowrap;
+	position: relative;
+	transition:
+		color var(--dur-base) var(--ease-out),
+		background var(--dur-base) var(--ease-out),
+		border-color var(--dur-base) var(--ease-out);
+
+	&:hover:not(:disabled) {
+		color: var(--text);
+	}
+
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+}
+
+.tabIcon {
+	display: inline-flex;
+	align-items: center;
+	flex: 0 0 auto;
+}
+
+.size-sm .tab {
+	padding: 6px 12px;
+	font-size: 12px;
+}
+
+.size-md .tab {
+	padding: 8px 16px;
+	font-size: 13px;
+}
+
+.count {
+	font-size: 11px;
+	font-family: var(--font-base);
+	font-weight: 700;
+	background: var(--surface2);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-2xl);
+	padding: 1px 7px;
+	color: var(--muted);
+}
+
+.tab.active .count {
+	background: var(--accent-surface);
+	border-color: var(--accent-border);
+	color: var(--accent);
+}
+
+.folder {
+	padding: 0 10px;
+	margin-bottom: -1px;
+	position: relative;
+	z-index: var(--z-base);
+}
+
+.folder .tab {
+	border-color: var(--border);
+	border-bottom: none;
+	border-radius: 9px 9px 0 0;
+	background: var(--surface2);
+
+	&::after {
+		content: "";
+		position: absolute;
+		bottom: -1px;
+		left: 0;
+		right: 0;
+		height: 1px;
+		background: var(--surface2);
+		transition: background var(--dur-base) var(--ease-out);
+	}
+}
+
+.folder .tab.active {
+	color: var(--accent);
+	background: var(--surface);
+
+	&::after {
+		background: var(--surface);
+	}
+}
+
+.underline .tab {
+	border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+	border-color: var(--border);
+	border-bottom: none;
+	background: var(--surface2);
+
+	&::after {
+		content: "";
+		position: absolute;
+		bottom: -1px;
+		left: 0;
+		right: 0;
+		height: 1px;
+		background: var(--surface2);
+	}
+}
+
+.underline .tab.active {
+	color: var(--accent);
+	background: var(--surface);
+
+	&::after {
+		background: var(--surface);
+	}
+}
+
+.segmented {
+	background: var(--surface2);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-md);
+	padding: 3px;
+	gap: 2px;
+}
+
+.segmented .tab {
+	border-radius: var(--radius-xs);
+}
+
+.segmented .tab.active {
+	background: var(--surface);
+	border-color: var(--border);
+	color: var(--accent);
+}
+
+@include bp.mobile {
+	.size-md .tab {
+		padding: 6px 12px;
+		font-size: 12px;
+	}
+}

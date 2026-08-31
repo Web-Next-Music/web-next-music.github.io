@@ -7,7 +7,10 @@ import Footer from "@/components/layout/Footer";
 import Select from "@/components/ui/Select";
 import Callout from "@/components/ui/Callout";
 import Button from "@/components/ui/Button";
-import SignInCard from "@/components/ui/SignInCard";
+import Input from "@/components/ui/Input";
+import Switch from "@/components/ui/Switch";
+import Textarea from "@/components/ui/Textarea";
+import SignInCard from "@/components/common/SignInCard";
 import { useAuth } from "@/lib/auth";
 import {
 	fetchLaSettings,
@@ -290,7 +293,7 @@ export default function LaSettingsClient() {
 
 									<div className={styles.field}>
 										<span className={styles.label}>Cover URL</span>
-										<input
+										<Input
 											className={styles.input}
 											placeholder="https://example.com/cover.png"
 											value={draft.serverCoverUrl ?? ""}
@@ -305,7 +308,7 @@ export default function LaSettingsClient() {
 
 									<div className={styles.field}>
 										<span className={styles.label}>Name</span>
-										<input
+										<Input
 											className={styles.input}
 											value={draft.name ?? ""}
 											onChange={(e) =>
@@ -319,7 +322,7 @@ export default function LaSettingsClient() {
 
 									<div className={styles.field}>
 										<span className={styles.label}>Description</span>
-										<textarea
+										<Textarea
 											className={styles.textarea}
 											value={draft.description ?? ""}
 											onChange={(e) =>
@@ -367,19 +370,12 @@ export default function LaSettingsClient() {
 
 									<div className={styles.toggleRow}>
 										<span className={styles.label}>Allow dev clients</span>
-										<label className={styles.switch}>
-											<input
-												type="checkbox"
-												checked={draft.devMode ?? false}
-												onChange={(e) =>
-													setDraft((d) => ({
-														...d,
-														devMode: e.target.checked,
-													}))
-												}
-											/>
-											<span className={styles.switchTrack} />
-										</label>
+										<Switch
+											checked={draft.devMode ?? false}
+											onCheckedChange={(devMode) =>
+												setDraft((d) => ({ ...d, devMode }))
+											}
+										/>
 									</div>
 								</div>
 

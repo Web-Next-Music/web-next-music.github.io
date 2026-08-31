@@ -1,27 +1,21 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import TrackLink from "./TrackLink";
 import {
 	Loader as LoaderIcon,
 	Pause as PauseIcon,
 	Play as PlayIcon,
-	Plus as PlusIcon,
-	Check as CheckIcon,
 	X as XIcon,
 	Music as MusicIcon,
 } from "lucide-react";
 import { usePlayer } from "@/lib/miniplayer/context";
-import { useAuth } from "@/lib/auth";
 import { encodeTrackKey, decodeTrackKey } from "@/lib/track/trackKey";
-import {
-	getPlaylistTracks,
-	addTrackToPlaylist,
-	removeTrackFromPlaylist,
-	type Playlist,
-} from "@/lib/supabase/playlists";
+import type { Playlist } from "@/lib/supabase/playlists";
 import type { TrackLikeMeta } from "@/lib/supabase/likesContext";
+import { cx } from "@/lib/cx";
+import IconButton from "@/components/ui/IconButton";
+import AddToPlaylistMenu from "./AddToPlaylistMenu";
 import LikeButton from "./LikeButton";
 import styles from "./TrackRow.module.scss";
 
@@ -104,10 +98,12 @@ function PlayBtn({
 	};
 
 	return (
-		<button
-			className={`${styles.playBtn} ${isThis ? styles.playBtnActive : ""}`}
+		<IconButton
+			label={active ? "Pause" : "Play"}
+			variant="surface"
+			active={isThis}
+			className={styles.playBtn}
 			onClick={handleClick}
-			aria-label={active ? "Pause" : "Play"}
 		>
 			{loading ? (
 				<LoaderIcon size={13} />
@@ -116,122 +112,7 @@ function PlayBtn({
 			) : (
 				<PlayIcon size={13} />
 			)}
-		</button>
-	);
-}
-
-function AddToPlaylistMenu({
-	trackId,
-	playlists,
-}: {
-	trackId: string;
-	playlists: Playlist[];
-}) {
-	const { user, isBanned } = useAuth();
-	const [open, setOpen] = useState(false);
-	const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
-	const [inPlaylists, setInPlaylists] = useState<Set<string>>(new Set());
-	const btnRef = useRef<HTMLButtonElement>(null);
-	const menuRef = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		if (!open) return;
-		const handler = (e: MouseEvent) => {
-			if (
-				!btnRef.current?.contains(e.target as Node) &&
-				!menuRef.current?.contains(e.target as Node)
-			)
-				setOpen(false);
-		};
-		document.addEventListener("mousedown", handler);
-		return () => document.removeEventListener("mousedown", handler);
-	}, [open]);
-
-	if (!user || isBanned || playlists.length === 0) return null;
-
-	const handleOpen = async (e: React.MouseEvent) => {
-		e.preventDefault();
-		e.stopPropagation();
-		if (isBanned) return;
-		if (open) {
-			setOpen(false);
-			return;
-		}
-		if (btnRef.current) {
-			const rect = btnRef.current.getBoundingClientRect();
-			setPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
-		}
-		const results = await Promise.all(
-			playlists.map((pl) => getPlaylistTracks(pl.id)),
-		);
-		const containing = new Set<string>();
-		playlists.forEach((pl, i) => {
-			if (results[i].some((t) => t.track_id === trackId)) containing.add(pl.id);
-		});
-		setInPlaylists(containing);
-		setOpen(true);
-	};
-
-	const handleToggle = async (e: React.MouseEvent, playlistId: string) => {
-		e.preventDefault();
-		e.stopPropagation();
-		const isIn = inPlaylists.has(playlistId);
-		if (isIn) {
-			await removeTrackFromPlaylist(playlistId, trackId);
-			setInPlaylists((prev) => {
-				const s = new Set(prev);
-				s.delete(playlistId);
-				return s;
-			});
-		} else {
-			await addTrackToPlaylist(playlistId, trackId, 0);
-			setInPlaylists((prev) => new Set(prev).add(playlistId));
-		}
-	};
-
-	return (
-		<>
-			<button
-				ref={btnRef}
-				className={styles.actionBtn}
-				onClick={handleOpen}
-				disabled={isBanned}
-				aria-label="Add to playlist"
-				title={isBanned ? "Your account is banned" : "Add to playlist"}
-				style={isBanned ? { opacity: 0.4, cursor: "not-allowed" } : undefined}
-			>
-				<PlusIcon size={13} />
-			</button>
-			{open &&
-				pos &&
-				typeof document !== "undefined" &&
-				createPortal(
-					<div
-						ref={menuRef}
-						className={styles.menu}
-						style={{ top: pos.top, right: pos.right }}
-						onClick={(e) => {
-							e.preventDefault();
-							e.stopPropagation();
-						}}
-					>
-						{playlists.map((pl) => {
-							const isIn = inPlaylists.has(pl.id);
-							return (
-								<button
-									key={pl.id}
-									className={`${styles.menuItem} ${isIn ? styles.menuItemActive : ""}`}
-									onClick={(e) => handleToggle(e, pl.id)}
-								>
-									<span>{pl.name}</span>
-									{isIn && <CheckIcon size={12} />}
-								</button>
-							);
-						})}
-					</div>,
-					document.body,
-				)}
-		</>
+		</IconButton>
 	);
 }
 
@@ -266,7 +147,7 @@ export default function TrackRow({
 	return (
 		<TrackLink
 			href={href}
-			className={`${styles.row} ${isThis ? styles.rowActive : ""}`}
+			className={cx(styles.row, isThis && styles.rowActive)}
 		>
 			<span className={styles.num}>{index + 1}</span>
 			<div className={styles.cover}>
@@ -308,17 +189,17 @@ export default function TrackRow({
 					/>
 				)}
 				{onRemove && (
-					<button
-						className={`${styles.actionBtn} ${styles.actionBtnRemove}`}
+					<IconButton
+						label="Remove"
+						variant="danger"
 						onClick={(e) => {
 							e.preventDefault();
 							e.stopPropagation();
 							onRemove(e);
 						}}
-						aria-label="Remove"
 					>
 						<XIcon size={12} />
-					</button>
+					</IconButton>
 				)}
 				<PlayBtn
 					trackId={trackId}

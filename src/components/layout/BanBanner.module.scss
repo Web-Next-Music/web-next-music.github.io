@@ -1,0 +1,18 @@
+.banner {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: var(--z-banner);
+	background: var(--danger);
+	color: #fff;
+	text-align: center;
+	padding: var(--space-2) var(--space-4);
+	font-size: var(--fs-sm);
+	font-weight: 500;
+	line-height: 1.4;
+}
+
+.spacer {
+	height: var(--ban-banner-h, 0px);
+}

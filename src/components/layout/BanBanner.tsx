@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useAuth } from "@/lib/auth";
+import styles from "./BanBanner.module.scss";
 
 export default function BanBanner() {
 	const { isBanned } = useAuth();
@@ -24,26 +25,10 @@ export default function BanBanner() {
 
 	return (
 		<>
-			<div
-				ref={ref}
-				style={{
-					background: "#c0392b",
-					color: "#fff",
-					textAlign: "center",
-					padding: "8px 16px",
-					fontSize: "13px",
-					fontWeight: 500,
-					lineHeight: 1.4,
-					position: "fixed",
-					top: 0,
-					left: 0,
-					right: 0,
-					zIndex: 101,
-				}}
-			>
+			<div ref={ref} className={styles.banner}>
 				Your account has been banned
 			</div>
-			<div style={{ height: "var(--ban-banner-h, 0px)" }} />
+			<div className={styles.spacer} />
 		</>
 	);
 }

@@ -200,13 +200,7 @@ body {
 	width: 13px;
 	height: 13px;
 	flex-shrink: 0;
-	animation: spin 0.75s linear infinite;
-}
-
-@keyframes spin {
-	to {
-		transform: rotate(360deg);
-	}
+	animation: nm-spin 0.75s linear infinite;
 }
 
 /* Panels */
@@ -465,7 +459,7 @@ body {
 	border: 1px solid var(--border);
 	border-radius: 10px;
 	overflow: hidden;
-	animation: cardIn 0.2s ease;
+	animation: nm-card-in 0.2s ease;
 	flex-shrink: 0;
 }
 
@@ -520,17 +514,6 @@ body {
 		&:hover {
 			background: var(--ignore-bg-btn);
 		}
-	}
-}
-
-@keyframes cardIn {
-	from {
-		opacity: 0;
-		transform: translateY(6px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
 	}
 }
 
@@ -890,7 +873,7 @@ body {
 		transform 0.18s;
 	pointer-events: none;
 	white-space: nowrap;
-	z-index: 200;
+	z-index: var(--z-popover);
 
 	&.toastShow {
 		opacity: 1;

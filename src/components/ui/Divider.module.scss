@@ -1,0 +1,39 @@
+.horizontal {
+	width: 100%;
+	height: 1px;
+	background: var(--border);
+}
+
+.vertical {
+	align-self: stretch;
+	width: 1px;
+	background: var(--border);
+}
+
+.gap-none {
+	margin: 0;
+}
+
+.horizontal.gap-sm {
+	margin: var(--space-2) 0;
+}
+
+.horizontal.gap-md {
+	margin: var(--space-4) 0;
+}
+
+.horizontal.gap-lg {
+	margin: var(--space-6) 0;
+}
+
+.vertical.gap-sm {
+	margin: 0 var(--space-2);
+}
+
+.vertical.gap-md {
+	margin: 0 var(--space-4);
+}
+
+.vertical.gap-lg {
+	margin: 0 var(--space-6);
+}

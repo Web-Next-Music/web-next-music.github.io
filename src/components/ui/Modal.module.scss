@@ -1,0 +1,96 @@
+@use "../../styles/mixins" as mx;
+@use "../../styles/breakpoints" as bp;
+
+.overlay {
+	position: fixed;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--space-5);
+	background: rgba(0, 0, 0, 0.7);
+	backdrop-filter: blur(4px);
+	z-index: var(--z-overlay);
+	animation: nm-fade-in var(--dur-slow) var(--ease-out);
+}
+
+.box {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	max-height: 85vh;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-xl);
+	box-shadow: var(--shadow-overlay);
+	z-index: var(--z-modal);
+	animation: nm-modal-in var(--dur-slow) var(--ease-out);
+}
+
+.size-sm {
+	max-width: 380px;
+}
+
+.size-md {
+	max-width: 520px;
+}
+
+.size-lg {
+	max-width: 760px;
+}
+
+.size-full {
+	max-width: min(1100px, 100%);
+	height: 85vh;
+}
+
+.head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-3);
+	padding: var(--space-4) var(--space-5);
+	border-bottom: 1px solid var(--border);
+}
+
+.title {
+	font-size: var(--fs-lg);
+	color: var(--text);
+}
+
+.close {
+	margin-left: auto;
+}
+
+.body {
+	@include mx.thin-scrollbar;
+	flex: 1 1 auto;
+	overflow-y: auto;
+	padding: var(--space-5);
+	font-size: var(--fs-sm);
+	color: var(--text);
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--space-2);
+	padding: var(--space-4) var(--space-5);
+	border-top: 1px solid var(--border);
+}
+
+@include bp.mobile {
+	.overlay {
+		padding: var(--space-3);
+	}
+
+	.head,
+	.footer {
+		padding: var(--space-3) var(--space-4);
+	}
+
+	.body {
+		padding: var(--space-4);
+	}
+}

@@ -68,9 +68,9 @@
 	flex-direction: column;
 	background: var(--surface);
 	border: 1px solid var(--border);
-	border-radius: 16px;
-	padding: 20px;
-	gap: 20px;
+	border-radius: var(--radius-xl);
+	padding: var(--space-5);
+	gap: var(--space-5);
 }
 
 .notice {
@@ -100,8 +100,8 @@
 .section {
 	background: var(--surface2, var(--surface));
 	border: 1px solid var(--border);
-	border-radius: 14px;
-	padding: 20px;
+	border-radius: var(--radius-lg);
+	padding: var(--space-5);
 }
 
 .sectionTitle {
@@ -139,24 +139,14 @@
 
 .input {
 	background: var(--surface2, var(--surface));
-	border: 1px solid var(--border);
-	border-radius: 8px;
-	padding: 10px 12px;
-	color: inherit;
-	font-family: var(--font-base);
+	height: var(--control-h-lg);
 	font-size: 0.84rem;
-	outline: none;
-	transition: border-color 0.15s ease;
-
-	&:focus {
-		border-color: var(--accent);
-	}
 }
 
 .textarea {
-	composes: input;
-	resize: vertical;
+	background: var(--surface2, var(--surface));
 	min-height: 76px;
+	font-size: 0.84rem;
 	line-height: 1.5;
 }
 
@@ -174,51 +164,6 @@
 	align-items: center;
 	justify-content: space-between;
 	margin-top: 18px;
-}
-
-.switch {
-	position: relative;
-	display: inline-block;
-	flex-shrink: 0;
-	width: 40px;
-	height: 22px;
-
-	input {
-		position: absolute;
-		inset: 0;
-		margin: 0;
-		opacity: 0;
-		cursor: pointer;
-		z-index: 1;
-	}
-}
-
-.switchTrack {
-	position: absolute;
-	inset: 0;
-	background: var(--border);
-	border-radius: 999px;
-	transition: background 0.2s ease;
-
-	&::before {
-		content: "";
-		position: absolute;
-		top: 2px;
-		left: 2px;
-		width: 18px;
-		height: 18px;
-		border-radius: 50%;
-		background: #fff;
-		transition: transform 0.2s ease;
-	}
-}
-
-.switch input:checked + .switchTrack {
-	background: var(--accent);
-}
-
-.switch input:checked + .switchTrack::before {
-	transform: translateX(18px);
 }
 
 .saveBar {

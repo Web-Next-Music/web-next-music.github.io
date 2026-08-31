@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
-import styles from "./ExperimentsView.module.scss";
+import SearchInput from "@/components/ui/SearchInput";
 import Select from "@components/ui/Select";
+import styles from "./ExperimentsView.module.scss";
 
 // Row height (item height + gap) must match the CSS values in experiments.module.scss
 const ROW_H = 36;
@@ -214,37 +215,16 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 			{/* Right panel: sticky toolbar + scrollable list */}
 			<div ref={rightRef} className={styles.right}>
 				<div className={styles.toolbar}>
-					<div className={styles.searchWrap}>
-						<svg
-							className={styles.searchIcon}
-							width="14"
-							height="14"
-							viewBox="0 0 24 24"
-							fill="none"
-						>
-							<circle
-								cx="11"
-								cy="11"
-								r="8"
-								stroke="currentColor"
-								strokeWidth="2"
-							/>
-							<path
-								d="m21 21-4.35-4.35"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-							/>
-						</svg>
-						<input
-							className={styles.searchInput}
-							type="text"
-							placeholder="Search experiments…"
-							value={query}
-							onChange={(e) => setQuery(e.target.value)}
-							spellCheck={false}
-						/>
-					</div>
+					<SearchInput
+						radius="pill"
+						size="sm"
+						placeholder="Search experiments…"
+						value={query}
+						onChange={(e) => setQuery(e.target.value)}
+						onClear={() => setQuery("")}
+						spellCheck={false}
+						wrapperClassName={styles.searchWrap}
+					/>
 					<div className={styles.toolbarRight}>
 						{(query || platform !== "all") && (
 							<span className={styles.resultCount}>

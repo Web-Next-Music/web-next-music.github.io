@@ -4,7 +4,7 @@
 	align-items: center;
 	justify-content: center;
 	height: 100%;
-	background: var(--background);
+	background: var(--bg);
 	gap: 20px;
 }
 
@@ -24,13 +24,13 @@
 	font-family: var(--font-nunito);
 	font-size: 1.5rem;
 	font-weight: 700;
-	color: var(--foreground);
+	color: var(--text);
 }
 
 .errorBlock {
 	background: var(--surface);
 	border: 1px solid var(--border);
-	border-radius: 10px;
+	border-radius: var(--radius-md);
 	padding: 12px 20px;
 	max-width: 50%;
 	width: 90%;

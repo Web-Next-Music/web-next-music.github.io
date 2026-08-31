@@ -88,7 +88,7 @@
 	white-space: nowrap;
 
 	&:hover {
-		background: rgba(43, 254, 245, 0.08);
+		background: var(--accent-surface);
 		border-color: var(--accent);
 		color: var(--accent);
 	}

@@ -1,9 +1,13 @@
 "use client";
 import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Blocks, Palette, Download, Search } from "lucide-react";
+import { Blocks, Palette, Download } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import Modal from "@/components/ui/Modal";
+import SearchInput from "@/components/ui/SearchInput";
 import Select from "@components/ui/Select";
+import Skeleton from "@/components/ui/Skeleton";
+import Tabs from "@/components/ui/Tabs";
 import styles from "./StoreFeed.module.scss";
 import { Extension, Tag } from "@/lib/addons/addonCache";
 import { useExtensions } from "@/lib/store/useExtensions";
@@ -66,56 +70,49 @@ function DownloadModal({
 	onClose: () => void;
 }) {
 	return (
-		<div
-			className={styles.modalBg}
-			onClick={(e) => e.target === e.currentTarget && onClose()}
+		<Modal
+			open
+			onClose={onClose}
+			size="sm"
+			title={`Download - ${ext.name}`}
+			bodyClassName={styles.modalBoxBody}
 		>
-			<div className={styles.modalBox}>
-				<div className={styles.modalBoxHead}>
-					<span className={styles.modalBoxTitle}>Download - {ext.name}</span>
-					<button className={styles.modalBoxClose} onClick={onClose}>
-						<span style={{ fontSize: 12 }}>✕</span>
-					</button>
-				</div>
-				<div className={styles.modalBoxBody}>
-					<div className={styles.downloadOptions}>
-						{ext.releaseAssets.map((asset) => (
-							<a
-								key={asset.name}
-								href={asset.url}
-								className={styles.dlOption}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								<div className={styles.dlOptionInfo}>
-									<div className={styles.dlOptionLabel}>{asset.name}</div>
-								</div>
-								<span className={styles.dlOptionBadge}>{asset.ext}</span>
-							</a>
-						))}
-						{ext.downloadZip && (
-							<a
-								href={ext.downloadZip}
-								className={styles.dlOption}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								<div className={styles.dlOptionInfo}>
-									<div className={styles.dlOptionLabel}>Source ZIP</div>
-									<div className={styles.dlOptionSub}>
-										Full repository source code
-									</div>
-								</div>
-								<span className={styles.dlOptionBadge}>.zip</span>
-							</a>
-						)}
-						{!ext.releaseAssets.length && !ext.downloadZip && (
-							<p className={styles.dlOptionNone}>No downloads available yet.</p>
-						)}
-					</div>
-				</div>
+			<div className={styles.downloadOptions}>
+				{ext.releaseAssets.map((asset) => (
+					<a
+						key={asset.name}
+						href={asset.url}
+						className={styles.dlOption}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						<div className={styles.dlOptionInfo}>
+							<div className={styles.dlOptionLabel}>{asset.name}</div>
+						</div>
+						<span className={styles.dlOptionBadge}>{asset.ext}</span>
+					</a>
+				))}
+				{ext.downloadZip && (
+					<a
+						href={ext.downloadZip}
+						className={styles.dlOption}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						<div className={styles.dlOptionInfo}>
+							<div className={styles.dlOptionLabel}>Source ZIP</div>
+							<div className={styles.dlOptionSub}>
+								Full repository source code
+							</div>
+						</div>
+						<span className={styles.dlOptionBadge}>.zip</span>
+					</a>
+				)}
+				{!ext.releaseAssets.length && !ext.downloadZip && (
+					<p className={styles.dlOptionNone}>No downloads available yet.</p>
+				)}
 			</div>
-		</div>
+		</Modal>
 	);
 }
 
@@ -223,38 +220,40 @@ export default function NextMusicStore() {
 			) : (
 				<>
 					<div className={styles.tabs}>
-						<div className={styles.tabsInner}>
-							<button
-								className={`${styles.tab} ${activeTab === "addons" ? styles.tabActive : ""}`}
-								onClick={() => setActiveTab("addons")}
-							>
-								<Blocks size={14} /> Addons
-								<span className={styles.tabCount}>{filteredAddons.length}</span>
-							</button>
-							<button
-								className={`${styles.tab} ${activeTab === "themes" ? styles.tabActive : ""}`}
-								onClick={() => setActiveTab("themes")}
-							>
-								<Palette size={14} /> Themes
-								<span className={styles.tabCount}>{filteredThemes.length}</span>
-							</button>
-						</div>
+						<Tabs
+							className={styles.tabsInner}
+							variant="folder"
+							value={activeTab}
+							onChange={setActiveTab}
+							aria-label="Extension type"
+							items={[
+								{
+									value: "addons" as const,
+									label: "Addons",
+									icon: <Blocks size={14} />,
+									count: filteredAddons.length,
+								},
+								{
+									value: "themes" as const,
+									label: "Themes",
+									icon: <Palette size={14} />,
+									count: filteredThemes.length,
+								},
+							]}
+						/>
 					</div>
 
 					<div className={styles.toolbar}>
 						<div className={styles.toolbarInner}>
-							<div className={styles.searchWrap}>
-								<span className={styles.searchIcon}>
-									<Search size={14} />
-								</span>
-								<input
-									className={styles.searchInput}
-									type="text"
-									placeholder="Search extensions…"
-									value={searchQuery}
-									onChange={(e) => setSearchQuery(e.target.value)}
-								/>
-							</div>
+							<SearchInput
+								radius="pill"
+								size="sm"
+								placeholder="Search extensions…"
+								value={searchQuery}
+								onChange={(e) => setSearchQuery(e.target.value)}
+								onClear={() => setSearchQuery("")}
+								wrapperClassName={styles.searchWrap}
+							/>
 							<div className={styles.filterWrap}>
 								<Select
 									value={activeTag}
@@ -281,8 +280,10 @@ export default function NextMusicStore() {
 								</div>
 								<div className={styles.loadingGrid}>
 									{Array.from({ length: 6 }).map((_, idx) => (
-										<div
+										<Skeleton
 											key={idx}
+											variant="block"
+											radius="lg"
 											className={styles.skeletonCard}
 											style={{ animationDelay: `${idx * 100}ms` }}
 										/>

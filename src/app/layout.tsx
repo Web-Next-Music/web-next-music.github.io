@@ -11,10 +11,10 @@ import { ThemeProvider } from "@/lib/theme";
 import { PlayerProvider } from "@/lib/miniplayer";
 import { AuthProvider } from "@/lib/auth";
 import { LikesProvider } from "@/lib/supabase/likesContext";
-import AuthModal from "@/components/ui/AuthModal";
+import AuthModal from "@/components/common/AuthModal";
 import BanBanner from "@/components/layout/BanBanner";
 import { AppWrapper } from "@/components/layout/AppWrapper";
-import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import "./globals.scss";
 
 export const metadata: Metadata = {

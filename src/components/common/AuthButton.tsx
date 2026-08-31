@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { syncGithubStar } from "@/lib/supabase/publicProfile";
 import { checkDDetectorAccess } from "@/lib/track/ddetector";
+import { cx } from "@/lib/cx";
+import Menu from "@/components/ui/Menu";
+import menuStyles from "@/components/ui/Menu.module.scss";
 import styles from "./AuthButton.module.scss";
 
 const starredCache = new Map<string, boolean>();
@@ -21,16 +24,8 @@ export default function AuthButton() {
 	const [isDDetector, setIsDDetector] = useState(() =>
 		user?.id ? (ddetectorCache.get(user.id) ?? false) : false,
 	);
-	const ref = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		if (!dropdownOpen) return;
-		const handler = (e: MouseEvent) => {
-			if (!ref.current?.contains(e.target as Node)) setDropdownOpen(false);
-		};
-		document.addEventListener("mousedown", handler);
-		return () => document.removeEventListener("mousedown", handler);
-	}, [dropdownOpen]);
+	const anchorRef = useRef<HTMLButtonElement>(null);
+	const closeDropdown = useCallback(() => setDropdownOpen(false), []);
 
 	useEffect(() => {
 		if (!user) return;
@@ -72,9 +67,13 @@ export default function AuthButton() {
 		"?")[0].toUpperCase();
 
 	return (
-		<div ref={ref} className={styles.wrap}>
+		<div className={styles.wrap}>
 			<button
-				className={`${styles.avatarBtn}${githubStarred && !isBanned ? ` ${styles.avatarBtnStarred}` : ""}`}
+				ref={anchorRef}
+				className={cx(
+					styles.avatarBtn,
+					githubStarred && !isBanned && styles.avatarBtnStarred,
+				)}
 				onClick={() => setDropdownOpen((v) => !v)}
 				aria-label="Account menu"
 				title={user.user_metadata?.user_name ?? user.email}
@@ -93,28 +92,56 @@ export default function AuthButton() {
 				</span>
 			)}
 
-			{dropdownOpen && (
-				<div className={styles.dropdown}>
-					<p className={styles.email}>
-						{user.user_metadata?.user_name ?? user.email}
-					</p>
+			<Menu
+				open={dropdownOpen}
+				onClose={closeDropdown}
+				anchorRef={anchorRef}
+				align="end"
+				offset={10}
+				minWidth={200}
+				className={styles.dropdown}
+			>
+				<p className={styles.email}>
+					{user.user_metadata?.user_name ?? user.email}
+				</p>
+				<Link
+					href={`/profile/${user.id}`}
+					className={menuStyles.item}
+					onClick={(e) => {
+						setDropdownOpen(false);
+						if (
+							e.button !== 0 ||
+							e.metaKey ||
+							e.ctrlKey ||
+							e.shiftKey ||
+							e.altKey
+						)
+							return;
+						e.preventDefault();
+						if (window.location.pathname === `/profile/${user.id}`) return;
+						router.push(`/profile?id=${user.id}`);
+					}}
+				>
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+					>
+						<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+						<circle cx="12" cy="7" r="4" />
+					</svg>
+					Profile
+				</Link>
+				{isDDetector && (
 					<Link
-						href={`/profile/${user.id}`}
-						className={styles.dropdownLink}
-						onClick={(e) => {
-							setDropdownOpen(false);
-							if (
-								e.button !== 0 ||
-								e.metaKey ||
-								e.ctrlKey ||
-								e.shiftKey ||
-								e.altKey
-							)
-								return;
-							e.preventDefault();
-							if (window.location.pathname === `/profile/${user.id}`) return;
-							router.push(`/profile?id=${user.id}`);
-						}}
+						href="/ddetector"
+						className={menuStyles.item}
+						onClick={closeDropdown}
 					>
 						<svg
 							width="16"
@@ -126,70 +153,49 @@ export default function AuthButton() {
 							strokeLinecap="round"
 							strokeLinejoin="round"
 						>
-							<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-							<circle cx="12" cy="7" r="4" />
+							<circle cx="11" cy="11" r="8" />
+							<path d="M21 21l-4.35-4.35" />
+							<path d="M11 8v6M8 11h6" />
 						</svg>
-						Profile
+						DDetector
 					</Link>
-					{isDDetector && (
-						<Link
-							href="/ddetector"
-							className={styles.dropdownLink}
-							onClick={() => setDropdownOpen(false)}
-						>
-							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							>
-								<circle cx="11" cy="11" r="8" />
-								<path d="M21 21l-4.35-4.35" />
-								<path d="M11 8v6M8 11h6" />
-							</svg>
-							DDetector
-						</Link>
-					)}
-					<button
-						className={styles.signOutBtn}
-						onClick={async () => {
-							setDropdownOpen(false);
-							await signOut();
-						}}
-					>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-							<path
-								d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-							<polyline
-								points="16 17 21 12 16 7"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-							<line
-								x1="21"
-								y1="12"
-								x2="9"
-								y2="12"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-							/>
-						</svg>
-						Sign Out
-					</button>
-				</div>
-			)}
+				)}
+				<button
+					type="button"
+					className={cx(menuStyles.item, menuStyles.danger)}
+					onClick={async () => {
+						setDropdownOpen(false);
+						await signOut();
+					}}
+				>
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+						<path
+							d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						/>
+						<polyline
+							points="16 17 21 12 16 7"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						/>
+						<line
+							x1="21"
+							y1="12"
+							x2="9"
+							y2="12"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+						/>
+					</svg>
+					Sign Out
+				</button>
+			</Menu>
 		</div>
 	);
 }

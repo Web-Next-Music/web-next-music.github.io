@@ -11,7 +11,9 @@ import {
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import LikeButton from "@/components/ui/LikeButton";
+import LikeButton from "@/components/common/LikeButton";
+import Button from "@/components/ui/Button";
+import Modal from "@/components/ui/Modal";
 import { usePlayer } from "@/lib/miniplayer";
 import {
 	ensureTracksLoaded,
@@ -792,116 +794,36 @@ function TrackPageContent({
 					)}
 				</div>
 			</div>
-			{showDownloadError && (
-				<div
-					style={{
-						position: "fixed",
-						inset: 0,
-						backgroundColor: "rgba(0, 0, 0, 0.5)",
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-						zIndex: 1000,
-					}}
-					onClick={() => setShowDownloadError(false)}
-				>
-					<div
-						style={{
-							backgroundColor: "var(--surface)",
-							border: "1px solid var(--border)",
-							borderRadius: "12px",
-							padding: "24px",
-							maxWidth: "400px",
-							boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
-						}}
-						onClick={(e) => e.stopPropagation()}
-					>
-						<h2
-							style={{
-								fontSize: "18px",
-								fontWeight: "700",
-								color: "var(--text)",
-								margin: "0 0 12px 0",
+			<Modal
+				open={showDownloadError}
+				onClose={() => setShowDownloadError(false)}
+				size="sm"
+				title="Download Error"
+				footer={
+					<>
+						<Button
+							variant="secondary"
+							size="sm"
+							onClick={() => setShowDownloadError(false)}
+						>
+							Cancel
+						</Button>
+						<Button
+							size="sm"
+							disabled={isDownloading}
+							onClick={() => {
+								downloadDirect(directUrl);
+								setShowDownloadError(false);
 							}}
 						>
-							Download Error
-						</h2>
-						<p
-							style={{
-								fontSize: "14px",
-								color: "var(--muted)",
-								margin: "0 0 20px 0",
-								lineHeight: "1.5",
-							}}
-						>
-							Failed to download track with metadata. Would you like to download
-							the track directly without metadata instead?
-						</p>
-						<div
-							style={{
-								display: "flex",
-								gap: "10px",
-								justifyContent: "flex-end",
-							}}
-						>
-							<button
-								onClick={() => setShowDownloadError(false)}
-								style={{
-									backgroundColor: "var(--surface2)",
-									border: "1px solid var(--border)",
-									borderRadius: "8px",
-									padding: "8px 16px",
-									fontSize: "13px",
-									fontWeight: "500",
-									color: "var(--text)",
-									cursor: "pointer",
-									transition: "all 0.15s",
-								}}
-								onMouseEnter={(e) => {
-									e.currentTarget.style.borderColor = "var(--accent)";
-									e.currentTarget.style.color = "var(--accent)";
-								}}
-								onMouseLeave={(e) => {
-									e.currentTarget.style.borderColor = "var(--border)";
-									e.currentTarget.style.color = "var(--text)";
-								}}
-							>
-								Cancel
-							</button>
-							<button
-								onClick={() => {
-									downloadDirect(directUrl);
-									setShowDownloadError(false);
-								}}
-								disabled={isDownloading}
-								style={{
-									backgroundColor: "rgba(43, 254, 245, 0.1)",
-									border: "1px solid rgba(43, 254, 245, 0.3)",
-									borderRadius: "8px",
-									padding: "8px 16px",
-									fontSize: "13px",
-									fontWeight: "500",
-									color: "var(--accent)",
-									cursor: "pointer",
-									transition: "all 0.15s",
-								}}
-								onMouseEnter={(e) => {
-									e.currentTarget.style.backgroundColor =
-										"rgba(43, 254, 245, 0.15)";
-									e.currentTarget.style.borderColor = "rgba(43, 254, 245, 0.5)";
-								}}
-								onMouseLeave={(e) => {
-									e.currentTarget.style.backgroundColor =
-										"rgba(43, 254, 245, 0.1)";
-									e.currentTarget.style.borderColor = "rgba(43, 254, 245, 0.3)";
-								}}
-							>
-								Download without metadata
-							</button>
-						</div>
-					</div>
-				</div>
-			)}
+							Download without metadata
+						</Button>
+					</>
+				}
+			>
+				Failed to download track with metadata. Would you like to download the
+				track directly without metadata instead?
+			</Modal>
 		</div>
 	);
 }

@@ -7,10 +7,10 @@ import {
 	ArrowLeft,
 	Code,
 	ExternalLink,
-	X,
 	File,
 } from "lucide-react";
 import type { Extension, Tag } from "@/lib/addons/addonCache";
+import Modal from "@/components/ui/Modal";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { ghFetch, CONTENTS_TTL } from "@/lib/addons/ghRequest";
 import styles from "./StoreFeed.module.scss";
@@ -44,70 +44,63 @@ function DownloadModal({
 	onClose: () => void;
 }) {
 	return (
-		<div
-			className={styles.modalBg}
-			onClick={(e) => e.target === e.currentTarget && onClose()}
+		<Modal
+			open
+			onClose={onClose}
+			size="sm"
+			title={`Download - ${ext.name}`}
+			bodyClassName={styles.modalBoxBody}
 		>
-			<div className={styles.modalBox}>
-				<div className={styles.modalBoxHead}>
-					<span className={styles.modalBoxTitle}>Download - {ext.name}</span>
-					<button className={styles.modalBoxClose} onClick={onClose}>
-						<X size={12} />
-					</button>
-				</div>
-				<div className={styles.modalBoxBody}>
-					<div className={styles.downloadOptions}>
-						{ext.releaseAssets.map((asset) => {
-							const icon = asset.name.toLowerCase().endsWith(".js") ? (
-								<Code size={17} />
-							) : asset.name.toLowerCase().endsWith(".tar.gz") ||
-							  asset.name.toLowerCase().endsWith(".zip") ? (
-								<Download size={17} />
-							) : (
-								<File size={17} />
-							);
-							return (
-								<a
-									key={asset.name}
-									href={asset.url}
-									className={styles.dlOption}
-									target="_blank"
-									rel="noopener noreferrer"
-								>
-									<div className={styles.dlOptionIcon}>{icon}</div>
-									<div className={styles.dlOptionInfo}>
-										<div className={styles.dlOptionLabel}>{asset.name}</div>
-									</div>
-									<span className={styles.dlOptionBadge}>{asset.ext}</span>
-								</a>
-							);
-						})}
-						{ext.downloadZip && (
-							<a
-								href={ext.downloadZip}
-								className={styles.dlOption}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								<div className={styles.dlOptionIcon}>
-									<Download size={17} />
-								</div>
-								<div className={styles.dlOptionInfo}>
-									<div className={styles.dlOptionLabel}>Source ZIP</div>
-									<div className={styles.dlOptionSub}>
-										Full repository source code
-									</div>
-								</div>
-								<span className={styles.dlOptionBadge}>.zip</span>
-							</a>
-						)}
-						{!ext.releaseAssets.length && !ext.downloadZip && (
-							<p className={styles.dlOptionNone}>No downloads available yet.</p>
-						)}
-					</div>
-				</div>
+			<div className={styles.downloadOptions}>
+				{ext.releaseAssets.map((asset) => {
+					const icon = asset.name.toLowerCase().endsWith(".js") ? (
+						<Code size={17} />
+					) : asset.name.toLowerCase().endsWith(".tar.gz") ||
+					  asset.name.toLowerCase().endsWith(".zip") ? (
+						<Download size={17} />
+					) : (
+						<File size={17} />
+					);
+					return (
+						<a
+							key={asset.name}
+							href={asset.url}
+							className={styles.dlOption}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<div className={styles.dlOptionIcon}>{icon}</div>
+							<div className={styles.dlOptionInfo}>
+								<div className={styles.dlOptionLabel}>{asset.name}</div>
+							</div>
+							<span className={styles.dlOptionBadge}>{asset.ext}</span>
+						</a>
+					);
+				})}
+				{ext.downloadZip && (
+					<a
+						href={ext.downloadZip}
+						className={styles.dlOption}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						<div className={styles.dlOptionIcon}>
+							<Download size={17} />
+						</div>
+						<div className={styles.dlOptionInfo}>
+							<div className={styles.dlOptionLabel}>Source ZIP</div>
+							<div className={styles.dlOptionSub}>
+								Full repository source code
+							</div>
+						</div>
+						<span className={styles.dlOptionBadge}>.zip</span>
+					</a>
+				)}
+				{!ext.releaseAssets.length && !ext.downloadZip && (
+					<p className={styles.dlOptionNone}>No downloads available yet.</p>
+				)}
 			</div>
-		</div>
+		</Modal>
 	);
 }
 

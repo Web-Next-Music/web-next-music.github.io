@@ -4,7 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import styles from "./Header.module.scss";
 import { useRouter, usePathname } from "next/navigation";
-import AuthButton from "@/components/ui/AuthButton";
+import AuthButton from "@/components/common/AuthButton";
+import Menu from "@/components/ui/Menu";
+import menuStyles from "@/components/ui/Menu.module.scss";
 
 const JUNE = 5;
 
@@ -51,7 +53,7 @@ export default function Header({
 	const [useCondemnedLogo, setUseCondemnedLogo] = useState(
 		() => seasonalLogoDecided,
 	);
-	const burgerRef = useRef<HTMLDivElement>(null);
+	const burgerRef = useRef<HTMLButtonElement>(null);
 	const router = useRouter();
 
 	useEffect(() => {
@@ -65,25 +67,7 @@ export default function Header({
 		};
 	}, []);
 
-	// Close dropdown when clicking outside
-	useEffect(() => {
-		if (!open) return;
-		const handler = (e: MouseEvent) => {
-			if (!burgerRef.current?.contains(e.target as Node)) setOpen(false);
-		};
-		document.addEventListener("mousedown", handler);
-		return () => document.removeEventListener("mousedown", handler);
-	}, [open]);
-
-	// Close dropdown on Escape
-	useEffect(() => {
-		if (!open) return;
-		const handler = (e: KeyboardEvent) => {
-			if (e.key === "Escape") setOpen(false);
-		};
-		document.addEventListener("keydown", handler);
-		return () => document.removeEventListener("keydown", handler);
-	}, [open]);
+	const closeMenu = () => setOpen(false);
 
 	return (
 		<>
@@ -140,8 +124,9 @@ export default function Header({
 							</div>
 						)}
 
-						<div ref={burgerRef} className={styles.burger}>
+						<div className={styles.burger}>
 							<button
+								ref={burgerRef}
 								className={styles.burgerBtn}
 								onClick={() => setOpen((v) => !v)}
 								aria-label="Toggle navigation menu"
@@ -156,20 +141,25 @@ export default function Header({
 								</span>
 							</button>
 
-							{open && (
-								<div className={styles.dropdown}>
-									{NAV_LINKS.map((l) => (
-										<Link
-											key={l.href}
-											href={l.href}
-											className={styles.dropdownLink}
-											onClick={() => setOpen(false)}
-										>
-											{l.label}
-										</Link>
-									))}
-								</div>
-							)}
+							<Menu
+								open={open}
+								onClose={closeMenu}
+								anchorRef={burgerRef}
+								align="end"
+								offset={10}
+								minWidth={180}
+							>
+								{NAV_LINKS.map((l) => (
+									<Link
+										key={l.href}
+										href={l.href}
+										className={menuStyles.item}
+										onClick={closeMenu}
+									>
+										{l.label}
+									</Link>
+								))}
+							</Menu>
 						</div>
 					</div>
 				</div>

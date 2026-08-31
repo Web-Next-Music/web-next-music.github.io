@@ -25,18 +25,15 @@ import {
 	getServerSnapshot,
 	findTrackById,
 } from "@/lib/track/trackStore";
-import { createPortal } from "react-dom";
-import {
-	Plus,
-	Check,
-	Pause,
-	Play,
-	Search as SearchIcon,
-	Music,
-} from "lucide-react";
+import { Plus, Check, Pause, Play, Music } from "lucide-react";
 import { usePlayer, PlayerProvider } from "@/lib/miniplayer";
 import { MiniPlayerInner } from "@/components/miniplayer/MiniPlayer";
-import LikeButton from "@/components/ui/LikeButton";
+import LikeButton from "@/components/common/LikeButton";
+import Menu from "@/components/ui/Menu";
+import menuStyles from "@/components/ui/Menu.module.scss";
+import SearchInput from "@/components/ui/SearchInput";
+import { cx } from "@/lib/cx";
+import Tabs from "@/components/ui/Tabs";
 import { useAuth } from "@/lib/auth";
 import {
 	getPlaylists,
@@ -46,7 +43,7 @@ import {
 	type Playlist,
 } from "@/lib/supabase/playlists";
 import styles from "./FckCensorTabs.module.scss";
-import TrackLink from "@/components/ui/TrackLink";
+import TrackLink from "@/components/common/TrackLink";
 import type {
 	PlayBtnProps,
 	SearchBarProps,
@@ -66,23 +63,8 @@ function AddToPlaylistBtn({
 }) {
 	const { user, isBanned } = useAuth();
 	const [open, setOpen] = useState(false);
-	const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
 	const [inPlaylists, setInPlaylists] = useState<Set<string>>(new Set());
 	const btnRef = useRef<HTMLButtonElement>(null);
-	const menuRef = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		if (!open) return;
-		const handler = (e: MouseEvent) => {
-			if (
-				!btnRef.current?.contains(e.target as Node) &&
-				!menuRef.current?.contains(e.target as Node)
-			)
-				setOpen(false);
-		};
-		document.addEventListener("mousedown", handler);
-		return () => document.removeEventListener("mousedown", handler);
-	}, [open]);
 
 	if (!user || isBanned) return null;
 
@@ -92,10 +74,6 @@ function AddToPlaylistBtn({
 		if (open) {
 			setOpen(false);
 			return;
-		}
-		if (btnRef.current) {
-			const rect = btnRef.current.getBoundingClientRect();
-			setPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
 		}
 		const results = await Promise.all(
 			playlists.map((pl) => getPlaylistTracks(pl.id)),
@@ -135,39 +113,33 @@ function AddToPlaylistBtn({
 			>
 				<Plus size={17} />
 			</button>
-			{open &&
-				pos &&
-				typeof document !== "undefined" &&
-				createPortal(
-					<div
-						ref={menuRef}
-						className={styles.playlistMenu}
-						style={{ top: pos.top, right: pos.right }}
-						onClick={(e) => {
-							e.preventDefault();
-							e.stopPropagation();
-						}}
-					>
-						{playlists.length === 0 ? (
-							<div className={styles.playlistMenuEmpty}>No playlists</div>
-						) : (
-							playlists.map((pl) => {
-								const inPlaylist = inPlaylists.has(pl.id);
-								return (
-									<button
-										key={pl.id}
-										className={`${styles.playlistMenuItem} ${inPlaylist ? styles.playlistMenuItemActive : ""}`}
-										onClick={(e) => handleToggle(e, pl.id)}
-									>
-										<span>{pl.name}</span>
-										{inPlaylist && <Check size={12} />}
-									</button>
-								);
-							})
-						)}
-					</div>,
-					document.body,
+			<Menu
+				open={open}
+				onClose={() => setOpen(false)}
+				anchorRef={btnRef}
+				align="end"
+				offset={4}
+			>
+				{playlists.length === 0 ? (
+					<div className={styles.playlistMenuEmpty}>No playlists</div>
+				) : (
+					playlists.map((pl) => {
+						const inPlaylist = inPlaylists.has(pl.id);
+						return (
+							<button
+								key={pl.id}
+								type="button"
+								role="menuitem"
+								className={cx(menuStyles.item, inPlaylist && menuStyles.active)}
+								onClick={(e) => handleToggle(e, pl.id)}
+							>
+								<span className={menuStyles.itemLabel}>{pl.name}</span>
+								{inPlaylist && <Check size={12} />}
+							</button>
+						);
+					})
 				)}
+			</Menu>
 		</>
 	);
 }
@@ -228,24 +200,14 @@ function PlayBtn({ track }: PlayBtnProps) {
 function SearchBar({ value, onChange }: SearchBarProps) {
 	return (
 		<div className={styles.searchWrap}>
-			<SearchIcon className={styles.searchIcon} size={14} />
-			<input
-				className={styles.searchInput}
-				type="text"
+			<SearchInput
+				radius="pill"
 				placeholder="Search by title, artist or ID..."
 				value={value}
 				onChange={(e) => onChange(e.target.value)}
+				onClear={() => onChange("")}
 				spellCheck={false}
 			/>
-			{value && (
-				<button
-					className={styles.searchClear}
-					onClick={() => onChange("")}
-					aria-label="Clear"
-				>
-					×
-				</button>
-			)}
 		</div>
 	);
 }
@@ -698,26 +660,24 @@ export default function FckCensorTabs() {
 
 	return (
 		<div>
-			<div className={styles.tabBar}>
-				<button
-					className={`${styles.tab} ${tab === "official" ? styles.active : ""}`}
-					onClick={() => handleTabChange("official")}
-				>
-					M3U
-					<span className={styles.count}>
-						{loading ? "..." : official.length}
-					</span>
-				</button>
-				<button
-					className={`${styles.tab} ${tab === "legacy" ? styles.active : ""}`}
-					onClick={() => handleTabChange("legacy")}
-				>
-					JSON
-					<span className={styles.count}>
-						{loading ? "..." : legacy.length}
-					</span>
-				</button>
-			</div>
+			<Tabs
+				variant="underline"
+				value={tab}
+				onChange={handleTabChange}
+				aria-label="Track list source"
+				items={[
+					{
+						value: "official" as const,
+						label: "M3U",
+						count: loading ? undefined : official.length,
+					},
+					{
+						value: "legacy" as const,
+						label: "JSON",
+						count: loading ? undefined : legacy.length,
+					},
+				]}
+			/>
 			<div className={styles.searchPanel}>
 				<SearchBar value={query} onChange={setQuery} />
 			</div>

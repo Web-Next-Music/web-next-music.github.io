@@ -1,24 +1,99 @@
-.pill {
+@use "../../styles/mixins" as mx;
+
+.base {
+	@include mx.control-base;
+	@include mx.focus-ring;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	gap: var(--space-2);
+	border: 1px solid transparent;
+	border-radius: var(--radius-md);
+	white-space: nowrap;
+}
+
+.icon {
+	display: inline-flex;
+	align-items: center;
+	flex: 0 0 auto;
+}
+
+.spinner {
+	flex: 0 0 auto;
+}
+
+.fullWidth {
+	width: 100%;
+}
+
+.size-sm {
+	height: var(--control-h-sm);
+	padding: 0 var(--space-3);
+	font-size: var(--fs-xs);
+}
+
+.size-md {
+	height: var(--control-h-md);
+	padding: 0 var(--space-4);
+	font-size: var(--fs-sm);
+}
+
+.size-lg {
+	height: var(--control-h-lg);
+	padding: 0 var(--space-6);
+	font-size: var(--fs-md);
+}
+
+.primary {
 	background: var(--accent);
-	color: var(--bg, #0a0a0a);
-	border: none;
-	border-radius: 999px;
-	padding: 12px 28px;
-	font-family: var(--font-base);
-	font-size: 0.84rem;
-	font-weight: 700;
-	cursor: pointer;
-	transition: opacity 0.15s ease;
+	color: var(--bg);
 
 	&:hover:not(:disabled) {
 		opacity: 0.88;
 	}
+}
 
-	&:disabled {
-		opacity: 0.5;
-		cursor: default;
+.secondary {
+	background: var(--surface);
+	border-color: var(--border);
+	color: var(--text);
+
+	&:hover:not(:disabled) {
+		background: var(--surface2);
+		border-color: var(--accent-border);
+	}
+}
+
+.ghost {
+	background: transparent;
+	color: var(--muted);
+
+	&:hover:not(:disabled) {
+		background: var(--surface2);
+		color: var(--text);
+	}
+}
+
+.danger {
+	background: var(--danger-surface);
+	border-color: var(--danger-border);
+	color: var(--danger);
+
+	&:hover:not(:disabled) {
+		background: var(--danger-hover);
+		border-color: var(--danger-border-strong);
+	}
+}
+
+.pill {
+	background: var(--accent);
+	color: var(--bg);
+	border-radius: var(--radius-pill);
+	height: auto;
+	padding: 12px 28px;
+	font-size: 0.84rem;
+
+	&:hover:not(:disabled) {
+		opacity: 0.88;
 	}
 }

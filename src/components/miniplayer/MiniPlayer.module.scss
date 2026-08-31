@@ -190,8 +190,8 @@
 }
 
 .btnActive {
-	background: rgba(43, 254, 245, 0.08) !important;
-	border-color: rgba(43, 254, 245, 0.35) !important;
+	background: var(--accent-surface) !important;
+	border-color: var(--accent-border-strong) !important;
 	color: var(--accent) !important;
 }
 

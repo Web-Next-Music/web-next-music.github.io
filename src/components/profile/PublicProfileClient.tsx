@@ -18,7 +18,7 @@ import { decodeTrackKey } from "@/lib/track/trackKey";
 import { findTrackById } from "@/lib/track/trackStore";
 import { TRACK_META } from "@/lib/fckcensor";
 import { marked } from "marked";
-import TrackRow from "@/components/ui/TrackRow";
+import TrackRow from "@/components/common/TrackRow";
 import styles from "./profile.module.scss";
 
 marked.use({ breaks: true, gfm: true } as Parameters<typeof marked.use>[0]);

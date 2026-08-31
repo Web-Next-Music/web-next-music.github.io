@@ -23,7 +23,7 @@ export function AppWrapper({ children }: { children: React.ReactNode }) {
 	}, []);
 
 	return (
-		<div ref={ref} className={styles.wrapper}>
+		<div ref={ref} data-app-scroll className={styles.wrapper}>
 			{children}
 		</div>
 	);

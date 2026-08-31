@@ -38,7 +38,9 @@ import {
 	type Playlist,
 	type PlaylistTrack,
 } from "@/lib/supabase/playlists";
-import TrackRow from "@/components/ui/TrackRow";
+import TrackRow from "@/components/common/TrackRow";
+import IconButton from "@/components/ui/IconButton";
+import { cx } from "@/lib/cx";
 import styles from "./profile.module.scss";
 import { useProfileBio } from "@/lib/profile/useProfileBio";
 import { useProfilePlaylists } from "@/lib/profile/useProfilePlaylists";
@@ -198,10 +200,10 @@ function PlaylistSection({
 						className={styles.playlistActions}
 						onClick={(e) => e.stopPropagation()}
 					>
-						<button
-							className={`${styles.iconBtn} ${isPinned ? styles.iconBtnPinned : ""}`}
+						<IconButton
+							className={cx(styles.iconBtn, isPinned && styles.iconBtnPinned)}
 							onClick={() => onTogglePin(playlist.id)}
-							title={
+							label={
 								isPinned ? "Unpin from public profile" : "Pin to public profile"
 							}
 						>
@@ -218,11 +220,11 @@ function PlaylistSection({
 								<line x1="12" y1="17" x2="12" y2="22" />
 								<path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
 							</svg>
-						</button>
-						<button
+						</IconButton>
+						<IconButton
 							className={styles.iconBtn}
 							onClick={() => setEditing(true)}
-							title="Rename"
+							label="Rename"
 						>
 							<svg
 								width="17"
@@ -236,11 +238,11 @@ function PlaylistSection({
 								<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
 								<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
 							</svg>
-						</button>
-						<button
-							className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+						</IconButton>
+						<IconButton
+							className={cx(styles.iconBtn, styles.iconBtnDanger)}
 							onClick={() => onDelete(playlist.id)}
-							title="Delete playlist"
+							label="Delete playlist"
 						>
 							<svg
 								width="17"
@@ -256,7 +258,7 @@ function PlaylistSection({
 								<path d="M10 11v6M14 11v6" />
 								<path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
 							</svg>
-						</button>
+						</IconButton>
 					</div>
 				)}
 			</div>

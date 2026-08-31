@@ -1,0 +1,63 @@
+.base {
+	background: var(--surface2);
+}
+
+.line {
+	width: 100%;
+	height: 12px;
+}
+
+.block {
+	width: 100%;
+	height: 80px;
+}
+
+.circle {
+	width: 36px;
+	height: 36px;
+}
+
+.radius-sm {
+	border-radius: var(--radius-xs);
+}
+
+.radius-md {
+	border-radius: var(--radius-md);
+}
+
+.radius-lg {
+	border-radius: var(--radius-lg);
+}
+
+.radius-pill {
+	border-radius: var(--radius-pill);
+}
+
+.radius-full {
+	border-radius: var(--radius-full);
+}
+
+.anim-pulse {
+	animation: nm-pulse 1.4s var(--ease-in-out) infinite;
+}
+
+.anim-shimmer {
+	background: linear-gradient(
+		90deg,
+		var(--surface) 25%,
+		var(--surface2) 50%,
+		var(--surface) 75%
+	);
+	background-size: 200% 100%;
+	animation: nm-shimmer 1.4s linear infinite;
+}
+
+.anim-none {
+	animation: none;
+}
+
+.text {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+}

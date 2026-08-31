@@ -55,7 +55,7 @@
 		border-radius: 50%;
 		background: var(--accent);
 		opacity: 0.4;
-		animation: pulse 1.2s ease-in-out infinite;
+		animation: nm-pulse-glow 1.2s ease-in-out infinite;
 
 		&:nth-child(2) {
 			animation-delay: 0.2s;
@@ -63,18 +63,6 @@
 		&:nth-child(3) {
 			animation-delay: 0.4s;
 		}
-	}
-}
-
-@keyframes pulse {
-	0%,
-	100% {
-		opacity: 0.2;
-		transform: scale(0.85);
-	}
-	50% {
-		opacity: 0.8;
-		transform: scale(1.1);
 	}
 }
 
@@ -365,8 +353,8 @@
 }
 
 .outlineBtnActive {
-	background: rgba(43, 254, 245, 0.08);
-	border-color: rgba(43, 254, 245, 0.3);
+	background: var(--accent-surface);
+	border-color: var(--accent-border-strong);
 	color: var(--accent);
 }
 
@@ -389,7 +377,7 @@
 		border-radius: 50%;
 		background: var(--accent);
 		opacity: 0.5;
-		animation: pulse 1.2s ease-in-out infinite;
+		animation: nm-pulse-glow 1.2s ease-in-out infinite;
 
 		&:nth-child(2) {
 			animation-delay: 0.2s;

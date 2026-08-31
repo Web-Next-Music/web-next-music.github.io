@@ -1,0 +1,24 @@
+.base {
+	display: inline-block;
+	flex: 0 0 auto;
+	border: 2px solid var(--border);
+	border-top-color: var(--accent);
+	border-radius: var(--radius-full);
+	animation: nm-spin 0.7s linear infinite;
+}
+
+.size-sm {
+	width: 12px;
+	height: 12px;
+}
+
+.size-md {
+	width: 16px;
+	height: 16px;
+}
+
+.size-lg {
+	width: 24px;
+	height: 24px;
+	border-width: 3px;
+}

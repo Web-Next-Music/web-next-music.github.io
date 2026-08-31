@@ -1,0 +1,53 @@
+@use "../../styles/mixins" as mx;
+
+.base {
+	@include mx.control-base;
+	@include mx.icon-button;
+	@include mx.focus-ring;
+	border: 1px solid transparent;
+}
+
+.size-sm {
+	width: var(--icon-btn-sm);
+	height: var(--icon-btn-sm);
+}
+
+.size-md {
+	width: var(--icon-btn-md);
+	height: var(--icon-btn-md);
+}
+
+.size-lg {
+	width: var(--icon-btn-lg);
+	height: var(--icon-btn-lg);
+}
+
+.ghost {
+	background: transparent;
+}
+
+.surface {
+	background: var(--surface);
+	border-color: var(--border);
+	color: var(--text);
+}
+
+.danger {
+	color: var(--danger);
+
+	&:hover:not(:disabled) {
+		background: var(--danger-surface);
+		color: var(--danger);
+	}
+}
+
+.active {
+	background: var(--accent-surface);
+	border-color: var(--accent-border);
+	color: var(--accent);
+
+	&:hover:not(:disabled) {
+		background: var(--accent-surface-hover);
+		color: var(--accent);
+	}
+}

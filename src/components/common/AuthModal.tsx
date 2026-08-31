@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/lib/auth";
-import SignInCard from "@/components/ui/SignInCard";
+import Modal from "@/components/ui/Modal";
+import SignInCard from "@/components/common/SignInCard";
 import styles from "./AuthModal.module.scss";
 
 export default function AuthModal() {
@@ -17,15 +18,6 @@ export default function AuthModal() {
 		}
 	}, [authModalOpen]);
 
-	useEffect(() => {
-		if (!authModalOpen) return;
-		const handler = (e: KeyboardEvent) => {
-			if (e.key === "Escape") closeAuthModal();
-		};
-		document.addEventListener("keydown", handler);
-		return () => document.removeEventListener("keydown", handler);
-	}, [authModalOpen, closeAuthModal]);
-
 	const handleGitHub = useCallback(async () => {
 		setLoading(true);
 		setError(null);
@@ -36,18 +28,20 @@ export default function AuthModal() {
 		}
 	}, [signInWithGitHub]);
 
-	if (!authModalOpen) return null;
-
 	return (
-		<div className={styles.overlay} onClick={closeAuthModal}>
-			<div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-				<SignInCard
-					loading={loading}
-					error={error}
-					onSignIn={handleGitHub}
-					onClose={closeAuthModal}
-				/>
-			</div>
-		</div>
+		<Modal
+			open={authModalOpen}
+			onClose={closeAuthModal}
+			showClose={false}
+			className={styles.modal}
+			bodyClassName={styles.body}
+		>
+			<SignInCard
+				loading={loading}
+				error={error}
+				onSignIn={handleGitHub}
+				onClose={closeAuthModal}
+			/>
+		</Modal>
 	);
 }

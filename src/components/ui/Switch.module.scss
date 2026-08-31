@@ -1,0 +1,100 @@
+.root {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-3);
+	cursor: pointer;
+}
+
+.disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.native {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.track {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	flex: 0 0 auto;
+	background: var(--surface2);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-pill);
+	transition:
+		background var(--dur-slow) var(--ease-out),
+		border-color var(--dur-slow) var(--ease-out);
+}
+
+.thumb {
+	position: absolute;
+	background: var(--muted);
+	border-radius: var(--radius-full);
+	transition:
+		transform var(--dur-slow) var(--ease-out),
+		background var(--dur-slow) var(--ease-out);
+}
+
+.size-sm .track {
+	width: 32px;
+	height: 18px;
+}
+
+.size-sm .thumb {
+	width: 12px;
+	height: 12px;
+	left: 2px;
+}
+
+.size-md .track {
+	width: 40px;
+	height: 22px;
+}
+
+.size-md .thumb {
+	width: 16px;
+	height: 16px;
+	left: 2px;
+}
+
+.native:checked ~ .track {
+	background: var(--accent-surface);
+	border-color: var(--accent-border-strong);
+}
+
+.native:checked ~ .track .thumb {
+	background: var(--accent);
+}
+
+.size-sm .native:checked ~ .track .thumb {
+	transform: translateX(14px);
+}
+
+.size-md .native:checked ~ .track .thumb {
+	transform: translateX(18px);
+}
+
+.native:focus-visible ~ .track {
+	box-shadow: 0 0 0 3px var(--accent-surface);
+}
+
+.copy {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.label {
+	font-size: var(--fs-sm);
+	color: var(--text);
+}
+
+.description {
+	font-size: var(--fs-xs);
+	color: var(--muted);
+}
