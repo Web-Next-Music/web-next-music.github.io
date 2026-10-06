@@ -2,22 +2,37 @@
 	position: relative;
 	overflow: hidden;
 
-	&::after {
-		content: "";
-		position: absolute;
-		inset: 0;
-		z-index: 1;
-		pointer-events: none;
-	}
-
 	> * {
 		position: relative;
 		z-index: 2;
 	}
 }
 
-.main .heroBg {
+.main .heroBg,
+.main .heroImage {
 	position: absolute;
 	inset: 0;
 	z-index: 0;
+	pointer-events: none;
+}
+
+.main .heroImage {
+	background-image: url("/ui/LS.webp");
+	background-position: center 24%;
+	background-size: cover;
+	opacity: 0.16;
+	mask-image: radial-gradient(
+		ellipse 72% 65% at 62% 34%,
+		#000 18%,
+		rgba(0, 0, 0, 0.82) 44%,
+		transparent 78%
+	);
+}
+
+@media (max-width: 900px) {
+	.main .heroImage {
+		background-position: 58% 12%;
+		opacity: 0.12;
+		mask-image: linear-gradient(to bottom, #000 0%, transparent 68%);
+	}
 }

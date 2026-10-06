@@ -30,26 +30,22 @@
 }
 
 .title {
-	font-size: 52px;
-	font-weight: 800;
-	line-height: 1.05;
-	letter-spacing: -2px;
-	margin-bottom: 20px;
-	font-family: var(--font-heading-large);
+	font-family: "Lucky Star", var(--font-heading-large);
+	font-size: clamp(52px, 5.5vw, 72px);
+	font-weight: 400;
+	line-height: 0.9;
+	letter-spacing: 8px;
+	margin-bottom: 28px;
+	color: var(--foreground);
 	text-align: left;
-
-	.accent {
-		background: var(--accent);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
-	}
+	text-transform: uppercase;
+	transform: skew(-4deg);
 }
 
 .desc {
 	font-size: 16px;
 	font-weight: 700;
-	color: var(--muted);
+	color: var(--foreground);
 	line-height: 1.7;
 	max-width: 440px;
 	margin-bottom: 20px;
@@ -93,138 +89,99 @@
 .dlGrid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	gap: 8px;
+	gap: 10px;
 	width: 100%;
 }
 
-@keyframes dlBtnIn {
-	from {
-		opacity: 0;
-		transform: translateY(8px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-
 .dlBtn {
+	--platform-color: var(--muted);
+	--platform-tint: color-mix(in srgb, var(--platform-color) 14%, transparent);
+	position: relative;
 	display: flex;
 	align-items: center;
+	min-height: 60px;
 	gap: 10px;
-	background: var(--surface);
+	overflow: hidden;
+	background: color-mix(in srgb, var(--surface) 88%, transparent);
 	border: 1px solid var(--border);
-	border-radius: 14px;
-	padding: 12px 14px;
+	border-radius: 16px;
+	padding: 9px 11px;
 	cursor: pointer;
-	transition:
-		background 0.25s ease,
-		border-color 0.25s ease;
 	text-decoration: none;
 	color: inherit;
-	animation: dlBtnIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
-
-	&:nth-child(1) {
-		animation-delay: 0.05s;
-	}
-	&:nth-child(2) {
-		animation-delay: 0.1s;
-	}
-	&:nth-child(3) {
-		animation-delay: 0.15s;
-	}
-	&:nth-child(4) {
-		animation-delay: 0.2s;
-	}
-
-	&:hover .dlArrow {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-
-.dlBtnWin,
-.dlBtnAppimage,
-.dlBtnDeb,
-.dlBtnPkg {
-	position: relative;
-	overflow: hidden;
+	isolation: isolate;
+	transition:
+		background 0.2s ease,
+		border-color 0.2s ease;
 
 	&::before {
 		content: "";
 		position: absolute;
 		inset: 0;
-		z-index: 0;
-		opacity: 0;
-		transition: opacity 0.3s ease;
-		pointer-events: none;
-		border-radius: inherit;
+		z-index: -1;
+		background:
+			radial-gradient(circle at 0 0, var(--platform-tint), transparent 58%),
+			var(--surface);
+		opacity: 0.65;
+		transition: opacity 0.25s ease;
 	}
 
-	& > * {
-		position: relative;
-		z-index: 1;
+	&:hover {
+		border-color: color-mix(in srgb, var(--platform-color) 50%, var(--border));
+
+		&::before {
+			opacity: 1;
+		}
+
+		.dlArrow {
+			color: var(--platform-color);
+			background: color-mix(in srgb, var(--platform-color) 18%, transparent);
+		}
 	}
 
-	&:hover::before {
-		opacity: 1;
+	&:focus-visible {
+		outline: 2px solid var(--platform-color);
+		outline-offset: 3px;
 	}
 }
 
 .dlBtnWin {
-	&::before {
-		background: linear-gradient(135deg, #0174cf22 0%, var(--surface) 100%);
-	}
-	&:hover {
-		border-color: #0174cf44;
-	}
+	--platform-color: #1689e8;
 }
+
 .dlBtnAppimage {
-	&::before {
-		background: linear-gradient(135deg, #739fb922 0%, var(--surface) 100%);
-	}
-	&:hover {
-		border-color: #739fb944;
-	}
+	--platform-color: #84b4cf;
 }
+
 .dlBtnDeb {
-	&::before {
-		background: linear-gradient(135deg, #a81d3322 0%, var(--surface) 100%);
-	}
-	&:hover {
-		border-color: #a81d3344;
-	}
+	--platform-color: #d43852;
 }
+
 .dlBtnPkg {
-	&::before {
-		background: linear-gradient(135deg, #1793d122 0%, var(--surface) 100%);
-	}
-	&:hover {
-		border-color: #1793d144;
-	}
+	--platform-color: #27a7e6;
 }
 
 .dlIcon {
-	width: 30px;
-	height: 30px;
-	border-radius: 7px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	width: 36px;
+	height: 36px;
 	flex-shrink: 0;
+	border-radius: 10px;
+	background: var(--platform-tint);
+
+	img {
+		width: 19px;
+		height: 19px;
+	}
 }
 
-.win {
-	background: #0174cf22;
-}
-.appimage {
-	background: #739fb922;
-}
-.deb {
-	background: #a81d3322;
-}
+.win,
+.appimage,
+.deb,
 .pkg {
-	background: #1793d122;
+	background: var(--platform-tint);
 }
 
 .dlText {
@@ -239,27 +196,39 @@
 	font-size: 12px;
 	color: var(--muted);
 	font-weight: 700;
+	letter-spacing: 0.1px;
 }
 
 .dlName {
 	font-size: 13px;
-	font-weight: 700;
+	font-weight: 800;
+	line-height: 1.3;
 }
 
 .dlSize {
-	font-size: 10px;
+	font-size: 9px;
 	font-family: var(--font-base);
 	color: var(--muted);
 	font-weight: 800;
-	margin-left: 5px;
+	margin-left: 6px;
+	letter-spacing: 0.2px;
 }
 
 .dlArrow {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: content-box;
+	width: 14px;
+	height: 14px;
+	padding: 7px;
 	color: var(--muted);
+	background: color-mix(in srgb, var(--muted) 10%, transparent);
+	border-radius: 9px;
 	flex-shrink: 0;
-	opacity: 0;
-	transform: translateY(-2px);
-	transition: all 0.18s;
+	transition:
+		color 0.2s ease,
+		background 0.2s ease;
 }
 
 .heroRight {
@@ -313,7 +282,7 @@
 	min-height: 42px;
 	padding: 8px 14px 8px 16px;
 	appearance: none;
-	background: var(--bg);
+	background: var(--surface);
 	border: 1px solid var(--border);
 	border-radius: 12px;
 	color: var(--text);

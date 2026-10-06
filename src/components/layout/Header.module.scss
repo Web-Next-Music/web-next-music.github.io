@@ -27,10 +27,16 @@
 	display: flex;
 	align-items: center;
 	gap: 15px;
-	font-family: var(--font-logo);
 	font-size: 23px;
 	flex-shrink: 0;
 	cursor: pointer;
+}
+
+.logoText {
+	font-family: "Lucky Star", var(--font-heading-large);
+	font-weight: 400;
+	letter-spacing: 3px;
+	font-size: 30px;
 }
 
 .logoImg {

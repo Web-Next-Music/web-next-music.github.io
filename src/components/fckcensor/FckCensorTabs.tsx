@@ -172,6 +172,7 @@ function SearchBar({ value, onChange }: SearchBarProps) {
 			wrapperClassName={"[margin-bottom:12px]"}
 			size="lg"
 			iconSize={16}
+			className="text-(--fs-sm)"
 			radius="pill"
 			placeholder="Search by title, artist or ID..."
 			value={value}

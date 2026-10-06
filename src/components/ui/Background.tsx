@@ -5,7 +5,7 @@ import { cx } from "@/lib/cx";
 import styles from "./Background.module.scss";
 
 export type BackgroundPatternType =
-	"grid" | "dots" | "lines" | "cross" | "checker";
+	"grid" | "dots" | "lines" | "cross" | "checker" | "aurora";
 
 export type BackgroundFade = "down" | "up" | "none";
 
@@ -33,6 +33,7 @@ const DEFAULT_SIZE: Record<BackgroundPatternType, number> = {
 	lines: 12,
 	cross: 40,
 	checker: 24,
+	aurora: 100,
 };
 
 function normalize(input: PatternInput): Required<BackgroundPattern> {
@@ -85,6 +86,7 @@ export default function Background({
 								"--bg-color": layer.color,
 								"--bg-layer-opacity": layer.opacity,
 								"--bg-angle": `${layer.angle}deg`,
+								"--bg-accent": layer.color,
 							} as CSSProperties
 						}
 					/>

@@ -192,11 +192,7 @@ export default function Hero() {
 		<section className={styles.hero}>
 			<div className={styles.heroTop}>
 				<div className={styles.heroLeft}>
-					<h1 className={styles.title}>
-						Next Music
-						<br />
-						<span className={styles.accent}>Client</span>
-					</h1>
+					<h1 className={styles.title}>Next Music</h1>
 					<p className={styles.desc}>
 						Web client for Yandex Music with support for themes, addons, Discord
 						Rich Presence (RPC) and OBS widget

@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 		title: "Next Music",
 		description:
 			"Web client for Yandex Music with support for themes, addons, Discord Rich Presence (RPC) and OBS widget",
-		images: ["/preview.png"],
+		images: ["/ui/preview.png"],
 		type: "website",
 	},
 };
