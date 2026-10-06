@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import styles from "./AppPreview.module.scss";
 import type { CardShellProps } from "@/types/ui";
 
 const STATIC_CARDS = [
@@ -45,19 +44,45 @@ function CardShell({
 }: CardShellProps) {
 	return (
 		<div
-			className={`${styles.card} ${live ? styles.cardLive : ""}`}
+			className={`${"[background:var(--surface)] [border:1px_solid_var(--border)] rounded-xl overflow-hidden animate-[slideIn_0.4s_ease_both] [animation-delay:var(--delay,0s)] [transition:border-color_0.2s,transform_0.2s] hover:border-(--accent-border) hover:transform-[translateX(-3px)]"} ${live ? "border-(--accent-border)" : ""}`}
 			style={{ "--delay": `${delay}s` } as React.CSSProperties}
 		>
-			<div className={styles.cardHeader}>
-				<span className={styles.headerLabel}>Listening to Next Music</span>
-				{statusDot ?? <span className={styles.dots}>•••</span>}
+			<div
+				className={
+					"flex items-center justify-between p-[10px_14px_8px] [border-bottom:1px_solid_var(--border)] [background:var(--surface2)]"
+				}
+			>
+				<span className={"text-[11px] font-bold text-muted tracking-[0.1px]"}>
+					Listening to Next Music
+				</span>
+				{statusDot ?? (
+					<span
+						className={"text-[11px] text-muted tracking-[1px] leading-none"}
+					>
+						•••
+					</span>
+				)}
 			</div>
-			<div className={styles.cardBody}>
+			<div className={"flex items-center gap-3 p-[12px_14px]"}>
 				{cover}
-				<div className={styles.info}>
-					<div className={styles.title}>{title}</div>
-					<div className={styles.artist}>{artist}</div>
-					<div className={styles.timeRow}>{timeRow}</div>
+				<div className={"flex-1 min-w-0"}>
+					<div
+						className={
+							"text-[13px] font-bold whitespace-nowrap overflow-hidden text-ellipsis mb-0.5"
+						}
+					>
+						{title}
+					</div>
+					<div
+						className={
+							"text-[11px] text-muted whitespace-nowrap overflow-hidden text-ellipsis mb-2"
+						}
+					>
+						{artist}
+					</div>
+					<div className={"flex items-center gap-1.5 text-[10px] text-muted"}>
+						{timeRow}
+					</div>
 				</div>
 			</div>
 		</div>
@@ -76,9 +101,15 @@ function ProgressRow({
 	return (
 		<>
 			<span>{elapsed}</span>
-			<div className={styles.progressBar}>
+			<div
+				className={
+					"flex-1 h-0.75 [background:var(--border)] rounded-(--radius-3xs) overflow-hidden"
+				}
+			>
 				<div
-					className={styles.progressFill}
+					className={
+						"h-full [background:linear-gradient(90deg,var(--accent2),var(--accent))] rounded-(--radius-3xs) [transition:width_0.8s_linear]"
+					}
 					style={{ width: `${progress}%` }}
 				/>
 			</div>
@@ -94,14 +125,20 @@ function CoverImg({ src, alt }: { src: string; alt: string }) {
 			alt={alt}
 			width={56}
 			height={56}
-			className={styles.cover}
+			className={
+				"w-14 h-14 rounded-sm object-cover shrink-0 [border:1px_solid_var(--border)]"
+			}
 		/>
 	);
 }
 
 export default function AppPreview() {
 	return (
-		<div className={styles.stack}>
+		<div
+			className={
+				"flex flex-col w-75 gap-2.5 shrink-0 [@media(max-width:_900px)]:w-full"
+			}
+		>
 			{STATIC_CARDS.map((c, i) => (
 				<CardShell
 					key={i}

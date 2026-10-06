@@ -36,6 +36,7 @@ const LikesContext = createContext<LikesContextValue>({
 
 export function LikesProvider({ children }: { children: ReactNode }) {
 	const { user } = useAuth();
+	const userId = user?.id;
 	const [likedTrackIds, setLikedTrackIds] = useState<Set<string>>(new Set());
 	const [likedMeta, setLikedMeta] = useState<Map<string, TrackLikeMeta>>(
 		new Map(),
@@ -46,7 +47,7 @@ export function LikesProvider({ children }: { children: ReactNode }) {
 	);
 
 	useEffect(() => {
-		if (!user) {
+		if (!userId) {
 			for (const timer of pendingTimersRef.current.values())
 				clearTimeout(timer);
 			pendingTimersRef.current.clear();
@@ -60,7 +61,7 @@ export function LikesProvider({ children }: { children: ReactNode }) {
 		const controller = new AbortController();
 		sb.from("track_likes")
 			.select("track_id, title, artist, cover, mp3_url")
-			.eq("user_id", user.id)
+			.eq("user_id", userId)
 			.abortSignal(controller.signal)
 			.then(({ data, error }) => {
 				if (error) {
@@ -96,7 +97,7 @@ export function LikesProvider({ children }: { children: ReactNode }) {
 				}
 			});
 		return () => controller.abort();
-	}, [user?.id]);
+	}, [userId]);
 
 	const toggle = useCallback(
 		async (trackId: string, meta?: TrackLikeMeta) => {
@@ -110,7 +111,8 @@ export function LikesProvider({ children }: { children: ReactNode }) {
 			// Immediate optimistic update
 			setLikedTrackIds((prev) => {
 				const next = new Set(prev);
-				willBeLiked ? next.add(trackId) : next.delete(trackId);
+				if (willBeLiked) next.add(trackId);
+				else next.delete(trackId);
 				return next;
 			});
 			if (willBeLiked && meta) {
@@ -201,7 +203,8 @@ export function LikesProvider({ children }: { children: ReactNode }) {
 					const committedLiked = committedIdsRef.current.has(trackId);
 					setLikedTrackIds((prev) => {
 						const next = new Set(prev);
-						committedLiked ? next.add(trackId) : next.delete(trackId);
+						if (committedLiked) next.add(trackId);
+						else next.delete(trackId);
 						return next;
 					});
 					if (!committedLiked) {

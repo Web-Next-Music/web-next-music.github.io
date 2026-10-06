@@ -1,11 +1,11 @@
-.modal {
+.box.box {
 	max-width: 420px;
 	background: transparent;
 	border: none;
 	box-shadow: none;
 }
 
-.body {
+.box > .body {
 	padding: 0;
 	overflow: visible;
 }

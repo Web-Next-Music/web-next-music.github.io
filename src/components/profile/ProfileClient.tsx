@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
+import Image from "next/image";
+
+import styles from "./profile.module.scss";
+
+import { useState, useEffect, useEffectEvent, useRef } from "react";
 import { config } from "@/lib/config";
 import { useAuth } from "@/lib/auth";
 import { useLikes, type TrackLikeMeta } from "@/lib/supabase/likesContext";
-import { usePlayer } from "@/lib/miniplayer/context";
-import { encodeTrackKey, decodeTrackKey } from "@/lib/track/trackKey";
 import {
 	ensureTracksLoaded,
 	subscribeStore,
@@ -22,7 +23,6 @@ import {
 import TrackRow from "@/components/common/TrackRow";
 import IconButton from "@/components/ui/IconButton";
 import { cx } from "@/lib/cx";
-import styles from "./profile.module.scss";
 import { useProfileBio } from "@/lib/profile/useProfileBio";
 import { useProfilePlaylists } from "@/lib/profile/useProfilePlaylists";
 import {
@@ -30,33 +30,6 @@ import {
 	formatJoinDate,
 	resolveTrackMeta,
 } from "@/lib/profile/profileHelpers";
-
-function trackHref(trackId: string, dbMeta?: TrackLikeMeta): string {
-	if (trackId.endsWith("-e")) return `/track?key=${trackId}`;
-
-	const mp3_url = dbMeta?.mp3_url;
-	const title = dbMeta?.title;
-	const artist = dbMeta?.artist;
-	const cover = dbMeta?.cover;
-
-	if (mp3_url) {
-		return `/track?key=${encodeTrackKey({ url: mp3_url, title, artist, cover })}`;
-	}
-
-	if (!trackId.startsWith("http")) {
-		const decoded = decodeTrackKey(trackId);
-		if (decoded?.url) {
-			return `/track?key=${encodeTrackKey({
-				url: decoded.url,
-				title: title ?? decoded.title,
-				artist: artist ?? decoded.artist,
-				cover: cover ?? decoded.cover,
-			})}`;
-		}
-	}
-
-	return `/track?id=${trackId}`;
-}
 
 function PlaylistSection({
 	playlist,
@@ -85,10 +58,9 @@ function PlaylistSection({
 	const [editing, setEditing] = useState(false);
 	const [editName, setEditName] = useState(playlist.name);
 	const inputRef = useRef<HTMLInputElement>(null);
-	const player = usePlayer();
 
-	useEffect(() => {
-		if (open && tracks.length === 0) {
+	const loadTracks = useEffectEvent(() => {
+		if (tracks.length === 0) {
 			setLoadingTracks(true);
 			getPlaylistTracks(playlist.id).then((data) => {
 				setTracks(data);
@@ -99,6 +71,10 @@ function PlaylistSection({
 				);
 			});
 		}
+	});
+
+	useEffect(() => {
+		if (open) loadTracks();
 	}, [open, playlist.id]);
 
 	useEffect(() => {
@@ -269,8 +245,7 @@ function PlaylistSection({
 
 export default function ProfileClient() {
 	const { user, loading, banChecking, openAuthModal, isBanned } = useAuth();
-	const { likedTrackIds, likedMeta, toggle: toggleLike } = useLikes();
-	const player = usePlayer();
+	const { likedTrackIds, likedMeta } = useLikes();
 	const newNameRef = useRef<HTMLInputElement>(null);
 	const [tab, setTab] = useState<"bio" | "liked" | "playlists">("bio");
 	const [, setStoreReady] = useState(() => getStoreSnapshot().loaded);
@@ -296,7 +271,6 @@ export default function ProfileClient() {
 		setCreating,
 		newName,
 		setNewName,
-		playlistContents,
 		pinnedIds,
 		handleContentsLoaded,
 		handleTrackRemoved,
@@ -332,16 +306,18 @@ export default function ProfileClient() {
 		const avatar = user.user_metadata?.avatar_url as string | undefined;
 		if (githubId && login)
 			syncGitHubMeta(user.id, githubId, login, name ?? null, avatar ?? null);
-	}, [user?.id]);
+	}, [user]);
+
+	const userId = user?.id;
 
 	useEffect(() => {
-		if (!user) return;
+		if (!userId) return;
 		setStarLoading(true);
 		syncGithubStar().then((starred) => {
 			setStarLoading(false);
 			if (starred !== null) setGithubStarred(starred);
 		});
-	}, [user?.id]);
+	}, [userId]);
 
 	useEffect(() => {
 		if (creating) newNameRef.current?.focus();
@@ -382,9 +358,11 @@ export default function ProfileClient() {
 				<div className={styles.layout}>
 					<aside className={styles.sidebar}>
 						<div className={styles.userCard}>
-							<img
+							<Image
 								src="/avatars/avatar-fallback.png"
 								alt="Banned"
+								width={88}
+								height={88}
 								className={styles.avatar}
 							/>
 							<h1 className={styles.username}>{githubId ?? "?"}</h1>
@@ -420,7 +398,13 @@ export default function ProfileClient() {
 					<div className={styles.userCard}>
 						<div className={styles.avatarWrap}>
 							{avatarUrl ? (
-								<img src={avatarUrl} alt={username} className={styles.avatar} />
+								<Image
+									src={avatarUrl ?? ""}
+									alt={username ?? ""}
+									width={88}
+									height={88}
+									className={styles.avatar}
+								/>
 							) : (
 								<div className={styles.avatarPlaceholder}>
 									{(username ?? "?")[0].toUpperCase()}
@@ -501,7 +485,7 @@ export default function ProfileClient() {
 
 					<div className={styles.statsCard}>
 						<button
-							className={`${styles.statItem} ${tab === "bio" ? styles.statItemActive : ""}`}
+							className={`${styles.statItem} ${styles.statTab} ${tab === "bio" ? styles.statItemActive : ""}`}
 							onClick={() => setTab("bio")}
 						>
 							<svg
@@ -523,7 +507,7 @@ export default function ProfileClient() {
 							</span>
 						</button>
 						<button
-							className={`${styles.statItem} ${tab === "liked" ? styles.statItemActive : ""}`}
+							className={`${styles.statItem} ${styles.statTab} ${tab === "liked" ? styles.statItemActive : ""}`}
 							onClick={() => setTab("liked")}
 						>
 							<svg
@@ -542,7 +526,7 @@ export default function ProfileClient() {
 							<span className={styles.statLabel}>Liked tracks</span>
 						</button>
 						<button
-							className={`${styles.statItem} ${tab === "playlists" ? styles.statItemActive : ""}`}
+							className={`${styles.statItem} ${styles.statTab} ${tab === "playlists" ? styles.statItemActive : ""}`}
 							onClick={() => setTab("playlists")}
 						>
 							<svg

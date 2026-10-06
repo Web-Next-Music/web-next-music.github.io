@@ -1,48 +1,7 @@
 "use client";
 
 import { useTheme } from "@/lib/theme";
-import styles from "./Footer.module.scss";
 import Link from "next/link";
-
-function SunIcon() {
-	return (
-		<svg
-			width="11"
-			height="11"
-			viewBox="0 0 24 24"
-			fill="none"
-			className={styles.svgBlock}
-		>
-			<circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
-			<path
-				d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-				stroke="currentColor"
-				strokeWidth="1.8"
-				strokeLinecap="round"
-			/>
-		</svg>
-	);
-}
-
-function MoonIcon() {
-	return (
-		<svg
-			width="11"
-			height="11"
-			viewBox="0 1 24 24"
-			fill="none"
-			className={styles.svgBlock}
-		>
-			<path
-				d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"
-				stroke="currentColor"
-				strokeWidth="2"
-				strokeLinecap="round"
-				strokeLinejoin="round"
-			/>
-		</svg>
-	);
-}
 
 export default function Footer({
 	isHiddenMode = false,
@@ -138,20 +97,40 @@ export default function Footer({
 
 	return (
 		<>
-			<footer className={styles.footer}>
-				<div className={styles.content}>
-					<div className={styles.col}>
-						<div className={styles.brand}>
+			<footer
+				className={
+					"[border-top:1px_solid_var(--border)] [border-bottom:1px_solid_var(--border)]"
+				}
+			>
+				<div
+					className={
+						"max-w-300 m-[0_auto] p-[40px_40px] grid grid-cols-[1fr_1fr_1fr_1fr] gap-8 [@media(max-width:_768px)]:grid-cols-[1fr_1fr] [@media(max-width:_768px)]:p-[40px_20px]"
+					}
+				>
+					<div
+						className={
+							"[&_h4]:text-[14px] [&_h4]:font-extrabold [&_h4]:text-muted [&_h4]:tracking-[1px] [&_h4]:mb-3.5 [&_h4]:font-sans [&_a]:block [&_a]:text-[13px] [&_a]:font-bold [&_a]:text-muted [&_a]:mb-2 [&_a]:[transition:color_0.2s] [&_a:hover]:text-foreground"
+						}
+					>
+						<div
+							className={
+								"text-[16px] font-extrabold [letter-spacing:-0.5px] mb-2"
+							}
+						>
 							{isHiddenMode ? "UGC Share" : "Next Music"}
 						</div>
-						<p className={styles.copy}>
+						<p className={"text-[14px] font-bold text-muted leading-[1.6]"}>
 							{isHiddenMode
 								? "Add-on for sharing UGC tracks from Yandex Music"
 								: "Web client for Yandex Music"}
 						</p>
 					</div>
 
-					<div className={styles.col}>
+					<div
+						className={
+							"[&_h4]:text-[14px] [&_h4]:font-extrabold [&_h4]:text-muted [&_h4]:tracking-[1px] [&_h4]:mb-3.5 [&_h4]:font-sans [&_a]:block [&_a]:text-[13px] [&_a]:font-bold [&_a]:text-muted [&_a]:mb-2 [&_a]:[transition:color_0.2s] [&_a:hover]:text-foreground"
+						}
+					>
 						<h4>PRODUCT</h4>
 						{links.product.map((l) => (
 							<Link key={l.label} href={l.href}>
@@ -160,7 +139,11 @@ export default function Footer({
 						))}
 					</div>
 
-					<div className={styles.col}>
+					<div
+						className={
+							"[&_h4]:text-[14px] [&_h4]:font-extrabold [&_h4]:text-muted [&_h4]:tracking-[1px] [&_h4]:mb-3.5 [&_h4]:font-sans [&_a]:block [&_a]:text-[13px] [&_a]:font-bold [&_a]:text-muted [&_a]:mb-2 [&_a]:[transition:color_0.2s] [&_a:hover]:text-foreground"
+						}
+					>
 						<h4>RESOURCES</h4>
 						{links.resources.map((l) => (
 							<Link key={l.label} href={l.href}>
@@ -169,7 +152,11 @@ export default function Footer({
 						))}
 					</div>
 
-					<div className={styles.col}>
+					<div
+						className={
+							"[&_h4]:text-[14px] [&_h4]:font-extrabold [&_h4]:text-muted [&_h4]:tracking-[1px] [&_h4]:mb-3.5 [&_h4]:font-sans [&_a]:block [&_a]:text-[13px] [&_a]:font-bold [&_a]:text-muted [&_a]:mb-2 [&_a]:[transition:color_0.2s] [&_a:hover]:text-foreground"
+						}
+					>
 						<h4>LINKS</h4>
 						{links.links.map((l) => (
 							<Link key={l.label} href={l.href}>
@@ -180,23 +167,33 @@ export default function Footer({
 				</div>
 			</footer>
 
-			<div className={styles.bottom}>
+			<div
+				className={
+					"max-w-300 m-[0_auto] p-[16px_40px] flex justify-between items-center gap-4 [&_p]:text-[13px] [&_p]:font-bold [&_p]:text-muted [@media(max-width:_768px)]:p-[16px_20px] [@media(max-width:_768px)]:flex-wrap [@media(max-width:_768px)]:justify-center [@media(max-width:_768px)]:gap-3 [@media(max-width:_768px)]:text-center"
+				}
+			>
 				<p>© 2026 Next Music. MIT License</p>
 
 				<button
-					className={styles.themeToggle}
+					className={
+						"flex items-center gap-2 bg-none [border:none] outline-none cursor-pointer p-0 font-(family-name:--font-heading-large) focus-visible:outline-none [&:hover_.toggleLabel]:text-foreground"
+					}
 					onClick={toggle}
 					aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
 					title={isDark ? "Switch to light theme" : "Switch to dark theme"}
 				>
-					<span
-						className={`${styles.toggleTrack} ${
-							isDark ? styles.dark : styles.light
-						}`}
-					>
-						<span className={styles.toggleThumb}>{isDark}</span>
+					<span className="relative flex items-center w-11 h-6 rounded-lg [border:1px_solid_var(--border)] [transition:background_0.25s,border-color_0.25s] [background:var(--surface2)]">
+						<span
+							className={`absolute left-0.75 w-4.5 h-4.5 rounded-(--radius-full) [background:var(--surface)] [border:1px_solid_var(--border)] flex items-center justify-center text-accent [transition:transform_0.25s_cubic-bezier(0.34,1.56,0.64,1),background_0.25s] ${isDark ? "transform-[translateX(0)]" : "transform-[translateX(20px)]"}`}
+						>
+							{isDark}
+						</span>
 					</span>
-					<span className={styles.toggleLabel}>
+					<span
+						className={
+							"[.themeToggle:hover_&]:text-foreground text-[12px] font-bold text-muted [transition:color_0.2s] [user-select:none]"
+						}
+					>
 						{isDark ? "Dark" : "Light"}
 					</span>
 				</button>

@@ -2,7 +2,6 @@
 
 import type { CSSProperties, HTMLAttributes } from "react";
 import { cx } from "@/lib/cx";
-import styles from "./Spinner.module.scss";
 
 export type SpinnerSize = "sm" | "md" | "lg" | number;
 
@@ -27,7 +26,13 @@ export default function Spinner({
 		<span
 			role="status"
 			aria-label={label}
-			className={cx(styles.base, !numeric && styles[`size-${size}`], className)}
+			className={cx(
+				"inline-block shrink-0 animate-spin rounded-full border-2 border-border border-t-accent",
+				!numeric && size === "sm" && "size-3",
+				!numeric && size === "md" && "size-4",
+				!numeric && size === "lg" && "size-6 border-[3px]",
+				className,
+			)}
 			style={sizeStyle}
 			{...rest}
 		/>

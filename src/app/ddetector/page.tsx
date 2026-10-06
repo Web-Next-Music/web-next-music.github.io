@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import {
 	useState,
 	useEffect,
@@ -26,7 +28,6 @@ import {
 } from "@/lib/track/ddetector";
 import { hasDrugWord, escHtml, highlightDrugs } from "@/lib/track/drugDetector";
 import Select from "@components/ui/Select";
-import styles from "./page.module.scss";
 import NotFoundView from "@/components/ddetector/NotFoundView";
 import TrackRow, {
 	type TrackStatus,
@@ -158,12 +159,13 @@ export default function DDetectorPage() {
 		const closeKey = (e: KeyboardEvent) => {
 			if (e.key === "Escape") setCtxMenu(null);
 		};
+		const closeOnScroll = () => setCtxMenu(null);
 		document.addEventListener("mousedown", close);
-		document.addEventListener("scroll", () => setCtxMenu(null), true);
+		document.addEventListener("scroll", closeOnScroll, true);
 		document.addEventListener("keydown", closeKey);
 		return () => {
 			document.removeEventListener("mousedown", close);
-			document.removeEventListener("scroll", () => setCtxMenu(null), true);
+			document.removeEventListener("scroll", closeOnScroll, true);
 			document.removeEventListener("keydown", closeKey);
 		};
 	}, [ctxMenu]);
@@ -178,16 +180,13 @@ export default function DDetectorPage() {
 		const closeKey = (e: KeyboardEvent) => {
 			if (e.key === "Escape") setHeaderCtxMenu(null);
 		};
+		const closeOnScroll = () => setHeaderCtxMenu(null);
 		document.addEventListener("mousedown", close);
-		document.addEventListener("scroll", () => setHeaderCtxMenu(null), true);
+		document.addEventListener("scroll", closeOnScroll, true);
 		document.addEventListener("keydown", closeKey);
 		return () => {
 			document.removeEventListener("mousedown", close);
-			document.removeEventListener(
-				"scroll",
-				() => setHeaderCtxMenu(null),
-				true,
-			);
+			document.removeEventListener("scroll", closeOnScroll, true);
 			document.removeEventListener("keydown", closeKey);
 		};
 	}, [headerCtxMenu]);
@@ -444,8 +443,16 @@ export default function DDetectorPage() {
 		return (
 			<>
 				<Header />
-				<div className={styles.fullPageCenter}>
-					<div className={styles.loadingDots}>
+				<div
+					className={
+						"flex flex-col items-center justify-center gap-3.5 min-h-[60vh] text-center"
+					}
+				>
+					<div
+						className={
+							"flex gap-1.5 items-center [&_span]:w-1.75 [&_span]:h-1.75 [&_span]:rounded-(--radius-full) [&_span]:[background:var(--accent)] [&_span]:opacity-[0.4] [&_span]:animate-[dotPulse_1.2s_ease-in-out_infinite] [&_span:nth-child(2)]:[animation-delay:0.2s] [&_span:nth-child(3)]:[animation-delay:0.4s]"
+						}
+					>
 						<span />
 						<span />
 						<span />
@@ -469,21 +476,36 @@ export default function DDetectorPage() {
 
 	// Main UI
 	return (
-		<div className={styles.page}>
+		<div
+			className={"h-full flex flex-col overflow-hidden [background:var(--bg)]"}
+		>
 			{/* Header */}
 			<div
-				className={styles.header}
+				className={
+					"shrink-0 flex items-center gap-2.5 p-[10px_10px_10px_20px] [border-bottom:1px_solid_var(--border)] [background:var(--header)] z-10 h-15 [@media(max-width:_600px)]:flex-wrap [@media(max-width:_600px)]:p-2.5 [@media(max-width:_600px)]:gap-1.5 [@media(max-width:_600px)]:h-20"
+				}
 				onContextMenu={(e) => {
 					e.preventDefault();
 					setHeaderCtxMenu({ x: e.clientX, y: e.clientY });
 				}}
 			>
-				<Link href="/" className={styles.headerTitle}>
+				<Link
+					href="/"
+					className={
+						"text-[18px] font-bold text-foreground shrink-0 font-(family-name:--font-heading-large) no-underline [&_span]:text-accent"
+					}
+				>
 					D<span>Detector</span>
 				</Link>
-				<div className={styles.headerCount}>{filteredTracks.length} tracks</div>
+				<div className={"text-[12px] font-bold text-muted shrink-0"}>
+					{filteredTracks.length} tracks
+				</div>
 
-				<div className={styles.headerControls}>
+				<div
+					className={
+						"flex items-center gap-2 flex-1 min-w-0 justify-end [@media(max-width:_600px)]:basis-full"
+					}
+				>
 					<Select
 						value={sort}
 						onChange={setSort}
@@ -495,10 +517,14 @@ export default function DDetectorPage() {
 						]}
 					/>
 
-					<div className={styles.searchWrap}>
+					<div
+						className={"flex-1 max-w-75 [@media(max-width:_600px)]:max-w-none"}
+					>
 						<input
 							ref={searchInputRef}
-							className={styles.searchInput}
+							className={
+								"w-full [background:var(--surface)] [border:1px_solid_var(--border)] rounded-2xl p-[6px_12px] text-foreground text-[13px] font-bold outline-none [transition:border-color_0.15s] font-sans focus:border-(--accent2) placeholder:text-muted placeholder:opacity-[0.6]"
+							}
 							type="text"
 							placeholder="Search (Enter)"
 							onKeyDown={(e) => {
@@ -509,14 +535,18 @@ export default function DDetectorPage() {
 					</div>
 
 					<button
-						className={styles.fetchBtn}
+						className={
+							"flex items-center justify-center text-center gap-1.5 p-[6px_14px] rounded-sm [border:1px_solid_var(--border)] [background:var(--surface)] text-muted text-[12px] font-bold cursor-pointer w-25 [transition:color_0.15s,border-color_0.15s,background_0.15s] font-sans [&:hover:not(:disabled)]:text-accent [&:hover:not(:disabled)]:border-accent [&:hover:not(:disabled)]:[background:var(--accent-btn-hover)] disabled:opacity-[0.5] disabled:cursor-not-allowed [@media(max-width:_600px)]:shrink-0"
+						}
 						onClick={handleFetch}
 						disabled={fetching || !session}
 						title="Rebuild track list from external source"
 					>
 						{fetching ? (
 							<svg
-								className={styles.fetchSpinner}
+								className={
+									"w-3.25 h-3.25 shrink-0 animate-[nm-spin_0.75s_linear_infinite]"
+								}
 								viewBox="0 0 24 24"
 								fill="none"
 								xmlns="http://www.w3.org/2000/svg"
@@ -543,11 +573,25 @@ export default function DDetectorPage() {
 			</div>
 
 			{dataLoading ? (
-				<div className={styles.loadingState}>Loading tracks...</div>
+				<div
+					className={
+						"flex-1 flex font-bold items-center justify-center text-muted text-[13px]"
+					}
+				>
+					Loading tracks...
+				</div>
 			) : (
-				<div className={styles.panels}>
+				<div
+					className={
+						"flex flex-1 overflow-hidden min-h-0 mt-(--mini-player-h) [@media(max-width:_600px)]:flex-col [@media(max-width:_600px)]:relative [@media(max-width:_600px)]:overflow-hidden"
+					}
+				>
 					{/* Left: track list */}
-					<div className={styles.panelLeft}>
+					<div
+						className={
+							"w-[50%] [border-right:1px_solid_var(--border)] overflow-y-auto p-2.5 [@media(max-width:_600px)]:w-full [@media(max-width:_600px)]:flex-1 [@media(max-width:_600px)]:min-h-0 [@media(max-width:_600px)]:[border-right:none] [@media(max-width:_600px)]:[border-bottom:none] [@media(max-width:_600px)]:pb-18"
+						}
+					>
 						{filteredTracks.map((track, i) => (
 							<TrackRow
 								key={track.id}
@@ -564,10 +608,12 @@ export default function DDetectorPage() {
 					</div>
 
 					<div
-						className={`${styles.panelRight}${rightOpen ? ` ${styles.panelRightOpen}` : ""}`}
+						className={`${"w-[50%] overflow-y-auto p-2.5 [@media(max-width:_600px)]:absolute [@media(max-width:_600px)]:bottom-0 [@media(max-width:_600px)]:left-0 [@media(max-width:_600px)]:right-0 [@media(max-width:_600px)]:h-full [@media(max-width:_600px)]:w-full [@media(max-width:_600px)]:flex [@media(max-width:_600px)]:flex-col [@media(max-width:_600px)]:[background:var(--bg)] [@media(max-width:_600px)]:p-0 [@media(max-width:_600px)]:[border-top:1px_solid_var(--border)] [@media(max-width:_600px)]:transform-[translateY(calc(100%-60px))] [@media(max-width:_600px)]:[transition:transform_0.32s_cubic-bezier(0.4,0,0.2,1)] [@media(max-width:_600px)]:z-20 [@media(max-width:_600px)]:overflow-y-hidden"}${rightOpen ? ` ${"[@media(max-width:_600px)]:transform-[translateY(-1px)]"}` : ""}`}
 					>
 						<button
-							className={styles.panelToggle}
+							className={
+								"hidden [@media(max-width:_600px)]:flex [@media(max-width:_600px)]:items-center [@media(max-width:_600px)]:justify-center [@media(max-width:_600px)]:w-full [@media(max-width:_600px)]:h-9 [@media(max-width:_600px)]:shrink-0 [@media(max-width:_600px)]:[background:transparent] [@media(max-width:_600px)]:[border:none] [@media(max-width:_600px)]:cursor-pointer [@media(max-width:_600px)]:text-muted [@media(max-width:_600px)]:[transition:color_0.15s] [@media(max-width:_600px)]:hover:text-foreground"
+							}
 							onClick={() => setRightOpen((v) => !v)}
 							aria-label={rightOpen ? "Collapse results" : "Expand results"}
 						>
@@ -580,35 +626,61 @@ export default function DDetectorPage() {
 								strokeWidth="2.5"
 								strokeLinecap="round"
 								strokeLinejoin="round"
-								className={`${styles.toggleArrow}${rightOpen ? ` ${styles.toggleArrowOpen}` : ""}`}
+								className={`${"[transition:transform_0.3s_cubic-bezier(0.4,0,0.2,1)]"}${rightOpen ? ` ${"transform-[rotate(-180deg)]"}` : ""}`}
 							>
 								<polyline points="18 15 12 9 6 15" />
 							</svg>
 						</button>
-						<div className={styles.rightHeader}>
-							<span className={styles.statusLabel}>
+						<div
+							className={
+								"shrink-0 flex items-center gap-2.5 p-[0_10px_10px] [border-bottom:1px_solid_var(--border)] mb-2.5 [@media(max-width:_600px)]:mb-0"
+							}
+						>
+							<span
+								className={
+									"text-[11px] font-bold text-muted shrink-0 whitespace-nowrap"
+								}
+							>
 								{processed < tracks.length
 									? `Scanning ${processed} / ${tracks.length}`
 									: tracks.length
 										? `Done · ${tracks.length} tracks`
 										: "No tracks"}
 							</span>
-							<div className={styles.progressWrap}>
+							<div
+								className={
+									"flex-1 h-0.5 [background:var(--surface2)] rounded-(--radius-3xs) overflow-hidden"
+								}
+							>
 								<div
-									className={styles.progressBar}
+									className={
+										"h-full [background:var(--accent)] rounded-md [transition:width_0.35s_ease]"
+									}
 									style={{ width: `${progressPct}%` }}
 								/>
 							</div>
 							{foundCount > 0 && (
-								<span className={styles.foundLabel}>
+								<span
+									className={
+										"text-[11px] text-accent shrink-0 whitespace-nowrap font-bold"
+									}
+								>
 									{foundCount} with hits
 								</span>
 							)}
 						</div>
 
-						<div className={styles.lyricsWrap}>
+						<div
+							className={
+								"flex flex-col gap-2.5 [@media(max-width:_600px)]:overflow-y-auto [@media(max-width:_600px)]:flex-1 [@media(max-width:_600px)]:min-h-0 [@media(max-width:_600px)]:p-2.5"
+							}
+						>
 							{drugCards.length === 0 && processed === tracks.length && (
-								<div className={styles.emptyState}>
+								<div
+									className={
+										"text-center text-muted p-[60px_24px] text-[13px] opacity-[0.6] leading-[1.7]"
+									}
+								>
 									{tracks.length
 										? "No drug references found"
 										: "No tracks. Press Fetch to load."}
@@ -625,7 +697,7 @@ export default function DDetectorPage() {
 									return (
 										<div
 											key={track.id}
-											className={`${styles.drugCard}${isIgnored ? ` ${styles.drugCardIgnored}` : ""}`}
+											className={`${"[background:var(--surface)] [border:1px_solid_var(--border)] rounded-md overflow-hidden animate-[nm-card-in_0.2s_ease] shrink-0"}${isIgnored ? ` ${"border-(--ignore-border-strong) [&_.drugCardHead]:[background:var(--ignore-bg-surface)] [&_.drugCardHead]:border-b-(--ignore-border) [&_.drugLines]:[background:var(--ignore-bg-lines)] [&_.drugTs]:text-(--ignore-accent-dim) [&_.drugMark]:[background:var(--ignore-mark-bg)] [&_.drugMark]:text-(--ignore-mark-color) [&_.btnYandex]:[background:var(--ignore-bg-subtle)] [&_.btnYandex]:border-(--ignore-border) [&_.btnYandex]:text-(--ignore-accent) [&_.btnYandex:hover]:[background:var(--ignore-mark-bg)] [&_.btnExpand:hover]:text-(--ignore-accent) [&_.btnExpand:hover]:border-(--ignore-border-hover) [&_.btnExpand:hover]:[background:var(--ignore-bg-btn)] [&_.btnExpandActive]:text-(--ignore-accent) [&_.btnExpandActive]:border-(--ignore-outline) [&_.btnExpandActive]:[background:var(--ignore-bg-subtle)] [&_.drugLine]:[border-bottom:1px_solid_var(--ignore-border)] [&_.drugLine:hover]:[background:var(--ignore-bg-btn)]"}` : ""}`}
 											ref={(el) => {
 												if (el) cardRefs.current.set(track.id, el);
 												else cardRefs.current.delete(track.id);
@@ -634,26 +706,54 @@ export default function DDetectorPage() {
 												handleCardContextMenu(e, track, !!allLines)
 											}
 										>
-											<div className={styles.drugCardHead}>
-												<div className={styles.drugCardCover}>
+											<div
+												className={
+													"in-[.drugCardIgnored]:[background:var(--ignore-bg-surface)] in-[.drugCardIgnored]:border-b-(--ignore-border) flex items-center gap-2.5 p-[10px_16px_10px_10px] [background:var(--surface2)] [border-bottom:1px_solid_var(--border)]"
+												}
+											>
+												<div
+													className={
+														"w-8 h-8 rounded-(--radius-2xs) [background:var(--bg)] shrink-0 overflow-hidden [&_img]:w-full [&_img]:h-full [&_img]:object-cover [&_img]:block"
+													}
+												>
 													{track.cover ? (
-														<img src={track.cover} alt="" loading="lazy" />
+														<Image
+															src={track.cover}
+															alt=""
+															width={40}
+															height={40}
+															loading="lazy"
+														/>
 													) : (
-														<div className={styles.coverPh}>♪</div>
+														<div
+															className={
+																"w-full h-full flex items-center justify-center text-border text-[15px]"
+															}
+														>
+															♪
+														</div>
 													)}
 												</div>
-												<div className={styles.drugCardInfo}>
-													<div className={styles.drugCardTitle}>
+												<div className={"flex-1 min-w-0"}>
+													<div
+														className={
+															"text-[12px] font-extrabold text-foreground whitespace-nowrap overflow-hidden text-ellipsis"
+														}
+													>
 														{track.title}
 													</div>
-													<div className={styles.drugCardArtist}>
+													<div
+														className={
+															"text-[11px] font-bold text-muted whitespace-nowrap overflow-hidden text-ellipsis mt-px"
+														}
+													>
 														{track.artist}
 													</div>
 												</div>
-												<div className={styles.drugCardActions}>
+												<div className={"flex gap-1.5 shrink-0"}>
 													{allLines && (
 														<button
-															className={`${styles.btn} ${styles.btnExpand}${isExpanded ? ` ${styles.btnExpandActive}` : ""}`}
+															className={`${"text-[10px] font-semibold p-[4px_10px] rounded-xs cursor-pointer [border:1px_solid_transparent] [transition:background_0.12s,color_0.12s] whitespace-nowrap no-underline inline-flex items-center gap-1 leading-none font-sans"} ${"[.drugCardIgnored_&:hover]:text-(--ignore-accent) [.drugCardIgnored_&:hover]:border-(--ignore-border-hover) [.drugCardIgnored_&:hover]:[background:var(--ignore-bg-btn)] [background:var(--surface)] border-border text-muted font-bold hover:[background:var(--bg)] hover:text-(--accent2) hover:border-(--accent2)"}${isExpanded ? ` ${"in-[.drugCardIgnored]:text-(--ignore-accent) in-[.drugCardIgnored]:border-(--ignore-outline) in-[.drugCardIgnored]:[background:var(--ignore-bg-subtle)] text-(--accent2) border-(--accent-border-strong) [background:var(--accent-btn-hover)]"}` : ""}`}
 															onClick={(e) => {
 																e.stopPropagation();
 																toggleExpanded(track.id);
@@ -663,7 +763,7 @@ export default function DDetectorPage() {
 														</button>
 													)}
 													<button
-														className={`${styles.btn} ${styles.btnCopy}`}
+														className={`${"text-[10px] font-semibold p-[4px_10px] rounded-xs cursor-pointer [border:1px_solid_transparent] [transition:background_0.12s,color_0.12s] whitespace-nowrap no-underline inline-flex items-center gap-1 leading-none font-sans"} ${"[background:var(--surface)] border-border text-muted font-bold hover:[background:var(--bg)] hover:text-foreground"}`}
 														onClick={(e) => {
 															e.stopPropagation();
 															navigator.clipboard?.writeText(String(track.id));
@@ -673,7 +773,7 @@ export default function DDetectorPage() {
 														Copy ID
 													</button>
 													<a
-														className={`${styles.btn} ${styles.btnYandex}`}
+														className={`${"text-[10px] font-semibold p-[4px_10px] rounded-xs cursor-pointer [border:1px_solid_transparent] [transition:background_0.12s,color_0.12s] whitespace-nowrap no-underline inline-flex items-center gap-1 leading-none font-sans"} ${"in-[.drugCardIgnored]:[background:var(--ignore-bg-subtle)] in-[.drugCardIgnored]:border-(--ignore-border) in-[.drugCardIgnored]:text-(--ignore-accent) [.drugCardIgnored_&:hover]:[background:var(--ignore-mark-bg)] [background:var(--accent-surface)] border-(--accent-border) text-accent font-bold hover:[background:var(--accent-surface-hover)]"}`}
 														href={`https://yandex.ru/search/?text=${encodeURIComponent(`${track.title} ${track.artist} скачать mp3`)}`}
 														target="_blank"
 														rel="noopener noreferrer"
@@ -684,7 +784,7 @@ export default function DDetectorPage() {
 											</div>
 
 											<div
-												className={`${styles.drugLines}${allLines ? ` ${styles.drugLinesNoTs}` : ""}`}
+												className={`${"in-[.drugCardIgnored]:[background:var(--ignore-bg-lines)]"}${allLines ? ` ${"[&_.drugTs]:hidden"}` : ""}`}
 											>
 												{displayLines.map((line, li) => {
 													const isContext =
@@ -692,13 +792,19 @@ export default function DDetectorPage() {
 													return (
 														<div
 															key={li}
-															className={`${styles.drugLine}${isContext ? ` ${styles.drugLineContext}` : ""}`}
+															className={`${"in-[.drugCardIgnored]:[border-bottom:1px_solid_var(--ignore-border)] [.drugCardIgnored_&:hover]:[background:var(--ignore-bg-btn)] flex gap-2.5 items-baseline p-[5px_12px] [border-bottom:1px_solid_var(--border)] [transition:background_0.1s] hover:[background:var(--accent-bg-hover)] last:[border-bottom:none]"}${isContext ? ` ${"opacity-[0.45] hover:opacity-[0.7] hover:[background:transparent]"}` : ""}`}
 														>
-															<span className={styles.drugTs}>
+															<span
+																className={
+																	'in-[.drugCardIgnored]:text-(--ignore-accent-dim) text-[10px] font-bold text-accent [font-variant-numeric:tabular-nums] shrink-0 font-["SF_Mono","Fira_Code",monospace] min-w-11.5 opacity-[0.8] in-[.drugLinesNoTs]:hidden'
+																}
+															>
 																{line.ts ?? "—:——"}
 															</span>
 															<span
-																className={styles.drugText}
+																className={
+																	"text-[12px] font-bold text-foreground leading-[1.55] opacity-[0.85]"
+																}
 																dangerouslySetInnerHTML={{ __html: line.html }}
 															/>
 														</div>
@@ -717,16 +823,32 @@ export default function DDetectorPage() {
 			{ctxMenu && (
 				<div
 					ref={ctxMenuRef}
-					className={styles.ctxMenu}
+					className={
+						"fixed z-300 min-w-45 [background:var(--surface2)] [border:1px_solid_var(--border)] rounded-md p-1 [box-shadow:var(--shadow-overlay)]"
+					}
 					style={{ top: ctxMenu.y, left: ctxMenu.x }}
 				>
-					<div className={styles.ctxMenuTrack}>
-						<span className={styles.ctxMenuTitle}>{ctxMenu.track.title}</span>
-						<span className={styles.ctxMenuArtist}>{ctxMenu.track.artist}</span>
+					<div className={"flex flex-col gap-px p-1.5"}>
+						<span
+							className={
+								"text-[12px] font-extrabold text-foreground whitespace-nowrap overflow-hidden text-ellipsis max-w-50"
+							}
+						>
+							{ctxMenu.track.title}
+						</span>
+						<span
+							className={
+								"text-[10px] font-bold text-muted whitespace-nowrap overflow-hidden text-ellipsis max-w-50 opacity-[0.7]"
+							}
+						>
+							{ctxMenu.track.artist}
+						</span>
 					</div>
-					<div className={styles.ctxMenuDivider} />
+					<div className={"h-px [background:var(--border)] m-[2px_0]"} />
 					<a
-						className={styles.ctxMenuItem}
+						className={
+							"flex items-center gap-2 w-full p-[6px_10px] rounded-xs text-[12px] font-bold text-foreground [background:transparent] [border:none] cursor-pointer no-underline font-sans [transition:background_0.1s,color_0.1s] [&_svg]:shrink-0 [&_svg]:text-muted [&_svg]:[transition:color_0.1s] hover:[background:var(--surface)] hover:text-accent [&:hover_svg]:text-accent"
+						}
 						href={`https://yandex.ru/search/?text=${encodeURIComponent(`${ctxMenu.track.title} ${ctxMenu.track.artist} скачать mp3`)}`}
 						target="_blank"
 						rel="noopener noreferrer"
@@ -750,7 +872,9 @@ export default function DDetectorPage() {
 						Search on Yandex
 					</a>
 					<button
-						className={styles.ctxMenuItem}
+						className={
+							"flex items-center gap-2 w-full p-[6px_10px] rounded-xs text-[12px] font-bold text-foreground [background:transparent] [border:none] cursor-pointer no-underline font-sans [transition:background_0.1s,color_0.1s] [&_svg]:shrink-0 [&_svg]:text-muted [&_svg]:[transition:color_0.1s] hover:[background:var(--surface)] hover:text-accent [&:hover_svg]:text-accent"
+						}
 						onClick={() => {
 							navigator.clipboard?.writeText(String(ctxMenu.track.id));
 							showToast(`ID copied: ${ctxMenu.track.id}`);
@@ -775,10 +899,12 @@ export default function DDetectorPage() {
 						</svg>
 						Copy track ID
 					</button>
-					<div className={styles.ctxMenuDivider} />
+					<div className={"h-px [background:var(--border)] m-[2px_0]"} />
 					{ctxMenu.hasAllLines && (
 						<button
-							className={styles.ctxMenuItem}
+							className={
+								"flex items-center gap-2 w-full p-[6px_10px] rounded-xs text-[12px] font-bold text-foreground [background:transparent] [border:none] cursor-pointer no-underline font-sans [transition:background_0.1s,color_0.1s] [&_svg]:shrink-0 [&_svg]:text-muted [&_svg]:[transition:color_0.1s] hover:[background:var(--surface)] hover:text-accent [&:hover_svg]:text-accent"
+							}
 							onClick={() => {
 								toggleExpanded(ctxMenu.track.id);
 								setCtxMenu(null);
@@ -797,7 +923,7 @@ export default function DDetectorPage() {
 						</button>
 					)}
 					<button
-						className={`${styles.ctxMenuItem} ${ignoredIds.has(ctxMenu.track.id) ? styles.ctxMenuItemUnignore : styles.ctxMenuItemIgnore}`}
+						className={`${"flex items-center gap-2 w-full p-[6px_10px] rounded-xs text-[12px] font-bold text-foreground [background:transparent] [border:none] cursor-pointer no-underline font-sans [transition:background_0.1s,color_0.1s] [&_svg]:shrink-0 [&_svg]:text-muted [&_svg]:[transition:color_0.1s] hover:[background:var(--surface)] hover:text-accent [&:hover_svg]:text-accent"} ${ignoredIds.has(ctxMenu.track.id) ? "text-muted hover:[background:var(--surface)] hover:text-accent" : "text-(--ignore-accent) [&_svg]:text-(--ignore-accent-dim) hover:[background:var(--ignore-bg)] hover:text-(--ignore-mark-hover-color) [&:hover_svg]:text-(--ignore-mark-hover-color)"}`}
 						onClick={() => handleToggleIgnore(ctxMenu.track)}
 					>
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -827,11 +953,15 @@ export default function DDetectorPage() {
 			{headerCtxMenu && (
 				<div
 					ref={headerCtxMenuRef}
-					className={styles.ctxMenu}
+					className={
+						"fixed z-300 min-w-45 [background:var(--surface2)] [border:1px_solid_var(--border)] rounded-md p-1 [box-shadow:var(--shadow-overlay)]"
+					}
 					style={{ top: headerCtxMenu.y, left: headerCtxMenu.x }}
 				>
 					<button
-						className={styles.ctxMenuItem}
+						className={
+							"flex items-center gap-2 w-full p-[6px_10px] rounded-xs text-[12px] font-bold text-foreground [background:transparent] [border:none] cursor-pointer no-underline font-sans [transition:background_0.1s,color_0.1s] [&_svg]:shrink-0 [&_svg]:text-muted [&_svg]:[transition:color_0.1s] hover:[background:var(--surface)] hover:text-accent [&:hover_svg]:text-accent"
+						}
 						onClick={() => {
 							toggleHideIgnored();
 							setHeaderCtxMenu(null);
@@ -890,7 +1020,7 @@ export default function DDetectorPage() {
 
 			{/* Toast */}
 			<div
-				className={`${styles.toast}${toastVisible ? ` ${styles.toastShow}` : ""}`}
+				className={`${"fixed top-2.25 left-[50%] transform-[translateX(-50%)_translateY(-14px)] [background:var(--surface2)] [border:1px_solid_var(--border)] text-foreground p-[8px_16px] rounded-sm text-[12px] font-bold opacity-0 [transition:opacity_0.18s,transform_0.18s] pointer-events-none whitespace-nowrap z-(--z-popover) [&.toastShow]:opacity-100 [&.toastShow]:transform-[translateX(-50%)_translateY(0)]"}${toastVisible ? ` ${"[.toast&]:opacity-100 [.toast&]:transform-[translateX(-50%)_translateY(0)]"}` : ""}`}
 			>
 				{toast}
 			</div>

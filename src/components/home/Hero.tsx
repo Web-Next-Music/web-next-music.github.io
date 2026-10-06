@@ -1,11 +1,12 @@
 "use client";
 
+import styles from "./Hero.module.scss";
+
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import styles from "./Hero.module.scss";
 import { findAsset, formatSize, fetchLatestRelease } from "@/lib/github";
 import { useAuth } from "@/lib/auth";
-import type { GithubAsset, GithubRelease } from "@/types/ui";
+import type { GithubRelease } from "@/types/ui";
 
 function WindowsIcon() {
 	return (
@@ -123,8 +124,8 @@ export default function Hero() {
 						<span className={styles.accent}>Client</span>
 					</h1>
 					<p className={styles.desc}>
-						Web client for Yandex Music with support for themes, addons,
-						Discord Rich Presence (RPC) and OBS widget
+						Web client for Yandex Music with support for themes, addons, Discord
+						Rich Presence (RPC) and OBS widget
 					</p>
 					<div className={styles.dlSection}>
 						<span className={styles.dlSectionLabel}>Download</span>

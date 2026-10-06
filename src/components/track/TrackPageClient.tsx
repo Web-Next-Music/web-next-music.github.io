@@ -1,13 +1,8 @@
 "use client";
 
-import {
-	useEffect,
-	useLayoutEffect,
-	useState,
-	useRef,
-	useCallback,
-	Suspense,
-} from "react";
+import Image from "next/image";
+
+import { useEffect, useState, useRef, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -27,7 +22,7 @@ import {
 	encodeTrackKey,
 	stableTrackKey,
 } from "@/lib/track/trackKey";
-import styles from "./TrackPageClient.module.scss";
+import { fetchLyrics, type LrcResult } from "@/lib/track/lyrics";
 import { ID3Writer } from "browser-id3-writer";
 import {
 	ArrowLeft as ArrowLeftIcon,
@@ -40,67 +35,6 @@ import {
 	ExternalLink as ExternalLinkIcon,
 	Clock as ClockIcon,
 } from "lucide-react";
-
-interface LrcLine {
-	time: number;
-	text: string;
-}
-
-function parseLrc(raw: string): LrcLine[] {
-	const lines: LrcLine[] = [];
-	const re = /\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/;
-	for (const line of raw.split("\n")) {
-		const m = line.match(re);
-		if (!m) continue;
-		const min = parseInt(m[1], 10);
-		const sec = parseInt(m[2], 10);
-		const ms = parseInt(m[3].padEnd(3, "0"), 10);
-		const time = min * 60 + sec + ms / 1000;
-		const text = m[4].trim();
-		if (text) lines.push({ time, text });
-	}
-	return lines;
-}
-
-interface LrcResult {
-	synced: LrcLine[] | null;
-	plain: string | null;
-	found: boolean;
-}
-
-async function fetchLyrics(title: string, artist: string): Promise<LrcResult> {
-	const empty: LrcResult = { synced: null, plain: null, found: false };
-
-	const parse = (data: any): LrcResult | null => {
-		if (!data || data.statusCode === 404) return null;
-		const synced = data.syncedLyrics ? parseLrc(data.syncedLyrics) : null;
-		const plain = data.plainLyrics ?? null;
-		if (!synced && !plain) return null;
-		return { synced, plain, found: true };
-	};
-
-	try {
-		const q = new URLSearchParams({
-			track_name: title,
-			artist_name: artist,
-		});
-		const fast = await fetch(`https://lrclib.net/api/get?${q}`);
-		if (fast.ok) {
-			const result = parse(await fast.json());
-			if (result) return result;
-		}
-
-		const search = await fetch(`https://lrclib.net/api/search?${q}`);
-		if (!search.ok) return empty;
-		const list = await search.json();
-		if (!list?.length) return empty;
-		const best = list.find((d: any) => d.syncedLyrics) ?? list[0];
-		const result = parse(best);
-		return result ?? empty;
-	} catch {
-		return empty;
-	}
-}
 
 function downloadDirect(audioUrl: string) {
 	window.open(audioUrl, "_blank");
@@ -188,12 +122,11 @@ function TrackPageContent({
 
 	const router = useRouter();
 
-	useLayoutEffect(() => {
-		if (typeof window === "undefined") return;
+	useEffect(() => {
 		if (!id || idOverride || rawKey || directUrl) return;
-		if (window.location.pathname !== "/track") return;
-		window.history.replaceState(null, "", `/track/${id}`);
-	}, [id, idOverride, rawKey, directUrl]);
+		if (pathname !== "/track") return;
+		router.replace(`/track/${id}`);
+	}, [directUrl, id, idOverride, pathname, rawKey, router]);
 
 	const [storeReady, setStoreReady] = useState(() => getStoreSnapshot().loaded);
 	const [track, setTrack] = useState<CachedTrack | null>(null);
@@ -222,10 +155,6 @@ function TrackPageContent({
 	const player = usePlayer();
 	const [activeLine, setActiveLine] = useState(-1);
 
-	const [ugcState, setUgcState] = useState<
-		"idle" | "loading" | "playing" | "error"
-	>("idle");
-
 	const [exclusiveBlobUrl, setExclusiveBlobUrl] = useState<string | null>(null);
 	const [exclusiveLoading, setExclusiveLoading] = useState(false);
 	const blobUrlRef = useRef<string | null>(null);
@@ -240,12 +169,6 @@ function TrackPageContent({
 	const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
 	const userScrolling = useRef(false);
 	const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-	useEffect(() => {
-		const handler = () => setShowLyrics((v) => !v);
-		window.addEventListener("toggleLyrics", handler);
-		return () => window.removeEventListener("toggleLyrics", handler);
-	}, []);
 
 	useEffect(() => {
 		if (getStoreSnapshot().loaded) {
@@ -271,12 +194,11 @@ function TrackPageContent({
 		}
 		if (id) {
 			const found = findTrackById(id);
-			found ? setTrack(found) : setNotFound(true);
+			if (found) setTrack(found);
+			else setNotFound(true);
 		}
 		// For url mode, displayTrack will be used from the virtual track
 	}, [storeReady, id, directUrl]);
-
-	const playedRef = useRef(false);
 
 	const getExclusivePlaybackUrl = useCallback(async () => {
 		if (!isExclusive) return directUrl;
@@ -306,24 +228,6 @@ function TrackPageContent({
 			}
 		};
 	}, []);
-
-	useEffect(() => {
-		if (!directUrl || !player || playedRef.current) return;
-		playedRef.current = true;
-
-		try {
-			const host = new URL(directUrl).hostname;
-			if (!host.endsWith("yandex.net")) {
-				setUgcState("error");
-				return;
-			}
-		} catch {
-			setUgcState("error");
-			return;
-		}
-
-		setUgcState("playing");
-	}, [player, directUrl, paramTitle, paramArtist, paramCover]);
 
 	useEffect(() => {
 		if (!displayTrack?.title) return;
@@ -422,7 +326,6 @@ function TrackPageContent({
 				playbackUrl = await getExclusivePlaybackUrl();
 			} catch (error) {
 				console.error("Failed to prepare playback:", error);
-				setUgcState("error");
 				return;
 			}
 		}
@@ -464,40 +367,40 @@ function TrackPageContent({
 		}
 	}, [displayTrack, isExclusive, paramToken]);
 
-	useEffect(() => {
-		window.dispatchEvent(
-			new CustomEvent("lyricsState", { detail: { open: showLyrics } }),
-		);
-	}, [showLyrics]);
-
 	const isThisPlaying = isThisLoaded && player?.isPlaying;
 
 	// No fallback needed - displayTrack handles all cases
 
 	if (!storeReady) {
 		return (
-			<div className={styles.centered}>
-				<div className={styles.loadingDots}>
+			<div className="flex min-h-[60vh] flex-col items-center justify-center gap-3.5 p-10 text-center">
+				<div className="flex items-center gap-1.5 [&_span]:size-1.75 [&_span]:animate-[nm-pulse-glow_1.2s_ease-in-out_infinite] [&_span]:rounded-full [&_span]:bg-accent [&_span]:opacity-40 [&_span:nth-child(2)]:[animation-delay:.2s] [&_span:nth-child(3)]:[animation-delay:.4s]">
 					<span />
 					<span />
 					<span />
 				</div>
-				<p className={styles.centeredDesc}>Loading track…</p>
+				<p className="text-sm text-muted">Loading track…</p>
 			</div>
 		);
 	}
 
 	if (notFound) {
 		return (
-			<div className={styles.centered}>
-				<div className={styles.notFoundIcon}>
+			<div className="flex min-h-[60vh] flex-col items-center justify-center gap-3.5 p-10 text-center">
+				<div className="opacity-50">
 					<InfoCircleIcon width={48} height={48} />
 				</div>
-				<h2 className={styles.centeredTitle}>Track not found</h2>
-				<p className={styles.centeredDesc}>
+				<h2 className="font-(family-name:--font-heading-large) text-[22px] font-bold text-foreground">
+					Track not found
+				</h2>
+
+				<p className="text-sm text-muted">
 					{id ? `Track with ID ${id} was not found` : "Track not found"}
 				</p>
-				<button className={styles.backBtn} onClick={() => router.back()}>
+				<button
+					className="mt-2 rounded-sm border border-border bg-surface px-4.5 py-2.25 text-[13px] text-foreground transition hover:border-accent hover:text-accent"
+					onClick={() => router.back()}
+				>
 					Back
 				</button>
 			</div>
@@ -506,8 +409,8 @@ function TrackPageContent({
 
 	if (!displayTrack) {
 		return (
-			<div className={styles.centered}>
-				<div className={styles.loadingDots}>
+			<div className="flex min-h-[60vh] flex-col items-center justify-center gap-3.5 p-10 text-center">
+				<div className="flex items-center gap-1.5 [&_span]:size-1.75 [&_span]:animate-[nm-pulse-glow_1.2s_ease-in-out_infinite] [&_span]:rounded-full [&_span]:bg-accent [&_span]:opacity-40 [&_span:nth-child(2)]:[animation-delay:.2s] [&_span:nth-child(3)]:[animation-delay:.4s]">
 					<span />
 					<span />
 					<span />
@@ -523,12 +426,12 @@ function TrackPageContent({
 		: stableTrackKey(directUrl, paramTitle, paramArtist, paramCover);
 
 	return (
-		<div className={styles.page}>
+		<div className="mx-auto max-w-255 py-5 max-[720px]:px-1.25 max-[720px]:pt-6.25 max-[720px]:pb-3.75">
 			<div
-				className={`${styles.layoutOuter} ${!showLyrics ? styles.layoutOuterCentered : ""}`}
+				className={`flex items-start gap-3 px-2.5 max-[720px]:flex-col max-[720px]:items-stretch ${!showLyrics ? "justify-center" : ""}`}
 			>
 				<button
-					className={styles.backLink}
+					className="mt-0 flex size-8 shrink-0 items-center justify-center self-start rounded-sm border border-border bg-surface text-muted transition-[color,border-color,background] hover:border-accent hover:bg-surface-raised hover:text-foreground max-[720px]:mb-3.75"
 					onClick={() => router.back()}
 					style={{
 						display: isHiddenMode ? "none" : "auto",
@@ -537,24 +440,26 @@ function TrackPageContent({
 					<ArrowLeftIcon />
 				</button>
 				<div
-					className={`${styles.layout} ${!showLyrics ? styles.layoutCentered : ""}`}
+					className={`grid min-w-0 flex-1 grid-cols-[300px_1fr] items-start gap-4 max-[720px]:grid-cols-1 ${!showLyrics ? "flex-none grid-cols-[360px] max-[720px]:grid-cols-1" : ""}`}
 				>
-					<div className={styles.heroCard}>
-						<div className={styles.coverWrap}>
+					<div className="relative flex flex-col gap-2.5 overflow-hidden rounded-2xl border border-border bg-surface p-5 max-[720px]:static max-[720px]:flex-row max-[720px]:flex-wrap max-[720px]:gap-3">
+						<div className="group relative aspect-square w-full shrink-0 overflow-hidden rounded-md max-[720px]:w-22.5">
 							{displayTrack?.cover ? (
-								<img
+								<Image
 									src={displayTrack?.cover}
 									alt={displayTrack?.title}
-									className={styles.heroCover}
+									fill
+									sizes="(max-width: 720px) 90px, 300px"
+									className="block size-full rounded-md border border-border object-cover"
 								/>
 							) : (
-								<div className={styles.heroCoverPlaceholder}>
+								<div className="flex size-full items-center justify-center rounded-md border border-border bg-surface-raised">
 									<MusicNoteIcon width={48} height={48} />
 								</div>
 							)}
 
 							<button
-								className={styles.coverPlayBtn}
+								className="absolute inset-0 z-2 flex items-center justify-center border-0 bg-transparent text-white opacity-0 transition-opacity group-hover:opacity-100"
 								onClick={
 									isThisPlaying
 										? player?.pause
@@ -566,9 +471,10 @@ function TrackPageContent({
 								aria-label={isThisPlaying ? "Pause" : "Play"}
 							>
 								{exclusiveLoading ? (
-									<div className={styles.miniDots}>
+									<div className="inline-flex items-center gap-0.75 [&_span]:size-1 [&_span]:animate-[nm-pulse-glow_1.2s_ease-in-out_infinite] [&_span]:rounded-full [&_span]:bg-accent [&_span]:opacity-50 [&_span:nth-child(2)]:[animation-delay:.2s] [&_span:nth-child(3)]:[animation-delay:.4s]">
 										<span />
 										<span />
+
 										<span />
 									</div>
 								) : isThisPlaying ? (
@@ -579,30 +485,34 @@ function TrackPageContent({
 							</button>
 
 							{isThisPlaying && (
-								<div className={styles.playingBadge}>
+								<div className="absolute right-2.5 bottom-2.5 z-3 flex items-end gap-0.75 [&_span]:origin-bottom [&_span]:animate-[waveBar_1s_ease-in-out_infinite] [&_span]:rounded-xs [&_span]:bg-accent [&_span:nth-child(1)]:h-2 [&_span:nth-child(2)]:h-3.5 [&_span:nth-child(2)]:[animation-delay:.15s] [&_span:nth-child(3)]:h-1.5 [&_span:nth-child(3)]:[animation-delay:.3s]">
 									<span />
 									<span />
+
 									<span />
 								</div>
 							)}
 						</div>
 
-						<div className={styles.heroMeta}>
-							<div className={styles.heroInfoRow}>
+						<div className="flex flex-col gap-2.5 max-[720px]:min-w-0 max-[720px]:flex-1">
+							<div className="flex items-center justify-between gap-2">
 								<div>
-									<div className={styles.heroTitleRow}>
-										<h1 className={styles.heroTitle}>{displayTrack?.title}</h1>
+									<div className="flex items-center justify-between gap-2">
+										<h1 className="mt-1 font-sans text-[18px] font-extrabold tracking-[-0.3px] text-foreground max-[720px]:text-base">
+											{displayTrack?.title}
+										</h1>
 									</div>
-									<p className={styles.heroArtist}>
+									<p className="mt-2.5 text-[13px] font-bold text-muted">
 										{displayTrack?.artist || "Unknown artist"}
 									</p>
 								</div>
 								{(displayTrack?.id || directUrl) && (
 									<LikeButton
 										compact
-										className={styles.trackLikeBtn}
+										className="size-8.5 shrink-0 rounded-full opacity-100 [&_svg]:size-4.5"
 										target={{
 											type: "track",
+
 											trackId: displayTrack?.id || directTrackId,
 											meta:
 												!displayTrack?.id && directUrl
@@ -618,11 +528,13 @@ function TrackPageContent({
 								)}
 							</div>
 							{displayTrack?.id && (
-								<p className={styles.heroId}>ID: {displayTrack?.id}</p>
+								<p className="m-0 text-[11px] font-bold text-muted opacity-50">
+									ID: {displayTrack?.id}
+								</p>
 							)}
 						</div>
 
-						<div className={styles.heroActions}>
+						<div className="flex flex-col gap-2.5 max-[720px]:w-full max-[720px]:flex-row max-[720px]:flex-wrap">
 							{directUrl && !id && !isExclusive && (
 								<button
 									onClick={async () => {
@@ -634,23 +546,28 @@ function TrackPageContent({
 												paramTitle,
 												paramCover,
 											);
-										} catch (error) {
+										} catch {
 											setShowDownloadError(true);
 										} finally {
 											setIsDownloading(false);
 										}
 									}}
 									disabled={isDownloading}
-									className={styles.outlineBtn}
+									className="inline-flex w-full items-center justify-center gap-1.75 rounded-sm border border-border bg-surface-raised px-3.5 py-2.25 text-[13px] font-bold text-foreground transition hover:border-accent hover:text-accent max-[720px]:min-w-25 max-[720px]:flex-1 max-[720px]:w-auto"
 								>
 									<DownloadTrackIcon size={15} />
+
 									{isDownloading ? "Downloading..." : "Download"}
 								</button>
 							)}
 
 							{directUrl && !id && (
-								<button onClick={handleCopyKey} className={styles.outlineBtn}>
+								<button
+									onClick={handleCopyKey}
+									className="inline-flex w-full items-center justify-center gap-1.75 rounded-sm border border-border bg-surface-raised px-3.5 py-2.25 text-[13px] font-bold text-foreground transition hover:border-accent hover:text-accent max-[720px]:min-w-25 max-[720px]:flex-1 max-[720px]:w-auto"
+								>
 									<ClipboardIcon size={15} />
+
 									{copyKeyFeedback === "copied" ? "Copied!" : "Copy key"}
 								</button>
 							)}
@@ -660,7 +577,7 @@ function TrackPageContent({
 									href={displayTrack?.yandexUrl}
 									target="_blank"
 									rel="noopener noreferrer"
-									className={styles.outlineBtn}
+									className="inline-flex w-full items-center justify-center gap-1.75 rounded-sm border border-border bg-surface-raised px-3.5 py-2.25 text-[13px] font-bold text-foreground transition hover:border-accent hover:text-accent max-[720px]:min-w-25 max-[720px]:flex-1 max-[720px]:w-auto"
 								>
 									<ExternalLinkIcon size={14} />
 									Yandex Music
@@ -674,14 +591,15 @@ function TrackPageContent({
 					</div>
 
 					{showLyrics && (
-						<div className={styles.lyricsPanel}>
-							<div className={styles.lyricsMeta}>
-								<span className={styles.lyricsLabel}>
+						<div className="sticky top-20 flex h-[calc(100dvh-160px)] min-h-100 max-h-205 flex-col overflow-hidden rounded-2xl border border-border bg-surface max-[720px]:static max-[720px]:h-[55vh] max-[720px]:min-h-75">
+							<div className="flex shrink-0 items-center justify-between border-b border-border px-4.5 py-3">
+								<span className="flex items-center gap-1.5 text-[11px] font-bold tracking-[.5px] text-muted uppercase">
 									{lyricsLoading ? (
 										<>
-											<span className={styles.miniDots}>
+											<span className="inline-flex items-center gap-0.75 [&_span]:size-1 [&_span]:animate-[nm-pulse-glow_1.2s_ease-in-out_infinite] [&_span]:rounded-full [&_span]:bg-accent [&_span]:opacity-50 [&_span:nth-child(2)]:[animation-delay:.2s] [&_span:nth-child(3)]:[animation-delay:.4s]">
 												<span />
 												<span />
+
 												<span />
 											</span>
 											Searching…
@@ -702,7 +620,7 @@ function TrackPageContent({
 										href="https://lrclib.net/"
 										target="_blank"
 										rel="noopener noreferrer"
-										className={styles.lyricsSource}
+										className="text-[11px] font-bold text-muted no-underline opacity-60 transition hover:text-accent hover:opacity-100"
 									>
 										via lrclib.net
 									</a>
@@ -710,13 +628,14 @@ function TrackPageContent({
 							</div>
 
 							{lyricsLoading && (
-								<div className={styles.lyricsSkeleton}>
+								<div className="flex flex-1 flex-col gap-4 p-4.5">
 									{[80, 55, 90, 45, 70, 60, 85, 50, 75, 40].map((w, i) => (
 										<div
 											key={i}
-											className={styles.skeletonLine}
+											className="h-4.25 animate-[shimmer_1.4s_ease-in-out_infinite] rounded-xs bg-surface-raised"
 											style={{
 												width: `${w}%`,
+
 												animationDelay: `${i * 0.05}s`,
 											}}
 										/>
@@ -726,7 +645,7 @@ function TrackPageContent({
 
 							{!lyricsLoading && isSynced && (
 								<div
-									className={styles.syncedLyrics}
+									className="flex-1 overflow-y-auto overscroll-contain px-4.5 pt-4 [scrollbar-color:var(--border)_transparent] scrollbar-thin [&::-webkit-scrollbar]:w-0.75 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border"
 									ref={lyricsContainerRef}
 									onScroll={handleLyricsScroll}
 								>
@@ -737,9 +656,11 @@ function TrackPageContent({
 												lineRefs.current[i] = el;
 											}}
 											className={[
-												styles.lyricLine,
-												i === activeLine ? styles.lyricLineActive : "",
-												i < activeLine ? styles.lyricLinePast : "",
+												"cursor-pointer rounded-sm px-2.5 py-1.5 font-(family-name:--font-montserrat) text-[17px] font-bold leading-normal text-muted opacity-50 transition-[color,opacity,transform,background] hover:bg-surface-raised hover:text-foreground hover:opacity-85",
+												i === activeLine
+													? "translate-x-1 bg-(--active-lyrics-line-background-color) text-foreground! opacity-100"
+													: "",
+												i < activeLine ? "opacity-30" : "",
 											].join(" ")}
 											onClick={() => {
 												const audio = player?.audioRef.current;
@@ -762,19 +683,21 @@ function TrackPageContent({
 												if (!player?.isPlaying) player?.resume();
 											}}
 										>
-											<span className={styles.lyricText}>{line.text}</span>
+											<span className="inline-block w-[calc(100%-18px)] origin-left transition-transform">
+												{line.text}
+											</span>
 										</div>
 									))}
-									<div className={styles.lyricsBottomPad} />
+									<div className="h-1/2 shrink-0" />
 								</div>
 							)}
 
 							{!lyricsLoading && !isSynced && hasLyrics && (
-								<div className={styles.plainLyrics}>
+								<div className="flex-1 overflow-y-auto px-6 py-4.5 [scrollbar-color:var(--border)_transparent] scrollbar-thin">
 									{lyrics!.plain!.split("\n").map((line, i) => (
 										<p
 											key={i}
-											className={styles.plainLine}
+											className="m-0 animate-[lineIn_.35s_ease_both] font-(family-name:--font-heading-large) text-base leading-[1.85] text-foreground"
 											style={{
 												animationDelay: `${Math.min(i * 0.02, 0.5)}s`,
 											}}
@@ -786,7 +709,7 @@ function TrackPageContent({
 							)}
 
 							{!lyricsLoading && lyrics !== null && !hasLyrics && (
-								<div className={styles.noLyricsBody}>
+								<div className="flex flex-1 flex-col items-center justify-center gap-3.5 p-10 text-center text-sm text-muted">
 									<p>No lyrics found for this track.</p>
 								</div>
 							)}

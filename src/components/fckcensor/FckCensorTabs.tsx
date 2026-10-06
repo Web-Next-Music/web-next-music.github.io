@@ -1,5 +1,9 @@
 "use client";
 
+import Image from "next/image";
+
+import styles from "./FckCensorTabs.module.scss";
+
 import {
 	useState,
 	useEffect,
@@ -29,7 +33,6 @@ import {
 	removeTrackFromPlaylist,
 	type Playlist,
 } from "@/lib/supabase/playlists";
-import styles from "./FckCensorTabs.module.scss";
 import TrackLink from "@/components/common/TrackLink";
 import type { PlayBtnProps, SearchBarProps, LegacyListProps } from "@/types/ui";
 
@@ -88,7 +91,9 @@ function AddToPlaylistBtn({
 		<>
 			<button
 				ref={btnRef}
-				className={styles.addToPlaylistBtn}
+				className={
+					"flex items-center justify-center w-7.5 h-7.5 rounded-sm [border:1px_solid_transparent] bg-none text-muted cursor-pointer shrink-0 opacity-100 [transition:opacity_0.15s,background_0.15s,color_0.15s,border-color_0.15s] hover:[background:var(--surface2)] hover:text-foreground hover:border-border"
+				}
 				onClick={handleOpen}
 				aria-label="Add to playlist"
 			>
@@ -102,7 +107,9 @@ function AddToPlaylistBtn({
 				offset={4}
 			>
 				{playlists.length === 0 ? (
-					<div className={styles.playlistMenuEmpty}>No playlists</div>
+					<div className={"p-[8px_12px] text-[12px] text-muted"}>
+						No playlists
+					</div>
 				) : (
 					playlists.map((pl) => {
 						const inPlaylist = inPlaylists.has(pl.id);
@@ -150,7 +157,7 @@ function PlayBtn({ track }: PlayBtnProps) {
 
 	return (
 		<button
-			className={`${styles.playBtn} ${isThis ? styles.playBtnActive : ""}`}
+			className={`${"flex items-center justify-center w-7.5 h-7.5 rounded-sm [border:1px_solid_var(--border)] [background:var(--surface)] text-muted cursor-pointer shrink-0 opacity-100 [transition:opacity_0.15s,background_0.15s,color_0.15s,border-color_0.15s] hover:[background:var(--surface2)] hover:text-accent hover:border-accent"} ${isThis ? "opacity-100 text-accent border-accent [background:var(--accent-surface)]" : ""}`}
 			onClick={handleClick}
 			aria-label={active ? "Pause" : "Play"}
 		>
@@ -162,7 +169,7 @@ function PlayBtn({ track }: PlayBtnProps) {
 function SearchBar({ value, onChange }: SearchBarProps) {
 	return (
 		<SearchInput
-			wrapperClassName={styles.searchWrap}
+			wrapperClassName={"[margin-bottom:12px]"}
 			size="lg"
 			iconSize={16}
 			radius="pill"
@@ -250,20 +257,20 @@ function LegacyList({ tracks, query, playlists }: LegacyListProps) {
 	const visibleTracks = filtered.slice(renderRange.start, renderRange.end);
 
 	return (
-		<div ref={listRef} className={styles.list}>
+		<div ref={listRef} className={"flex flex-col gap-0.75"}>
 			{filtered.length === 0 && (
-				<div className={styles.empty}>
+				<div className={"p-[40px_20px] text-center text-muted text-[14px]"}>
 					{query.trim() ? "No results found" : "Failed to load track list"}
 				</div>
 			)}
 			<div
 				ref={spacerRef}
-				className={styles.spacer}
+				className={"relative"}
 				style={{ height: filtered.length * TRACK_HEIGHT }}
 			>
 				<div
 					ref={contentRef}
-					className={styles.content}
+					className={"absolute top-0 left-0 right-0"}
 					style={{
 						transform: `translateY(${renderRange.start * TRACK_HEIGHT}px)`,
 					}}
@@ -273,40 +280,60 @@ function LegacyList({ tracks, query, playlists }: LegacyListProps) {
 						const meta = track.meta;
 						const inner = (
 							<>
-								<span className={styles.num}>{globalIndex + 1}</span>
+								<span
+									className={
+										"text-[12px] font-bold font-sans text-muted w-6.25 text-right shrink-0 [@media(max-width:_640px)]:hidden"
+									}
+								>
+									{globalIndex + 1}
+								</span>
 
 								{meta?.cover ? (
-									<img
+									<Image
 										src={meta.cover}
 										alt=""
 										width={40}
 										height={40}
-										className={styles.cover}
+										className={
+											"w-10 h-10 rounded-xs object-cover shrink-0 [border:1px_solid_var(--border)]"
+										}
 										loading="lazy"
 									/>
 								) : (
-									<div className={styles.legacyIcon}>
+									<div
+										className={
+											"w-10 h-10 rounded-xs [background:var(--surface2)] [border:1px_solid_var(--border)] flex items-center justify-center shrink-0"
+										}
+									>
 										<Music size={16} color="var(--muted)" />
 									</div>
 								)}
 
-								<div className={styles.info}>
-									<div className={styles.title}>
+								<div className={"flex-1 min-w-0"}>
+									<div
+										className={
+											"text-[14px] font-extrabold whitespace-nowrap overflow-hidden text-ellipsis"
+										}
+									>
 										<Highlight
 											text={meta?.title ?? `Track #${track.id}`}
 											query={query}
 										/>
 									</div>
-									<div className={styles.artist}>
+									<div
+										className={
+											"text-[12px] font-bold text-muted mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis"
+										}
+									>
 										{meta?.artist ? (
 											<Highlight text={meta.artist} query={query} />
 										) : (
-											<span className={styles.idFallback}>ID: {track.id}</span>
+											<span className={"opacity-[0.45]"}>ID: {track.id}</span>
 										)}
 									</div>
 								</div>
 								<div
-									className={styles.rowActions}
+									className={"flex items-center gap-1.5 shrink-0"}
 									onClick={(e) => {
 										e.preventDefault();
 										e.stopPropagation();
@@ -336,7 +363,9 @@ function LegacyList({ tracks, query, playlists }: LegacyListProps) {
 							<TrackLink
 								key={track.id}
 								href={`/track?id=${track.id}`}
-								className={styles.trackRow}
+								className={
+									"flex items-center gap-3.5 p-[9px_14px] rounded-2xl [border:1px_solid_transparent] [transition:all_0.15s] cursor-pointer no-underline text-foreground hover:[background:var(--surface)] hover:border-border [&:hover_.playBtn]:opacity-100 [&:hover_.addToPlaylistBtn]:opacity-100 active:transform-[scale(0.995)] [@media(max-width:_640px)]:gap-2.5 [@media(max-width:_640px)]:p-[8px_10px]"
+								}
 								style={{ height: TRACK_HEIGHT }}
 							>
 								{inner}
@@ -347,7 +376,9 @@ function LegacyList({ tracks, query, playlists }: LegacyListProps) {
 								href={track.yandexUrl}
 								target="_blank"
 								rel="noopener noreferrer"
-								className={styles.trackRow}
+								className={
+									"flex items-center gap-3.5 p-[9px_14px] rounded-2xl [border:1px_solid_transparent] [transition:all_0.15s] cursor-pointer no-underline text-foreground hover:[background:var(--surface)] hover:border-border [&:hover_.playBtn]:opacity-100 [&:hover_.addToPlaylistBtn]:opacity-100 active:transform-[scale(0.995)] [@media(max-width:_640px)]:gap-2.5 [@media(max-width:_640px)]:p-[8px_10px]"
+								}
 								style={{ height: TRACK_HEIGHT }}
 							>
 								{inner}
@@ -368,7 +399,11 @@ function Highlight({ text, query }: { text: string; query: string }) {
 	return (
 		<>
 			{text.slice(0, idx)}
-			<mark className={styles.highlight}>
+			<mark
+				className={
+					"[background:var(--accent-border)] text-accent rounded-(--radius-3xs) p-[0_1px]"
+				}
+			>
 				{text.slice(idx, idx + q.length)}
 			</mark>
 			{text.slice(idx + q.length)}
@@ -378,14 +413,29 @@ function Highlight({ text, query }: { text: string; query: string }) {
 
 function Skeleton() {
 	return (
-		<div className={styles.list}>
+		<div className={"flex flex-col gap-0.75"}>
 			{Array.from({ length: 8 }).map((_, i) => (
-				<div key={i} className={`${styles.trackRow} ${styles.skeletonRow}`}>
-					<span className={styles.num}>{i + 1}</span>
-					<div className={styles.coverPlaceholder} />
-					<div className={styles.info}>
+				<div
+					key={i}
+					className={`${"flex items-center gap-3.5 p-[9px_14px] rounded-2xl [border:1px_solid_transparent] [transition:all_0.15s] cursor-pointer no-underline text-foreground hover:[background:var(--surface)] hover:border-border [&:hover_.playBtn]:opacity-100 [&:hover_.addToPlaylistBtn]:opacity-100 active:transform-[scale(0.995)] [@media(max-width:_640px)]:gap-2.5 [@media(max-width:_640px)]:p-[8px_10px]"} ${"opacity-[0.4]"}`}
+				>
+					<span
+						className={
+							"text-[12px] font-bold font-sans text-muted w-6.25 text-right shrink-0 [@media(max-width:_640px)]:hidden"
+						}
+					>
+						{i + 1}
+					</span>
+					<div
+						className={
+							"w-10 h-10 rounded-xs [background:var(--surface2)] [border:1px_solid_var(--border)] shrink-0"
+						}
+					/>
+					<div className={"flex-1 min-w-0"}>
 						<div
-							className={styles.title}
+							className={
+								"text-[14px] font-extrabold whitespace-nowrap overflow-hidden text-ellipsis"
+							}
 							style={{
 								background: "var(--color-border-tertiary)",
 								borderRadius: 4,
@@ -394,7 +444,7 @@ function Skeleton() {
 							}}
 						/>
 						<div
-							className={`${styles.artist} ${styles.skeletonArtistLine}`}
+							className={`${"text-[12px] font-bold text-muted mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis"} ${"mt-1"}`}
 							style={{
 								background: "var(--color-border-tertiary)",
 								borderRadius: 4,
@@ -413,6 +463,7 @@ export default function FckCensorTabs() {
 	const [query, setQuery] = useState("");
 	const [playlists, setPlaylists] = useState<Playlist[]>([]);
 	const { user } = useAuth();
+	const userId = user?.id;
 
 	const { legacy, loaded } = useSyncExternalStore(
 		subscribeStore,
@@ -426,12 +477,12 @@ export default function FckCensorTabs() {
 	}, []);
 
 	useEffect(() => {
-		if (!user) {
+		if (!userId) {
 			setPlaylists([]);
 			return;
 		}
-		getPlaylists(user.id).then(setPlaylists);
-	}, [user?.id]);
+		getPlaylists(userId).then(setPlaylists);
+	}, [userId]);
 
 	return (
 		<div>

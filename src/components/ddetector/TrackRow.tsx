@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { memo } from "react";
 import type { DDetectorTrack } from "@/lib/track/ddetector";
 import styles from "@/app/ddetector/page.module.scss";
@@ -60,9 +61,11 @@ const TrackRow = memo(function TrackRow({
 			<span className={styles.trackNum}>{index + 1}</span>
 			<div className={styles.cover}>
 				{track.cover ? (
-					<img
+					<Image
 						src={track.cover}
 						alt=""
+						width={40}
+						height={40}
 						loading="lazy"
 						onError={handleCoverError}
 					/>

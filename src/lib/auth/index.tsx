@@ -190,7 +190,7 @@ export function AuthProvider({
 		);
 
 		return () => listener.subscription.unsubscribe();
-	}, []);
+	}, [devToken]);
 
 	const signInWithGitHub = useCallback(async (): Promise<string | null> => {
 		const sb = getSupabase();

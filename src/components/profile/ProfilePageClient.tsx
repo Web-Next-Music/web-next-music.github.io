@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -39,6 +39,7 @@ export default function ProfilePageClient({
 }) {
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
+	const router = useRouter();
 	const { user, loading } = useAuth();
 
 	const resolvedId =
@@ -51,12 +52,11 @@ export default function ProfilePageClient({
 		if (resolvedId && resolvedId !== id) setId(resolvedId);
 	}, [resolvedId, id]);
 
-	useLayoutEffect(() => {
-		if (typeof window === "undefined") return;
+	useEffect(() => {
 		if (!id || idOverride) return;
-		if (window.location.pathname !== "/profile") return;
-		window.history.replaceState(null, "", `/profile/${id}`);
-	}, [id, idOverride]);
+		if (pathname !== "/profile") return;
+		router.replace(`/profile/${id}`);
+	}, [id, idOverride, pathname, router]);
 
 	if (!id) return <NotFoundView />;
 

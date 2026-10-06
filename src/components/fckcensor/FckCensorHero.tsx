@@ -7,6 +7,16 @@ import styles from "@/app/fckcensor-next/page.module.scss";
 const FCKCENSOR_REPO = "Web-Next-Music/FckCensor-Next";
 const RELEASES_URL = `https://github.com/${FCKCENSOR_REPO}/releases/latest`;
 
+interface ReleaseAsset {
+	name?: string;
+	browser_download_url?: string;
+}
+
+interface Release {
+	tag_name?: string;
+	assets?: ReleaseAsset[];
+}
+
 async function fetchReleaseInfo(): Promise<{
 	url: string;
 	tag: string | null;
@@ -16,10 +26,10 @@ async function fetchReleaseInfo(): Promise<{
 			`https://api.github.com/repos/${FCKCENSOR_REPO}/releases?per_page=1`,
 		);
 		if (res.ok) {
-			const releases = await res.json();
-			const release = releases[0];
-			const asset = release?.assets?.find((a: any) =>
-				a.name.endsWith(".user.js"),
+			const releases: unknown = await res.json();
+			const release = Array.isArray(releases) ? (releases[0] as Release) : null;
+			const asset = release?.assets?.find((asset) =>
+				asset.name?.endsWith(".user.js"),
 			);
 			return {
 				url: asset?.browser_download_url ?? RELEASES_URL,

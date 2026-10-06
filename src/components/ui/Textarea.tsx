@@ -2,7 +2,6 @@
 
 import type { ChangeEvent, Ref, TextareaHTMLAttributes } from "react";
 import { cx } from "@/lib/cx";
-import styles from "./Textarea.module.scss";
 
 interface Props extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 	invalid?: boolean;
@@ -14,6 +13,7 @@ export default function Textarea({
 	invalid = false,
 	autoGrow = false,
 	className,
+	style,
 	onChange,
 	...rest
 }: Props) {
@@ -29,10 +29,11 @@ export default function Textarea({
 		<textarea
 			aria-invalid={invalid || undefined}
 			onChange={handleChange}
+			style={{ scrollbarWidth: "thin", ...style }}
 			className={cx(
-				styles.textarea,
-				invalid && styles.invalid,
-				autoGrow && styles.autoGrow,
+				"min-h-20 w-full resize-y rounded-sm border border-border bg-surface px-3 py-2 font-sans text-(length:--fs-sm) font-bold leading-normal text-foreground outline-none transition-colors duration-200 placeholder:text-muted focus:border-(--accent-border-strong) disabled:cursor-not-allowed disabled:opacity-50 [scrollbar-color:var(--border)_transparent] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border",
+				invalid && "border-(--danger-border-strong) focus:border-danger",
+				autoGrow && "resize-none overflow-hidden",
 				className,
 			)}
 			{...rest}

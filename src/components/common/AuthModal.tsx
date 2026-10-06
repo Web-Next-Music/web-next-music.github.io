@@ -33,7 +33,7 @@ export default function AuthModal() {
 			open={authModalOpen}
 			onClose={closeAuthModal}
 			showClose={false}
-			className={styles.modal}
+			className={styles.box}
 			bodyClassName={styles.body}
 		>
 			<SignInCard

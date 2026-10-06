@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
+
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { usePlayer } from "@/lib/miniplayer/context";
 import {
@@ -10,42 +12,36 @@ import {
 import { encodeTrackKey, decodeTrackKey } from "@/lib/track/trackKey";
 import LikeButton from "@/components/common/LikeButton";
 import LogoIcon from "@/components/common/LogoIcon";
-import styles from "./MiniPlayer.module.scss";
 
 export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 	const player = usePlayer();
 	const router = useRouter();
-	if (!player) return null;
-	const { nowPlaying, isPlaying, pause, resume, close, audioRef } = player;
+	const nowPlaying = player?.nowPlaying ?? null;
+	const audioRef = player?.audioRef;
 	const [progress, setProgress] = useState(0);
 	const [duration, setDuration] = useState(0);
 	const [volume, setVolume] = useState(1);
 	const [muted, setMuted] = useState(false);
-	const progressRef = useRef<HTMLDivElement>(null);
 	const rpcEnabled = useDesktopRpcEnabled();
 
 	const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const val = parseFloat(e.target.value);
 		setVolume(val);
-		if (audioRef.current) {
-			audioRef.current.volume = val;
-			audioRef.current.muted = val === 0;
-		}
+		player?.setVolume(val);
+		player?.setMuted(val === 0);
 		setMuted(val === 0);
 	};
 
 	const toggleMute = () => {
-		const audio = audioRef.current;
-		if (!audio) return;
 		const next = !muted;
 		setMuted(next);
-		audio.muted = next;
+		player?.setMuted(next);
 	};
 
 	const effectiveVolume = muted ? 0 : volume;
 
 	useEffect(() => {
-		const audio = audioRef.current;
+		const audio = audioRef?.current;
 		if (!audio) return;
 		const onTime = () => setProgress(audio.currentTime);
 		const onDur = () => setDuration(audio.duration);
@@ -60,10 +56,7 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 	const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
 		const rect = e.currentTarget.getBoundingClientRect();
 		const ratio = (e.clientX - rect.left) / rect.width;
-		const audio = audioRef.current;
-		if (audio && duration) {
-			audio.currentTime = ratio * duration;
-		}
+		if (duration) player?.seek(ratio * duration);
 	};
 
 	const fmt = (s: number) => {
@@ -86,20 +79,30 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 			document.body.classList.remove("has-mini-player");
 			root.style.setProperty("--mini-player-h", "0px");
 		};
-	}, [!!nowPlaying]);
+	}, [nowPlaying]);
 
-	if (!nowPlaying) return null;
+	if (!player || !nowPlaying) return null;
+	const { isPlaying, pause, resume, close } = player;
 
 	const pct = duration ? (progress / duration) * 100 : 0;
 	const trackId = nowPlaying.id;
-	const isDirectUrl = !!nowPlaying.directUrl;
 
 	return (
-		<div className={styles.bar}>
-			<div className={styles.inner}>
-				<div className={styles.left}>
+		<div
+			className={
+				"items-center flex h-12 [background:var(--bg)] [border-bottom:1px_solid_var(--border)] fixed top-[calc(59px+var(--ban-banner-h,0px))] left-0 right-0 z-9 animate-[slideDown_0.2s_ease]"
+			}
+		>
+			<div
+				className={
+					"flex items-center gap-2.5 w-full p-[0_20px] [@media(max-width:_900px)]:p-[0_10px]"
+				}
+			>
+				<div className={"flex items-center gap-2 shrink-0"}>
 					<div
-						className={styles.leftClickable}
+						className={
+							"flex items-center gap-2.5 cursor-pointer opacity-100 [transition:opacity_0.15s] hover:opacity-[0.7]"
+						}
 						style={{
 							pointerEvents: isHiddenMode ? "none" : "auto",
 						}}
@@ -127,19 +130,47 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 						}}
 					>
 						{nowPlaying.cover ? (
-							<img src={nowPlaying.cover} alt="" className={styles.cover} />
+							<Image
+								src={nowPlaying.cover}
+								alt=""
+								width={30}
+								height={30}
+								className={
+									"w-7.5 h-7.5 rounded-xs object-cover [border:1px_solid_var(--border)] shrink-0"
+								}
+							/>
 						) : (
-							<div className={styles.coverPlaceholder} />
+							<div
+								className={
+									"w-7.5 h-7.5 rounded-xs [background:var(--surface2)] [border:1px_solid_var(--border)] shrink-0"
+								}
+							/>
 						)}
-						<div className={styles.info}>
-							<span className={styles.title}>{nowPlaying.title}</span>
-							<span className={styles.artist}>{nowPlaying.artist}</span>
+						<div
+							className={
+								"flex flex-col min-w-0 w-full max-w-33 mr-2.5 [@media(max-width:_900px)]:hidden"
+							}
+						>
+							<span
+								className={
+									"text-[12px] font-extrabold whitespace-nowrap overflow-hidden text-ellipsis text-foreground"
+								}
+							>
+								{nowPlaying.title}
+							</span>
+							<span
+								className={
+									"text-[11px] font-bold text-muted whitespace-nowrap overflow-hidden text-ellipsis"
+								}
+							>
+								{nowPlaying.artist}
+							</span>
 						</div>
 					</div>
 					{trackId && (
 						<LikeButton
 							compact
-							className={styles.likeBtn}
+							className={"opacity-100 w-7 h-7 rounded-xs"}
 							target={{
 								type: "track",
 								trackId,
@@ -154,18 +185,38 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 					)}
 				</div>
 
-				<span className={styles.timeSingle}>{fmt(progress)}</span>
-				<div
-					className={styles.progressWrap}
-					onClick={handleSeek}
-					ref={progressRef}
+				<span
+					className={
+						"text-[11px] font-bold text-muted font-[SF_Mono,Fira_Code,monospace] whitespace-nowrap shrink-0 min-w-7.5 text-center"
+					}
 				>
-					<div className={styles.progressFill} style={{ width: `${pct}%` }} />
+					{fmt(progress)}
+				</span>
+				<div
+					className={
+						'flex-1 h-5 flex items-center cursor-pointer relative [&::before]:[content:""] [&::before]:absolute [&::before]:left-0 [&::before]:right-0 [&::before]:h-0.75 [&::before]:[background:var(--surface2)] [&::before]:rounded-(--radius-pill) [&::before]:[transition:height_0.15s] [&:hover::before]:h-1.25 [&:hover_.progressFill]:h-1.25'
+					}
+					onClick={handleSeek}
+				>
+					<div
+						className={
+							"[.progressWrap:hover_&]:h-1.25 absolute left-0 h-0.75 [background:linear-gradient(90deg,var(--accent2)_50%,var(--accent)_100%)] rounded-(--radius-pill) pointer-events-none [transition:width_0.1s_linear,height_0.15s]"
+						}
+						style={{ width: `${pct}%` }}
+					/>
 				</div>
-				<span className={styles.timeSingle}>{fmt(duration)}</span>
+				<span
+					className={
+						"text-[11px] font-bold text-muted font-[SF_Mono,Fira_Code,monospace] whitespace-nowrap shrink-0 min-w-7.5 text-center"
+					}
+				>
+					{fmt(duration)}
+				</span>
 
 				<button
-					className={styles.btn}
+					className={
+						"flex items-center justify-center w-7 h-7 rounded-xs [border:1px_solid_var(--border)] [background:var(--surface)] text-foreground cursor-pointer shrink-0 [transition:background_0.15s,border-color_0.15s,color_0.15s] hover:[background:var(--surface2)] hover:border-accent hover:text-accent"
+					}
 					onClick={isPlaying ? pause : resume}
 					aria-label={isPlaying ? "Pause" : "Play"}
 				>
@@ -177,9 +228,9 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 							viewBox="0 0 24 24"
 							fill="none"
 							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
 						>
 							<rect x="14" y="3" width="5" height="18" rx="1" />
 							<rect x="5" y="3" width="5" height="18" rx="1" />
@@ -192,18 +243,24 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 							viewBox="0 0 24 24"
 							fill="none"
 							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
+							strokeWidth="2"
+							strokeLinecap="round"
+							strokeLinejoin="round"
 						>
 							<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />
 						</svg>
 					)}
 				</button>
 
-				<div className={styles.volumeWrap}>
+				<div
+					className={
+						"flex items-center shrink-0 hover:gap-1.25 focus-within:gap-1.25 [&:hover_.volumeSliderWrap]:w-18 [&:hover_.volumeSliderWrap]:opacity-100 [&:focus-within_.volumeSliderWrap]:w-18 [&:focus-within_.volumeSliderWrap]:opacity-100"
+					}
+				>
 					<button
-						className={styles.btn}
+						className={
+							"flex items-center justify-center w-7 h-7 rounded-xs [border:1px_solid_var(--border)] [background:var(--surface)] text-foreground cursor-pointer shrink-0 [transition:background_0.15s,border-color_0.15s,color_0.15s] hover:[background:var(--surface2)] hover:border-accent hover:text-accent"
+						}
 						onClick={toggleMute}
 						aria-label={muted ? "Unmute" : "Mute"}
 					>
@@ -215,9 +272,9 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 								viewBox="0 0 24 24"
 								fill="none"
 								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
 							>
 								<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
 								<line x1="22" x2="16" y1="9" y2="15" />
@@ -231,9 +288,9 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 								viewBox="0 0 24 24"
 								fill="none"
 								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
 							>
 								<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
 								<path d="M16 9a5 5 0 0 1 0 6" />
@@ -246,9 +303,9 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 								viewBox="0 0 24 24"
 								fill="none"
 								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
+								strokeWidth="2"
+								strokeLinecap="round"
+								strokeLinejoin="round"
 							>
 								<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
 								<path d="M16 9a5 5 0 0 1 0 6" />
@@ -256,7 +313,11 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 							</svg>
 						)}
 					</button>
-					<div className={styles.volumeSliderWrap}>
+					<div
+						className={
+							"[.volumeWrap:hover_&]:w-18 [.volumeWrap:hover_&]:opacity-100 [.volumeWrap:focus-within_&]:w-18 [.volumeWrap:focus-within_&]:opacity-100 w-0 overflow-hidden opacity-0 -mt-2.5 [transition:width_0.2s_ease,opacity_0.2s_ease]"
+						}
+					>
 						<input
 							type="range"
 							min="0"
@@ -264,7 +325,9 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 							step="0.02"
 							value={muted ? 0 : volume}
 							onChange={handleVolumeChange}
-							className={styles.volumeSlider}
+							className={
+								"[-webkit-appearance:none] appearance-none w-17 h-0.75 rounded-(--radius-pill) outline-none cursor-pointer [background:linear-gradient(to_right,var(--accent2)_0%,var(--accent)_var(--vol,100%),var(--surface2)_var(--vol,100%),var(--surface2)_100%)] [&::-webkit-slider-thumb]:[-webkit-appearance:none] [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-(--radius-full) [&::-webkit-slider-thumb]:[background:var(--accent)] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:[border:none] [&::-webkit-slider-thumb]:[transition:transform_0.1s] [&::-webkit-slider-thumb:hover]:transform-[scale(1.25)] [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-(--radius-full) [&::-moz-range-thumb]:[background:var(--accent)] [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:[border:none]"
+							}
 							aria-label="Volume"
 							style={
 								{
@@ -276,7 +339,7 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 				</div>
 
 				<button
-					className={`${styles.btn} ${styles.rpcBtn}`}
+					className={`${"flex items-center justify-center w-7 h-7 rounded-xs [border:1px_solid_var(--border)] [background:var(--surface)] text-foreground cursor-pointer shrink-0 [transition:background_0.15s,border-color_0.15s,color_0.15s] hover:[background:var(--surface2)] hover:border-accent hover:text-accent"} ${"[@media(max-width:_640px)]:hidden"}`}
 					onClick={() => setDesktopRpcEnabled(!rpcEnabled)}
 					aria-label={
 						rpcEnabled
@@ -294,7 +357,9 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 				</button>
 
 				<button
-					className={styles.btn}
+					className={
+						"flex items-center justify-center w-7 h-7 rounded-xs [border:1px_solid_var(--border)] [background:var(--surface)] text-foreground cursor-pointer shrink-0 [transition:background_0.15s,border-color_0.15s,color_0.15s] hover:[background:var(--surface2)] hover:border-accent hover:text-accent"
+					}
 					onClick={close}
 					aria-label="Close player"
 				>
@@ -305,9 +370,9 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 						viewBox="0 0 24 24"
 						fill="none"
 						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					>
 						<path d="M18 6 6 18" />
 						<path d="m6 6 12 12" />

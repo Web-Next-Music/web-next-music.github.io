@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 import { cx } from "@/lib/cx";
 import { useIsClient } from "@/lib/useIsClient";
 import { usePopover } from "./usePopover";
-import styles from "./Select.module.scss";
 
 export interface SelectOption<T extends string> {
 	value: T;
@@ -37,6 +36,10 @@ export default function Select<T extends string>({
 	size = "md",
 	className,
 }: Props<T>) {
+	const sizes = {
+		sm: "px-2 py-1 text-[11px]",
+		md: "px-3 py-1.5 text-xs",
+	};
 	const [open, setOpen] = useState(false);
 	const mounted = useIsClient();
 	const triggerRef = useRef<HTMLButtonElement>(null);
@@ -55,7 +58,7 @@ export default function Select<T extends string>({
 			? createPortal(
 					<ul
 						ref={floatingRef as RefObject<HTMLUListElement>}
-						className={styles.list}
+						className="z-(--z-popover) max-h-[min(360px,60vh)] min-w-35 list-none overflow-y-auto rounded-lg border border-border bg-surface p-1 shadow-(--shadow-popover) [scrollbar-color:var(--border)_transparent] scrollbar-thin [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border"
 						style={style}
 					>
 						{options.map((o) => (
@@ -64,8 +67,8 @@ export default function Select<T extends string>({
 									type="button"
 									disabled={o.disabled}
 									className={cx(
-										styles.option,
-										o.value === value && styles.optionActive,
+										"flex w-full items-center gap-2 rounded-sm border-0 bg-transparent px-3 py-1.75 text-left font-sans text-[13px] font-bold text-foreground transition-colors hover:not-disabled:bg-(--accent-btn-hover) hover:not-disabled:text-accent disabled:cursor-not-allowed disabled:opacity-50",
+										o.value === value && "justify-between text-accent",
 									)}
 									onClick={() => {
 										onChange(o.value);
@@ -73,12 +76,14 @@ export default function Select<T extends string>({
 									}}
 								>
 									{o.icon && (
-										<span className={styles.optionIcon}>{o.icon}</span>
+										<span className="inline-flex shrink-0 items-center">
+											{o.icon}
+										</span>
 									)}
 									{o.label}
 									{o.value === value && (
 										<svg
-											className={styles.optionCheck}
+											className="ml-auto shrink-0 text-accent"
 											width="12"
 											height="12"
 											viewBox="0 0 24 24"
@@ -102,9 +107,13 @@ export default function Select<T extends string>({
 			: null;
 
 	return (
-		<div className={cx(styles.wrap, className)}>
-			{label && <span className={styles.label}>{label}</span>}
-			<div className={styles.dropdown}>
+		<div className={cx("flex items-center gap-3", className)}>
+			{label && (
+				<span className="whitespace-nowrap font-sans text-[11px] font-bold tracking-widest text-muted uppercase">
+					{label}
+				</span>
+			)}
+			<div className="relative">
 				<button
 					ref={triggerRef}
 					type="button"
@@ -112,16 +121,19 @@ export default function Select<T extends string>({
 					aria-haspopup="listbox"
 					aria-expanded={open}
 					className={cx(
-						styles.trigger,
-						styles[`size-${size}`],
-						open && styles.triggerOpen,
+						"flex items-center gap-2 rounded-sm border border-border bg-surface font-sans font-extrabold text-foreground whitespace-nowrap transition-colors hover:not-disabled:border-(--accent-border-strong) disabled:cursor-not-allowed disabled:opacity-50",
+						sizes[size],
+						open && "border-(--accent-border-strong)",
 					)}
 					onClick={() => setOpen((v) => !v)}
 				>
 					{selected?.label ?? placeholder}
-					<span className={styles.divider} />
+					<span className="block h-3 w-px shrink-0 bg-border" />
 					<svg
-						className={cx(styles.chevron, open && styles.chevronOpen)}
+						className={cx(
+							"shrink-0 text-muted transition-[transform,color] duration-200",
+							open && "rotate-180 text-accent",
+						)}
 						width="10"
 						height="10"
 						viewBox="0 0 24 24"

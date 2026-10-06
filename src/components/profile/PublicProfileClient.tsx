@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import Image from "next/image";
+
+import { useState, useEffect, useEffectEvent } from "react";
 import { config } from "@/lib/config";
 import {
 	getPublicProfileByUserId,
@@ -29,14 +31,18 @@ function PublicPlaylistSection({ playlist }: { playlist: Playlist }) {
 	const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
 	const [loading, setLoading] = useState(false);
 
-	useEffect(() => {
-		if (open && tracks.length === 0) {
+	const loadTracks = useEffectEvent(() => {
+		if (tracks.length === 0) {
 			setLoading(true);
 			getPlaylistTracks(playlist.id).then((data) => {
 				setTracks(data);
 				setLoading(false);
 			});
 		}
+	});
+
+	useEffect(() => {
+		if (open) loadTracks();
 	}, [open, playlist.id]);
 
 	return (
@@ -179,15 +185,19 @@ export default function PublicProfileClient({ userId }: { userId: string }) {
 					<div className={styles.userCard}>
 						<div className={styles.avatarWrap}>
 							{banned ? (
-								<img
+								<Image
 									src="/avatars/avatar-fallback.png"
 									alt="Banned"
+									width={88}
+									height={88}
 									className={styles.avatar}
 								/>
 							) : profile.avatar_url ? (
-								<img
+								<Image
 									src={profile.avatar_url}
 									alt={displayName}
+									width={88}
+									height={88}
 									className={styles.avatar}
 								/>
 							) : (
@@ -256,9 +266,9 @@ export default function PublicProfileClient({ userId }: { userId: string }) {
 									viewBox="0 0 24 24"
 									fill="currentColor"
 									stroke="currentColor"
-									stroke-width="2"
-									stroke-linecap="round"
-									stroke-linejoin="round"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
 								>
 									<path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" />
 								</svg>
@@ -273,9 +283,9 @@ export default function PublicProfileClient({ userId }: { userId: string }) {
 									viewBox="0 0 24 24"
 									fill="none"
 									stroke="currentColor"
-									stroke-width="2"
-									stroke-linecap="round"
-									stroke-linejoin="round"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
 								>
 									<path d="M16 5H3" />
 									<path d="M11 12H3" />

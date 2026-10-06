@@ -11,7 +11,7 @@ function base64url(str: string): string {
 
 const RESYNC_MS = 3000;
 const RPC_STORAGE_KEY = "nm-desktop-rpc";
-const RPC_EVENT = "nm-desktop-rpc-change";
+const rpcSubscribers = new Set<() => void>();
 
 export function isDesktopRpcEnabled(): boolean {
 	try {
@@ -27,15 +27,18 @@ export function setDesktopRpcEnabled(on: boolean): void {
 	} catch {
 		/* ignore */
 	}
-	window.dispatchEvent(new Event(RPC_EVENT));
+	rpcSubscribers.forEach((subscriber) => subscriber());
 }
 
 function subscribeRpc(cb: () => void): () => void {
-	window.addEventListener(RPC_EVENT, cb);
-	window.addEventListener("storage", cb);
+	rpcSubscribers.add(cb);
+	const onStorage = (event: StorageEvent) => {
+		if (event.key === RPC_STORAGE_KEY) cb();
+	};
+	window.addEventListener("storage", onStorage);
 	return () => {
-		window.removeEventListener(RPC_EVENT, cb);
-		window.removeEventListener("storage", cb);
+		rpcSubscribers.delete(cb);
+		window.removeEventListener("storage", onStorage);
 	};
 }
 

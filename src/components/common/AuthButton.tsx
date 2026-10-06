@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 import { useCallback, useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,13 +12,13 @@ import { cx } from "@/lib/cx";
 import Dropdown from "@/components/ui/Dropdown";
 import dropdownStyles from "@/components/ui/Dropdown.module.scss";
 import { useClickOutside } from "@/lib/useClickOutside";
-import styles from "./AuthButton.module.scss";
 
 const starredCache = new Map<string, boolean>();
 const ddetectorCache = new Map<string, boolean>();
 
 export default function AuthButton() {
 	const { user, loading, signOut, openAuthModal, isBanned } = useAuth();
+	const userId = user?.id;
 	const router = useRouter();
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const [githubStarred, setGithubStarred] = useState(() =>
@@ -32,32 +34,44 @@ export default function AuthButton() {
 	useClickOutside(wrapRef, dropdownOpen, closeDropdown);
 
 	useEffect(() => {
-		if (!user) return;
+		if (!userId) return;
 		syncGithubStar().then((starred) => {
 			if (starred !== null) {
-				starredCache.set(user.id, starred);
+				starredCache.set(userId, starred);
 				setGithubStarred(starred);
 			}
 		});
-	}, [user?.id]);
+	}, [userId]);
 
 	useEffect(() => {
-		if (!user) return;
-		if (ddetectorCache.has(user.id)) {
-			setIsDDetector(ddetectorCache.get(user.id)!);
+		if (!userId) return;
+		if (ddetectorCache.has(userId)) {
+			setIsDDetector(ddetectorCache.get(userId)!);
 			return;
 		}
-		checkDDetectorAccess(user.id).then((ok) => {
-			ddetectorCache.set(user.id, ok);
+		checkDDetectorAccess(userId).then((ok) => {
+			ddetectorCache.set(userId, ok);
 			setIsDDetector(ok);
 		});
-	}, [user?.id]);
+	}, [userId]);
 
-	if (loading) return <div className={styles.avatarSkeleton} />;
+	if (loading)
+		return (
+			<div
+				className={
+					"w-8 h-8 rounded-(--radius-full) [background:var(--accent-mark-bg)] [border:1px_solid_var(--accent-border)] animate-[nm-pulse_1.4s_var(--ease-in-out)_infinite]"
+				}
+			/>
+		);
 
 	if (!user) {
 		return (
-			<button className={styles.signInBtn} onClick={openAuthModal}>
+			<button
+				className={
+					"font-(family-name:--font-heading-large) text-[14px] font-bold text-muted p-[6px_14px] rounded-xs [border:1px_solid_var(--border)] bg-none cursor-pointer [transition:color_0.15s,border-color_0.15s,background_0.15s] whitespace-nowrap hover:text-accent hover:border-accent hover:[background:var(--badge-background-color)]"
+				}
+				onClick={openAuthModal}
+			>
 				Sign In
 			</button>
 		);
@@ -71,25 +85,40 @@ export default function AuthButton() {
 		"?")[0].toUpperCase();
 
 	return (
-		<div className={styles.wrap} ref={wrapRef}>
+		<div className="relative" ref={wrapRef}>
 			<button
 				ref={anchorRef}
 				className={cx(
-					styles.avatarBtn,
-					githubStarred && !isBanned && styles.avatarBtnStarred,
+					"relative w-8 h-8 rounded-(--radius-full) [background:var(--accent-mark-bg)] [border:1px_solid_var(--accent-border-strong)] text-accent font-(family-name:--font-heading-large) text-[13px] font-bold cursor-pointer flex items-center justify-center [transition:background_0.15s,border-color_0.15s] hover:[background:var(--accent-surface-hover)] hover:border-(--accent-border-strong)",
+					githubStarred &&
+						!isBanned &&
+						"mask-[radial-gradient(circle_at_26px_26px,transparent_8px,black_8px)]",
 				)}
 				onClick={() => setDropdownOpen((v) => !v)}
 				aria-label="Account menu"
 				title={user.user_metadata?.user_name ?? user.email}
 			>
 				{avatarUrl ? (
-					<img src={avatarUrl} alt={initial} className={styles.avatarImg} />
+					<Image
+						src={avatarUrl}
+						alt={initial}
+						width={32}
+						height={32}
+						className={
+							"w-full h-full rounded-(--radius-full) object-cover block"
+						}
+					/>
 				) : (
 					initial
 				)}
 			</button>
 			{githubStarred && !isBanned && (
-				<span className={styles.avatarStar} aria-hidden="true">
+				<span
+					className={
+						"absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-(--radius-full) flex items-center justify-center text-[#e3b341] leading-0 pointer-events-none"
+					}
+					aria-hidden="true"
+				>
 					<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
 						<polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
 					</svg>

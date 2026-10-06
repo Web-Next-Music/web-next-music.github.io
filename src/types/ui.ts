@@ -48,5 +48,8 @@ export interface PlayerContextValue {
 	pause: () => void;
 	resume: () => void;
 	close: () => void;
+	seek: (seconds: number) => void;
+	setVolume: (volume: number) => void;
+	setMuted: (muted: boolean) => void;
 	audioRef: RefObject<HTMLAudioElement | null>;
 }

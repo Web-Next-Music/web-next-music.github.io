@@ -1,8 +1,9 @@
 "use client";
 
+import styles from "./Header.module.scss";
+
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import styles from "./Header.module.scss";
 import { useRouter, usePathname } from "next/navigation";
 import AuthButton from "@/components/common/AuthButton";
 import Dropdown from "@/components/ui/Dropdown";
@@ -68,23 +69,48 @@ export default function Header({
 	}, []);
 
 	const closeMenu = () => setOpen(false);
+	const isActiveLink = (href: string) =>
+		href === "/"
+			? pathname === "/"
+			: pathname === href || pathname.startsWith(`${href}/`);
+	const getLinkColor = (href: string) =>
+		isActiveLink(href)
+			? "var(--text)"
+			: "color-mix(in srgb, var(--text) 70%, var(--muted))";
 
 	useClickOutside(burgerWrapRef, open, closeMenu);
 
 	return (
 		<>
-			<header className={styles.header}>
-				<div className={styles.headerWrap}>
+			<header
+				className={
+					"flex items-center p-[10px_0] [border-bottom:1px_solid_var(--border)] sticky top-(--ban-banner-h,0px) [background:var(--bg)] z-(--z-header) h-15 [@media(max-width:_900px)]:p-2.5"
+				}
+			>
+				<div
+					className={
+						"flex items-center justify-between w-full p-[0_20px] [@media(max-width:_900px)]:p-0"
+					}
+				>
 					<div
-						className={styles.logo}
+						className={
+							"font-bold [letter-spacing:-0.5px] flex items-center gap-3.75 font-(family-name:--font-logo) text-[23px] shrink-0 cursor-pointer"
+						}
 						onClick={!isHiddenMode ? () => router.push("/") : undefined}
+
 						style={{
 							pointerEvents: isHiddenMode ? "none" : "auto",
 						}}
 					>
-						<div className={styles.logo}>
+						<div
+							className={
+								"font-bold [letter-spacing:-0.5px] flex items-center gap-3.75 font-(family-name:--font-logo) text-[23px] shrink-0 cursor-pointer"
+							}
+						>
 							<div
-								className={styles.logoImg}
+								className={
+									"w-10 h-10 rounded-[10px] bg-cover [border:1px_solid_var(--border)] shrink-0 bg-surface"
+								}
 								style={{
 									backgroundImage: isHiddenMode
 										? 'url("/icons/ugcShare.webp")'
@@ -99,21 +125,19 @@ export default function Header({
 						</div>
 					</div>
 
-					<div className={styles.navWrap}>
-						<nav className={styles.nav} aria-label="Main navigation">
+					<div className={"flex flex-row"}>
+						<nav
+							className={
+								"flex [&_a]:text-[15px] [&_a]:p-[6px_14px] [&_a]:rounded-md [&_a]:[border:1px_solid_transparent] [&_a]:[transition:all_0.2s] [&_a]:font-(family-name:--font-heading-large) [&_a]:font-extrabold [&_a]:whitespace-nowrap [&_a:hover]:[background:var(--header)] [&_a[aria-current=page]]:[background:var(--header)] [@media(max-width:_725px)]:hidden"
+							}
+							aria-label="Main navigation"
+						>
 							{NAV_LINKS.map((l) => (
 								<Link
 									key={l.href}
 									href={l.href}
-									className={
-										l.href === "/"
-											? pathname === "/"
-												? styles.active
-												: undefined
-											: pathname.startsWith(l.href)
-												? styles.active
-												: undefined
-									}
+									aria-current={isActiveLink(l.href) ? "page" : undefined}
+									style={{ color: getLinkColor(l.href) }}
 								>
 									{l.label}
 								</Link>
@@ -121,22 +145,30 @@ export default function Header({
 						</nav>
 
 						{!isHiddenMode && (
-							<div className={styles.headerRight}>
+							<div className={"flex items-center ml-2.5"}>
 								<AuthButton />
 							</div>
 						)}
 
-						<div className={styles.burger} ref={burgerWrapRef}>
+						<div
+							className={
+								"hidden relative ml-2.5 [@media(max-width:_725px)]:block"
+							}
+							ref={burgerWrapRef}
+						>
 							<button
-								className={styles.burgerBtn}
+								className={
+									"flex items-center justify-center w-9 h-9 bg-none [border:1px_solid_var(--border)] rounded-lg cursor-pointer text-muted [transition:border-color_0.2s,color_0.2s,background_0.2s] hover:border-(--accent-border-strong) hover:text-foreground hover:[background:var(--surface)]"
+								}
 								onClick={() => setOpen((v) => !v)}
 								aria-label="Toggle navigation menu"
 								aria-expanded={open}
 							>
 								<span
-									className={`${styles.burgerIcon} ${open ? styles.burgerIconOpen : ""}`}
+									className={`${"flex flex-col gap-1 w-4 [&_span]:block [&_span]:w-full [&_span]:h-0.5 [&_span]:[background:currentColor] [&_span]:rounded-xs [&_span]:origin-center [&_span]:[transition:transform_0.22s_ease,opacity_0.22s_ease,width_0.22s_ease]"} ${open ? "[&_span:nth-child(1)]:transform-[translateY(6px)_rotate(45deg)] [&_span:nth-child(2)]:opacity-0 [&_span:nth-child(2)]:w-0 [&_span:nth-child(3)]:transform-[translateY(-6px)_rotate(-45deg)]" : ""}`}
 								>
 									<span />
+
 									<span />
 									<span />
 								</span>
@@ -148,6 +180,8 @@ export default function Header({
 										key={l.href}
 										href={l.href}
 										className={dropdownStyles.item}
+										aria-current={isActiveLink(l.href) ? "page" : undefined}
+										style={{ color: getLinkColor(l.href) }}
 										onClick={closeMenu}
 									>
 										{l.label}

@@ -185,7 +185,7 @@
 }
 
 .statusOk {
-	composes: status;
+	@extend .status;
 	color: var(--accent);
 	font-weight: 700;
 }

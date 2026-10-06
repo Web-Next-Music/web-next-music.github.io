@@ -1,17 +1,46 @@
+@import "tailwindcss";
+
+@theme inline {
+	--color-canvas: var(--bg);
+	--color-surface: var(--surface);
+	--color-surface-raised: var(--surface2);
+	--color-border: var(--border);
+	--color-foreground: var(--text);
+	--color-muted: var(--muted);
+	--color-accent: var(--accent);
+	--color-danger: var(--danger);
+	--font-sans: var(--font-base);
+}
+
+@font-face {
+	font-family: "Lucky Star";
+	src: url("/fonts/luckystar.otf") format("opentype");
+	font-display: swap;
+}
+
+.drugMark {
+	background: var(--accent-mark-bg);
+	color: var(--accent);
+	border-radius: var(--radius-3xs);
+	padding: 0 3px;
+	font-weight: 600;
+}
+
 @font-face {
 	font-family: "Science Gothic";
 	src: local("Science Gothic");
 	font-weight: 700;
 }
-
-*,
-*::before,
-*::after {
-	box-sizing: border-box;
-	margin: 0;
-	padding: 0;
-	user-select: none;
-	font-weight: 700;
+@layer base {
+	*,
+	*::before,
+	*::after {
+		box-sizing: border-box;
+		margin: 0;
+		padding: 0;
+		user-select: none;
+		font-weight: 700;
+	}
 }
 
 input,
@@ -25,7 +54,6 @@ textarea,
 	--font-logo: var(--font-syne), sans-serif;
 	--font-base: var(--font-nunito), sans-serif;
 	--mini-player-h: 0px;
-
 	/* Radii */
 	--radius-3xs: 2px;
 	--radius-2xs: 4px;
@@ -38,7 +66,6 @@ textarea,
 	--radius-3xl: 20px;
 	--radius-pill: 999px;
 	--radius-full: 50%;
-
 	/* Spacing */
 	--space-1: 4px;
 	--space-2: 8px;
@@ -48,7 +75,6 @@ textarea,
 	--space-6: 24px;
 	--space-7: 28px;
 	--space-8: 32px;
-
 	/* Control sizes */
 	--control-h-sm: 28px;
 	--control-h-md: 34px;
@@ -56,14 +82,12 @@ textarea,
 	--icon-btn-sm: 26px;
 	--icon-btn-md: 30px;
 	--icon-btn-lg: 34px;
-
 	/* Type scale */
 	--fs-2xs: 0.58rem;
 	--fs-xs: 0.68rem;
 	--fs-sm: 0.75rem;
 	--fs-md: 0.82rem;
 	--fs-lg: 0.95rem;
-
 	/* Motion */
 	--dur-fast: 0.12s;
 	--dur-base: 0.15s;
@@ -71,7 +95,6 @@ textarea,
 	--dur-slower: 0.3s;
 	--ease-out: cubic-bezier(0.4, 0, 0.2, 1);
 	--ease-in-out: cubic-bezier(0.4, 0, 0.6, 1);
-
 	/* Layers */
 	--z-base: 1;
 	--z-raised: 2;
@@ -82,16 +105,13 @@ textarea,
 	--z-modal: 310;
 	--z-popover: 400;
 	--z-tooltip: 500;
-
 	/* Shadows */
 	--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
 	--shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
 	--shadow-popover: 0 6px 20px rgba(0, 0, 0, 0.3);
-
 	/* Overlay shadow*/
 	--shadow-overlay:
 		0 8px 24px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2);
-
 	/* DDetector: ignore state accent colors */
 	--ignore-accent: rgb(220, 80, 80);
 	--ignore-accent-dim: rgb(200, 100, 100);
@@ -111,7 +131,8 @@ textarea,
 	--ignore-outline: rgba(200, 60, 60, 0.35);
 }
 
-@mixin light-vars {
+/* Data-theme attribute (set by ThemeProvider / user preference) */
+[data-theme="light"] {
 	--bg: #f9f9f9;
 	--header: #f3f3f4d9;
 	--surface: #fdfdfe;
@@ -158,7 +179,7 @@ textarea,
 	--success-border-strong: rgba(34, 197, 94, 0.4);
 }
 
-@mixin dark-vars {
+[data-theme="dark"] {
 	--bg: #000000;
 	--header: #000000d9;
 	--surface: #0c0c0e;
@@ -205,40 +226,236 @@ textarea,
 	--success-border-strong: rgba(34, 197, 94, 0.4);
 }
 
-/* Data-theme attribute (set by ThemeProvider / user preference) */
-[data-theme="light"] {
-	@include light-vars;
-}
-[data-theme="dark"] {
-	@include dark-vars;
-}
-
 /* CSS-level fallback: auto-switch when no explicit data-theme is set */
 @media (prefers-color-scheme: light) {
 	:root:not([data-theme="dark"]) {
-		@include light-vars;
+		--bg: #f9f9f9;
+		--header: #f3f3f4d9;
+		--surface: #fdfdfe;
+		--surface2: #ffffff;
+		--border: color-mix(
+			in oklab,
+			hsl(240 calc(1 * 4%) 60.784%/0.2784313725490196) 100%,
+			hsl(0 0% 0%/0.2784313725490196) 0%
+		);
+		--text: #111116;
+		--muted: #666;
+		--accent: #00c9c0;
+		--accent2: #2bfef5;
+		--badge-background-color: #2bfef514;
+		--badge-border-color: #00c9c050;
+		--active-lyrics-line-background-color: #f4f4f880;
+		/* Accent alpha variants (accent = #00c9c0 = rgb(0, 201, 192)) */
+		--accent-bg-hover: rgba(0, 201, 192, 0.04);
+		--accent-bg-active: rgba(0, 201, 192, 0.05);
+		--accent-btn-hover: rgba(0, 201, 192, 0.06);
+		--accent-surface: rgba(0, 201, 192, 0.08);
+		--accent-mark-bg: rgba(0, 201, 192, 0.12);
+		--accent-surface-hover: rgba(0, 201, 192, 0.14);
+		--accent-border: rgba(0, 201, 192, 0.2);
+		--accent-border-strong: rgba(0, 201, 192, 0.3);
+		/* Status tones */
+		--danger: #dc2626;
+		--danger-surface: rgba(239, 68, 68, 0.06);
+		--danger-hover: rgba(239, 68, 68, 0.1);
+		--danger-surface-strong: rgba(239, 68, 68, 0.12);
+		--danger-border: rgba(239, 68, 68, 0.22);
+		--danger-border-strong: rgba(239, 68, 68, 0.4);
+		--warning: #eab308;
+		--warning-surface: rgba(234, 179, 8, 0.06);
+		--warning-hover: rgba(234, 179, 8, 0.1);
+		--warning-surface-strong: rgba(234, 179, 8, 0.12);
+		--warning-border: rgba(234, 179, 8, 0.22);
+		--warning-border-strong: rgba(234, 179, 8, 0.4);
+		--success: #22c55e;
+		--success-surface: rgba(34, 197, 94, 0.06);
+		--success-hover: rgba(34, 197, 94, 0.1);
+		--success-surface-strong: rgba(34, 197, 94, 0.12);
+		--success-border: rgba(34, 197, 94, 0.22);
+		--success-border-strong: rgba(34, 197, 94, 0.4);
 	}
 }
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme="light"]) {
-		@include dark-vars;
+		--bg: #000000;
+		--header: #000000d9;
+		--surface: #0c0c0e;
+		--surface2: #171719;
+		--border: color-mix(
+			in oklab,
+			hsl(240 calc(1 * 4%) 60.784%/0.2) 100%,
+			hsl(0 0% 0%/0.2) 0%
+		);
+		--text: #f0f0f4;
+		--muted: #666666;
+		--accent: #2bfef5;
+		--accent2: #00c9c0;
+		--badge-background-color: #2bfef514;
+		--badge-border-color: #2bfef533;
+		--active-lyrics-line-background-color: #2bfef50d;
+		/* Accent alpha variants (accent = #2bfef5 = rgb(43, 254, 245)) */
+		--accent-bg-hover: rgba(43, 254, 245, 0.04);
+		--accent-bg-active: rgba(43, 254, 245, 0.05);
+		--accent-btn-hover: rgba(43, 254, 245, 0.06);
+		--accent-surface: rgba(43, 254, 245, 0.08);
+		--accent-mark-bg: rgba(43, 254, 245, 0.12);
+		--accent-surface-hover: rgba(43, 254, 245, 0.14);
+		--accent-border: rgba(43, 254, 245, 0.2);
+		--accent-border-strong: rgba(43, 254, 245, 0.3);
+		/* Status tones */
+		--danger: #ef4444;
+		--danger-surface: rgba(239, 68, 68, 0.06);
+		--danger-hover: rgba(239, 68, 68, 0.1);
+		--danger-surface-strong: rgba(239, 68, 68, 0.12);
+		--danger-border: rgba(239, 68, 68, 0.22);
+		--danger-border-strong: rgba(239, 68, 68, 0.4);
+		--warning: #eab308;
+		--warning-surface: rgba(234, 179, 8, 0.06);
+		--warning-hover: rgba(234, 179, 8, 0.1);
+		--warning-surface-strong: rgba(234, 179, 8, 0.12);
+		--warning-border: rgba(234, 179, 8, 0.22);
+		--warning-border-strong: rgba(234, 179, 8, 0.4);
+		--success: #22c55e;
+		--success-surface: rgba(34, 197, 94, 0.06);
+		--success-hover: rgba(34, 197, 94, 0.1);
+		--success-surface-strong: rgba(34, 197, 94, 0.12);
+		--success-border: rgba(34, 197, 94, 0.22);
+		--success-border-strong: rgba(34, 197, 94, 0.4);
 	}
 }
-
 body {
 	background: var(--bg);
 	color: var(--text);
 	font-family: var(--font-base);
 }
 
-main {
-	padding-top: var(--mini-player-h);
-	transition: padding-top 0.2s ease;
+@layer base {
+	main {
+		padding-top: var(--mini-player-h);
+		transition: padding-top 0.2s ease;
+	}
 }
 
 a {
 	color: inherit;
 	text-decoration: none;
+}
+
+@keyframes dotPulse {
+	0%,
+	100% {
+		opacity: 0.2;
+		transform: scale(0.85);
+	}
+	50% {
+		opacity: 0.8;
+		transform: scale(1.1);
+	}
+}
+
+@keyframes flag-scroll {
+	0% {
+		transform: translateX(0);
+	}
+	100% {
+		transform: translateX(var(--scroll-end, -60px));
+	}
+}
+
+@keyframes slideIn {
+	from {
+		opacity: 0;
+		transform: translateX(16px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes blink {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.35;
+	}
+}
+
+@keyframes dlBtnIn {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes slideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes waveBar {
+	0%,
+	100% {
+		transform: scaleY(0.35);
+	}
+	50% {
+		transform: scaleY(1);
+	}
+}
+
+@keyframes panelIn {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes shimmer {
+	0%,
+	100% {
+		opacity: 0.35;
+	}
+	50% {
+		opacity: 0.7;
+	}
+}
+
+@keyframes lineIn {
+	from {
+		opacity: 0;
+		transform: translateY(5px);
+	}
+	to {
+		opacity: 0.5;
+		transform: translateY(0);
+	}
+}
+
+@keyframes dropIn {
+	0% {
+		opacity: 0;
+		transform: translateY(-6px);
+	}
+	100% {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 @keyframes nm-fade-in {

@@ -2,7 +2,6 @@
 
 import type { ElementType, HTMLAttributes, Ref } from "react";
 import { cx } from "@/lib/cx";
-import styles from "./Card.module.scss";
 
 export type CardPadding = "none" | "sm" | "md" | "lg";
 export type CardRadius = "md" | "lg" | "xl";
@@ -28,15 +27,27 @@ export default function Card({
 	...rest
 }: Props) {
 	const Tag = as as ElementType;
+	const paddingClasses: Record<CardPadding, string> = {
+		none: "p-0",
+		sm: "p-3",
+		md: "p-4",
+		lg: "p-5",
+	};
+	const radiusClasses: Record<CardRadius, string> = {
+		md: "rounded-md",
+		lg: "rounded-lg",
+		xl: "rounded-2xl",
+	};
 
 	return (
 		<Tag
 			className={cx(
-				styles.base,
-				styles[`pad-${padding}`],
-				styles[`radius-${radius}`],
-				styles[tone],
-				interactive && styles.interactive,
+				"border border-border",
+				paddingClasses[padding],
+				radiusClasses[radius],
+				tone === "raised" ? "bg-surface-raised" : "bg-surface",
+				interactive &&
+					"transition-colors hover:border-(--accent-border) hover:bg-surface-raised",
 				className,
 			)}
 			{...rest}
@@ -50,26 +61,43 @@ export function CardHeader({
 	className,
 	...rest
 }: HTMLAttributes<HTMLDivElement>) {
-	return <div className={cx(styles.header, className)} {...rest} />;
+	return (
+		<div
+			className={cx("mb-3 flex items-center justify-between gap-3", className)}
+			{...rest}
+		/>
+	);
 }
 
 export function CardTitle({
 	className,
 	...rest
 }: HTMLAttributes<HTMLDivElement>) {
-	return <div className={cx(styles.title, className)} {...rest} />;
+	return (
+		<div
+			className={cx("text-(length:--fs-lg) text-foreground", className)}
+			{...rest}
+		/>
+	);
 }
 
 export function CardBody({
 	className,
 	...rest
 }: HTMLAttributes<HTMLDivElement>) {
-	return <div className={cx(styles.body, className)} {...rest} />;
+	return (
+		<div
+			className={cx("text-(length:--fs-sm) text-muted", className)}
+			{...rest}
+		/>
+	);
 }
 
 export function CardFooter({
 	className,
 	...rest
 }: HTMLAttributes<HTMLDivElement>) {
-	return <div className={cx(styles.footer, className)} {...rest} />;
+	return (
+		<div className={cx("mt-4 flex items-center gap-2", className)} {...rest} />
+	);
 }

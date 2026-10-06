@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import styles from "./AppWrapper.module.scss";
 
 export function AppWrapper({ children }: { children: React.ReactNode }) {
 	const ref = useRef<HTMLDivElement>(null);
@@ -23,7 +22,13 @@ export function AppWrapper({ children }: { children: React.ReactNode }) {
 	}, []);
 
 	return (
-		<div ref={ref} data-app-scroll className={styles.wrapper}>
+		<div
+			ref={ref}
+			data-app-scroll
+			className={
+				"fixed left-0 top-0 w-full overflow-y-auto overflow-x-hidden [-webkit-overflow-scrolling:touch]"
+			}
+		>
 			{children}
 		</div>
 	);

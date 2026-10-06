@@ -2,7 +2,6 @@
 
 import type { InputHTMLAttributes, ReactNode, Ref } from "react";
 import { cx } from "@/lib/cx";
-import styles from "./Input.module.scss";
 
 export type InputSize = "sm" | "md" | "lg";
 export type InputRadius = "sm" | "lg" | "pill";
@@ -30,26 +29,42 @@ export default function Input({
 	className,
 	...rest
 }: InputProps) {
+	const sizes: Record<InputSize, string> = {
+		sm: "h-7 px-3 text-[var(--fs-xs)]",
+		md: "h-[var(--control-h-md)] px-3 text-[var(--fs-sm)]",
+		lg: "h-[var(--control-h-lg)] px-4 text-[var(--fs-md)]",
+	};
+	const radii: Record<InputRadius, string> = {
+		sm: "rounded-sm",
+		lg: "rounded-2xl",
+		pill: "rounded-full",
+	};
+	const iconOffset = size === "lg" ? "pl-10" : "pl-[34px]";
+	const rightIconOffset = size === "lg" ? "pr-10" : "pr-[34px]";
 	return (
-		<div className={cx(styles.wrap, wrapperClassName)}>
+		<div className={cx("relative flex w-full items-center", wrapperClassName)}>
 			{iconLeft && (
-				<span className={cx(styles.icon, styles.iconLeft)}>{iconLeft}</span>
+				<span className="pointer-events-none absolute top-1/2 left-3 flex -translate-y-1/2 items-center text-muted">
+					{iconLeft}
+				</span>
 			)}
 			<input
 				aria-invalid={invalid || undefined}
 				className={cx(
-					styles.input,
-					styles[`size-${size}`],
-					styles[`radius-${radius}`],
-					iconLeft && styles.hasLeft,
-					iconRight && styles.hasRight,
-					invalid && styles.invalid,
+					"w-full border border-border bg-surface font-sans font-bold text-foreground outline-none transition-colors duration-200 focus:border-(--accent-border-strong) placeholder:text-muted disabled:cursor-not-allowed disabled:opacity-50",
+					sizes[size],
+					radii[radius],
+					iconLeft && iconOffset,
+					iconRight && rightIconOffset,
+					invalid && "focus:border-danger border-(--danger-border-strong)",
 					className,
 				)}
 				{...rest}
 			/>
 			{iconRight && (
-				<span className={cx(styles.icon, styles.iconRight)}>{iconRight}</span>
+				<span className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center text-muted">
+					{iconRight}
+				</span>
 			)}
 		</div>
 	);

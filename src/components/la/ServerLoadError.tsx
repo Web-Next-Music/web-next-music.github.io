@@ -25,7 +25,7 @@ export default function ServerLoadError({
 			title="Couldn't load settings for this server"
 			actions={<CalloutButton onClick={onRetry}>Retry</CalloutButton>}
 		>
-			Make sure you're signed in with a GitHub account whitelisted on this
+			Make sure you&apos;re signed in with a GitHub account whitelisted on this
 			server
 			{scheme === "https" ? (
 				<>

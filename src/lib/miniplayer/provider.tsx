@@ -44,6 +44,18 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 		setIsPlaying(false);
 	}, []);
 
+	const seek = useCallback((seconds: number) => {
+		if (audioRef.current) audioRef.current.currentTime = seconds;
+	}, []);
+
+	const setVolume = useCallback((volume: number) => {
+		if (audioRef.current) audioRef.current.volume = volume;
+	}, []);
+
+	const setMuted = useCallback((muted: boolean) => {
+		if (audioRef.current) audioRef.current.muted = muted;
+	}, []);
+
 	useEffect(() => {
 		const audio = audioRef.current;
 		if (!audio || !nowPlaying) return;
@@ -65,6 +77,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 				pause,
 				resume,
 				close,
+				seek,
+				setVolume,
+				setMuted,
 				audioRef,
 			}}
 		>
