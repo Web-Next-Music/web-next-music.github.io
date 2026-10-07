@@ -116,13 +116,16 @@
 	color: var(--accent);
 	border-color: var(--accent);
 }
+
 .textStyle {
 	color: var(--accent);
 	border-color: var(--accent);
 }
+
 .textStyle2 {
 	color: var(--muted);
 }
+
 .rowLayout {
 	display: flex;
 	align-items: center;
@@ -136,21 +139,25 @@
 		background var(--dur-base) cubic-bezier(0, 0, 0.2, 1),
 		border-color var(--dur-base) cubic-bezier(0, 0, 0.2, 1);
 }
+
 @media (hover: hover) {
 	.rowLayout:hover {
 		background: var(--surface);
 		border-color: var(--border);
 	}
 }
+
 .rowLayout:hover .actionsLayout {
 	opacity: 100%;
 }
+
 .coverLayout {
 	position: relative;
 	width: 2.5rem;
 	height: 2.5rem;
 	flex-shrink: 0;
 }
+
 .coverImgLayout {
 	width: 2.5rem;
 	height: 2.5rem;
@@ -159,6 +166,7 @@
 	display: block;
 	border: 1px solid var(--border);
 }
+
 .coverPlaceholderLayout {
 	width: 2.5rem;
 	height: 2.5rem;
@@ -169,6 +177,7 @@
 	align-items: center;
 	justify-content: center;
 }
+
 .actionsLayout {
 	display: flex;
 	align-items: center;

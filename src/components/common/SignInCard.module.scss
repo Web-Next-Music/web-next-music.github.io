@@ -129,6 +129,7 @@
 	padding: 1.25rem;
 	margin: auto;
 }
+
 .closeBtnLayout {
 	position: absolute;
 	top: 0.875rem;
@@ -150,12 +151,14 @@
 		color 0.15s,
 		box-shadow 0.15s;
 }
+
 @media (hover: hover) {
 	.closeBtnLayout:hover {
 		color: var(--accent);
 		box-shadow: inset 0 0 0 1px var(--border);
 	}
 }
+
 .githubBtnLayout {
 	display: inline-flex;
 	align-items: center;
@@ -175,12 +178,15 @@
 		background 0.15s,
 		color 0.15s;
 }
+
 .githubBtnLayout:hover:not(:disabled) {
 	color: var(--accent);
 }
+
 .githubBtnLayout:disabled {
 	cursor: not-allowed;
 }
+
 .errorLayout {
 	font-size: 13px;
 	color: var(--danger);

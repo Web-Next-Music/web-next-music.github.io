@@ -315,6 +315,7 @@
 		&:nth-child(2) {
 			animation-delay: 0.2s;
 		}
+
 		&:nth-child(3) {
 			animation-delay: 0.4s;
 		}
@@ -567,6 +568,7 @@
 	&:hover {
 		opacity: 0.85;
 	}
+
 	&:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
@@ -690,19 +692,24 @@
 		font-family: var(--font-heading-large);
 		color: var(--text);
 	}
+
 	h1 {
 		font-size: 26px;
 	}
+
 	h2 {
 		font-size: 14px;
 	}
+
 	h3 {
 		font-size: 13px;
 	}
+
 	p {
 		margin: 4px 0;
 		font-size: 16px;
 	}
+
 	a {
 		color: var(--accent);
 		text-decoration: none;
@@ -710,12 +717,15 @@
 			text-decoration: underline;
 		}
 	}
+
 	strong {
 		font-weight: 600;
 	}
+
 	em {
 		font-style: italic;
 	}
+
 	img {
 		max-width: 100%;
 		max-height: 320px;
@@ -778,6 +788,7 @@
 		.bioTextarea {
 			width: 100%;
 		}
+
 		.bioBtnRow {
 			justify-content: flex-end;
 		}

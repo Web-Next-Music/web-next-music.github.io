@@ -221,6 +221,7 @@
 		&:nth-child(2) {
 			animation-delay: 0.2s;
 		}
+
 		&:nth-child(3) {
 			animation-delay: 0.4s;
 		}
@@ -276,6 +277,7 @@
 		color 0.15s,
 		border-color 0.15s;
 }
+
 @media (hover: hover) {
 	.addToPlaylistBtnLayout:hover {
 		background: var(--surface2);
@@ -283,6 +285,7 @@
 		border-color: var(--border);
 	}
 }
+
 .playBtnLayout {
 	display: flex;
 	align-items: center;
@@ -302,6 +305,7 @@
 		color 0.15s,
 		border-color 0.15s;
 }
+
 @media (hover: hover) {
 	.playBtnLayout:hover {
 		background: var(--surface2);
@@ -309,9 +313,11 @@
 		border-color: var(--accent);
 	}
 }
+
 .textStyle {
 	color: var(--fs-sm);
 }
+
 .numLayout {
 	font-size: 12px;
 	font-weight: 700;
@@ -321,11 +327,13 @@
 	text-align: right;
 	flex-shrink: 0;
 }
+
 @media (max-width: 640px) {
 	.numLayout {
 		display: none;
 	}
 }
+
 .coverLayout {
 	width: 2.5rem;
 	height: 2.5rem;
@@ -334,6 +342,7 @@
 	flex-shrink: 0;
 	border: 1px solid var(--border);
 }
+
 .legacyIconLayout {
 	width: 2.5rem;
 	height: 2.5rem;
@@ -345,6 +354,7 @@
 	justify-content: center;
 	flex-shrink: 0;
 }
+
 .trackRowLayout {
 	display: flex;
 	align-items: center;
@@ -357,27 +367,33 @@
 	text-decoration-line: none;
 	color: var(--text);
 }
+
 @media (hover: hover) {
 	.trackRowLayout:hover {
 		background: var(--surface);
 		border-color: var(--border);
 	}
 }
+
 .trackRowLayout:hover .playBtnLayout {
 	opacity: 100%;
 }
+
 .trackRowLayout:hover .addToPlaylistBtnLayout {
 	opacity: 100%;
 }
+
 .trackRowLayout:active {
 	transform: scale(0.995);
 }
+
 @media (max-width: 640px) {
 	.trackRowLayout {
 		gap: 0.625rem;
 		padding: 8px 10px;
 	}
 }
+
 .coverPlaceholderLayout {
 	width: 2.5rem;
 	height: 2.5rem;

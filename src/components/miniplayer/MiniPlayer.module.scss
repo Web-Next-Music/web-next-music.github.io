@@ -19,6 +19,7 @@
 		opacity: 0;
 		transform: translateY(-6px);
 	}
+
 	to {
 		opacity: 1;
 		transform: translateY(0);
@@ -285,17 +286,20 @@
 	width: 100%;
 	padding: 0 20px;
 }
+
 @media (max-width: 900px) {
 	.innerLayout {
 		padding: 0 10px;
 	}
 }
+
 .leftLayout {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 	flex-shrink: 0;
 }
+
 .leftClickableLayout {
 	display: flex;
 	align-items: center;
@@ -304,11 +308,13 @@
 	opacity: 100%;
 	transition: opacity 0.15s;
 }
+
 @media (hover: hover) {
 	.leftClickableLayout:hover {
 		opacity: 0.7;
 	}
 }
+
 .coverLayout {
 	width: 1.875rem;
 	height: 1.875rem;
@@ -317,6 +323,7 @@
 	border: 1px solid var(--border);
 	flex-shrink: 0;
 }
+
 .coverPlaceholderLayout {
 	width: 1.875rem;
 	height: 1.875rem;
@@ -325,6 +332,7 @@
 	border: 1px solid var(--border);
 	flex-shrink: 0;
 }
+
 .infoLayout {
 	display: flex;
 	flex-direction: column;
@@ -333,17 +341,20 @@
 	max-width: 8.25rem;
 	margin-right: 0.625rem;
 }
+
 @media (max-width: 900px) {
 	.infoLayout {
 		display: none;
 	}
 }
+
 .likeBtnLayout {
 	opacity: 100%;
 	width: 1.75rem;
 	height: 1.75rem;
 	border-radius: var(--radius-xs);
 }
+
 .progressWrapLayout {
 	flex: 1;
 	height: 1.25rem;
@@ -352,6 +363,7 @@
 	cursor: pointer;
 	position: relative;
 }
+
 .progressWrapLayout::before {
 	content: "";
 	position: absolute;
@@ -362,13 +374,16 @@
 	border-radius: var(--radius-pill);
 	transition: height 0.15s;
 }
+
 .progressWrapLayout:hover::before {
 	height: 0.3125rem;
 }
+
 .progressWrapLayout:hover .progressFillLayout {
 	height: 0.3125rem;
 	height: 0.3125rem;
 }
+
 .progressFillLayout {
 	position: absolute;
 	left: 0px;
@@ -380,6 +395,7 @@
 		width 0.1s linear,
 		height 0.15s;
 }
+
 .btnLayout {
 	display: flex;
 	align-items: center;
@@ -397,6 +413,7 @@
 		border-color 0.15s,
 		color 0.15s;
 }
+
 @media (hover: hover) {
 	.btnLayout:hover {
 		background: var(--surface2);
@@ -404,35 +421,43 @@
 		color: var(--accent);
 	}
 }
+
 .volumeWrapLayout {
 	display: flex;
 	align-items: center;
 	flex-shrink: 0;
 }
+
 @media (hover: hover) {
 	.volumeWrapLayout:hover {
 		gap: 0.3125rem;
 	}
 }
+
 .volumeWrapLayout:focus-within {
 	gap: 0.3125rem;
 }
+
 .volumeWrapLayout:hover .volumeSliderWrapLayout {
 	width: 4.5rem;
 	opacity: 100%;
 }
+
 .volumeWrapLayout:focus-within .volumeSliderWrapLayout {
 	width: 4.5rem;
 	opacity: 100%;
 }
+
 .volumeWrapLayout:hover .volumeSliderWrapLayout {
 	width: 4.5rem;
 	opacity: 100%;
 }
+
 .volumeWrapLayout:focus-within .volumeSliderWrapLayout {
 	width: 4.5rem;
 	opacity: 100%;
 }
+
 .volumeSliderWrapLayout {
 	width: 0px;
 	overflow: hidden;
@@ -442,6 +467,7 @@
 		width 0.2s ease,
 		opacity 0.2s ease;
 }
+
 .volumeSliderLayout {
 	-webkit-appearance: none;
 	appearance: none;
@@ -458,6 +484,7 @@
 		var(--surface2) 100%
 	);
 }
+
 .volumeSliderLayout::-webkit-slider-thumb {
 	-webkit-appearance: none;
 	width: 0.75rem;
@@ -468,9 +495,11 @@
 	border: none;
 	transition: transform 0.1s;
 }
+
 .volumeSliderLayout::-webkit-slider-thumb:hover {
 	transform: scale(1.25);
 }
+
 .volumeSliderLayout::-moz-range-thumb {
 	width: 0.75rem;
 	height: 0.75rem;
@@ -479,6 +508,7 @@
 	cursor: pointer;
 	border: none;
 }
+
 @media (max-width: 640px) {
 	.elementStyle {
 		display: none;

@@ -65,12 +65,15 @@
 .smStyle {
 	border-radius: 0.125rem;
 }
+
 .lgStyle {
 	border-radius: 0.5rem;
 }
+
 .pulseStyle {
 	animation: nm-pulse 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
+
 .anim-shimmerLayout {
 	animation: nm-shimmer 1.4s linear infinite;
 	background-image: linear-gradient(
@@ -81,6 +84,7 @@
 	);
 	background-size: 200% 100%;
 }
+
 .elementStyle {
 	background-color: var(--surface2);
 }

@@ -41,28 +41,36 @@
 .smStyle {
 	margin-block: 0.5rem;
 }
+
 .smStyle2 {
 	margin-inline: 0.5rem;
 }
+
 .mdStyle {
 	margin-block: 1rem;
 }
+
 .mdStyle2 {
 	margin-inline: 1rem;
 }
+
 .lgStyle {
 	margin-block: 1.5rem;
 }
+
 .lgStyle2 {
 	margin-inline: 1.5rem;
 }
+
 .elementStyle {
 	background-color: var(--border);
 }
+
 .horizontalLayout {
 	height: 1px;
 	width: 100%;
 }
+
 .verticalLayout {
 	width: 1px;
 	align-self: stretch;

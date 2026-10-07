@@ -108,31 +108,39 @@
 	padding-inline: 0.75rem;
 	color: var(--fs-xs);
 }
+
 .size-mdLayout {
 	height: var(--control-h-md);
 	padding-inline: 0.75rem;
 	color: var(--fs-sm);
 }
+
 .size-lgLayout {
 	height: var(--control-h-lg);
 	padding-inline: 1rem;
 	color: var(--fs-md);
 }
+
 .smStyle {
 	border-radius: var(--radius-sm);
 }
+
 .spacingStyle {
 	padding-left: 2.5rem;
 }
+
 .hasLeftLayout {
 	padding-left: 34px;
 }
+
 .elementStyle {
 	padding-right: 2.5rem;
 }
+
 .hasRightLayout {
 	padding-right: 34px;
 }
+
 .iconLayout {
 	pointer-events: none;
 	position: absolute;
@@ -143,6 +151,7 @@
 	align-items: center;
 	color: var(--muted);
 }
+
 .iconLayout2 {
 	position: absolute;
 	top: 50%;
@@ -152,14 +161,17 @@
 	align-items: center;
 	color: var(--muted);
 }
+
 .inputLayout {
 	width: 100%;
 	border-style: solid;
 	border-width: 1px;
 }
+
 .invalidLayout {
 	border-color: var(--danger-border-strong);
 }
+
 .inputLayout {
 	border-color: var(--border);
 	background-color: var(--surface);
@@ -173,15 +185,19 @@
 	transition-duration: 200ms;
 	outline-style: none;
 }
+
 .inputLayout::placeholder {
 	color: var(--muted);
 }
+
 .inputLayout:focus {
 	border-color: var(--accent-border-strong);
 }
+
 .invalidLayout:focus {
 	border-color: var(--danger);
 }
+
 .inputLayout:disabled {
 	cursor: not-allowed;
 	opacity: 50%;

@@ -203,6 +203,7 @@
 	gap: 1rem;
 	margin-bottom: 1.75rem;
 }
+
 .avatarLayout {
 	flex-shrink: 0;
 	width: 4.375rem;
@@ -212,6 +213,7 @@
 	border: 1px solid var(--border);
 	background: var(--surface);
 }
+
 .noticeLayout {
 	font-family: var(--font-base);
 	font-size: 0.78rem;
@@ -221,12 +223,14 @@
 	border-radius: 0.5rem;
 	padding: 16px 18px;
 }
+
 .sectionLayout {
 	background: var(--surface2, var(--surface));
 	border: 1px solid var(--border);
 	border-radius: 0.5rem;
 	padding: var(--space-5);
 }
+
 .fieldLayout {
 	display: flex;
 	flex-direction: column;
@@ -235,23 +239,28 @@
 	padding-bottom: 1.125rem;
 	border-bottom: 1px solid var(--border);
 }
+
 .fieldLayout:last-child {
 	margin-bottom: 0px;
 	padding-bottom: 0px;
 	border-bottom: none;
 }
+
 .rowLayout {
 	display: flex;
 	gap: 0.75rem;
 }
+
 :is(.rowLayout > *) {
 	flex: 1;
 }
+
 .textStyle {
 	font-family: var(--font-base);
 	font-size: 0.75rem;
 	color: var(--muted);
 }
+
 .statusOkLayout {
 	composes: status;
 	color: var(--accent);
