@@ -1,109 +1,42 @@
 "use client";
 
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import { navigateProfile } from "@/lib/profile/navigation";
+import { UserRound, Heart } from "lucide-react";
 
-import { useState, useEffect, useEffectEvent } from "react";
+import { useState, useEffect } from "react";
 import { config } from "@/lib/config";
 import {
 	getPublicProfileByUserId,
 	getUserPinnedPlaylists,
 	getUserStats,
+	getProfileLikesVisibility,
 	syncGithubStarForProfile,
 	type UserProfile,
 } from "@/lib/supabase/publicProfile";
-import {
-	getPlaylistTracks,
-	type Playlist,
-	type PlaylistTrack,
-} from "@/lib/supabase/playlists";
-import { decodeTrackKey } from "@/lib/track/trackKey";
-import { findTrackById } from "@/lib/track/trackStore";
-import TrackRow from "@/components/common/TrackRow";
+import { type Playlist } from "@/lib/supabase/playlists";
+import PlaylistCard from "./PlaylistCard";
+import Card from "@/components/ui/Card";
+import PlaylistTracks from "./PlaylistTracks";
+import PublicLikedTracks from "./PublicLikedTracks";
+import likesStyles from "./publicLikes.module.scss";
 import styles from "./profile.module.scss";
-import {
-	renderBio,
-	formatJoinDate,
-	resolveTrackMeta,
-} from "@/lib/profile/profileHelpers";
+import ProfileStatus from "./ProfileStatus";
+import { renderBio, formatJoinDate } from "@/lib/profile/profileHelpers";
 
-function PublicPlaylistSection({ playlist }: { playlist: Playlist }) {
-	const [open, setOpen] = useState(false);
-	const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
-	const [loading, setLoading] = useState(false);
-
-	const loadTracks = useEffectEvent(() => {
-		if (tracks.length === 0) {
-			setLoading(true);
-			getPlaylistTracks(playlist.id).then((data) => {
-				setTracks(data);
-				setLoading(false);
-			});
-		}
-	});
-
-	useEffect(() => {
-		if (open) loadTracks();
-	}, [open, playlist.id]);
-
-	return (
-		<div className={styles.playlistItem}>
-			<div className={styles.playlistHeader} onClick={() => setOpen((v) => !v)}>
-				<div className={styles.playlistChevron} data-open={open}>
-					<svg
-						width="12"
-						height="12"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="2.5"
-						strokeLinecap="round"
-					>
-						<path d="M9 18l6-6-6-6" />
-					</svg>
-				</div>
-				<span className={styles.playlistName}>{playlist.name}</span>
-				<span className={styles.playlistCount}>
-					{tracks.length > 0 ? `${tracks.length} tracks` : ""}
-				</span>
-			</div>
-
-			{open && (
-				<div className={styles.playlistTracks}>
-					{loading ? (
-						<div className={styles.loadingSmall}>Loading…</div>
-					) : tracks.length === 0 ? (
-						<div className={styles.emptySmall}>No tracks</div>
-					) : (
-						tracks.map((pt, i) => {
-							const meta = resolveTrackMeta(pt.track_id);
-							const title = meta?.title ?? pt.track_id;
-							const artist = meta?.artist ?? "";
-							const cover = meta?.cover;
-							const mp3_url =
-								(!pt.track_id.startsWith("http") && !pt.track_id.endsWith("-e")
-									? decodeTrackKey(pt.track_id)?.url
-									: undefined) ?? findTrackById(pt.track_id)?.url;
-							return (
-								<TrackRow
-									key={pt.id}
-									trackId={pt.track_id}
-									index={i}
-									title={title}
-									artist={artist}
-									cover={cover}
-									dbMeta={{ title, artist, cover, mp3_url }}
-									showLike
-								/>
-							);
-						})
-					)}
-				</div>
-			)}
-		</div>
-	);
-}
-
-export default function PublicProfileClient({ userId }: { userId: string }) {
+export default function PublicProfileClient({
+	userId,
+	playlistId,
+}: {
+	userId: string;
+	playlistId?: string;
+}) {
+	const searchParams = useSearchParams();
+	const requestedTab = searchParams.get("tab");
+	const openTab = (nextTab: "bio" | "likes") => {
+		navigateProfile(`/profile/${encodeURIComponent(userId)}?tab=${nextTab}`);
+	};
 	const [profile, setProfile] = useState<UserProfile | null | "loading">(
 		"loading",
 	);
@@ -115,44 +48,85 @@ export default function PublicProfileClient({ userId }: { userId: string }) {
 	const [banned, setBanned] = useState(false);
 	const [starred, setStarred] = useState(false);
 	const [exactDate, setExactDate] = useState(false);
+	const [profileError, setProfileError] = useState(false);
+	const [reload, setReload] = useState(0);
+	const [likesVisibility, setLikesVisibility] = useState<{
+		userId: string;
+		enabled: boolean;
+	} | null>(null);
+	const [tab, setTab] = useState<"bio" | "likes">("bio");
+	useEffect(() => {
+		setTab(requestedTab === "likes" ? "likes" : "bio");
+	}, [requestedTab, userId, playlistId]);
+	const showLikes =
+		!banned && likesVisibility?.userId === userId && likesVisibility.enabled;
 
 	useEffect(() => {
-		getPublicProfileByUserId(userId).then((result) => {
-			if (!result) {
-				setProfile(null);
-				return;
-			}
+		let active = true;
+		setProfile("loading");
+		setProfileError(false);
+		setStats(null);
+		setPlaylists([]);
+		setBanned(false);
+		setStarred(false);
+		setLikesVisibility(null);
 
-			setProfile(result.profile);
-			setBanned(result.banned);
-
-			const name = result.banned
-				? userId
-				: (result.profile.display_name ??
-					result.profile.github_login ??
-					userId);
-			document.title = `${name} - Next Music`;
-
-			if (!result.banned) {
-				Promise.all([
-					getUserStats(result.profile.user_id),
-					getUserPinnedPlaylists(result.profile.user_id),
-				]).then(([stats, playlists]) => {
-					setStats(stats);
-					setPlaylists(playlists);
-				});
-
-				if (result.profile.github_id) {
-					syncGithubStarForProfile(result.profile.github_id).then((s) => {
-						if (s !== null) setStarred(s);
-					});
+		getPublicProfileByUserId(userId)
+			.then((result) => {
+				if (!active) return;
+				if (!result) {
+					setProfile(null);
+					return;
 				}
-			}
-		});
+
+				setProfile(result.profile);
+				setBanned(result.banned);
+
+				const name = result.banned
+					? userId
+					: (result.profile.display_name ??
+						result.profile.github_login ??
+						userId);
+				document.title = `${name} - Next Music`;
+
+				if (!result.banned) {
+					getProfileLikesVisibility(result.profile.user_id)
+						.then((enabled) => {
+							if (active) setLikesVisibility({ userId, enabled });
+						})
+						.catch(() => {
+							if (active) setLikesVisibility(null);
+						});
+					Promise.all([
+						getUserStats(result.profile.user_id),
+						getUserPinnedPlaylists(result.profile.user_id),
+					])
+						.then(([stats, playlists]) => {
+							if (!active) return;
+							setStats(stats);
+							setPlaylists(playlists);
+						})
+						.catch(() => {
+							if (active) setStats(null);
+						});
+
+					if (result.profile.github_id) {
+						syncGithubStarForProfile(result.profile.github_id).then((s) => {
+							if (active && s !== null) setStarred(s);
+						});
+					}
+				}
+			})
+			.catch(() => {
+				if (!active) return;
+				setProfileError(true);
+				setProfile(null);
+			});
 		return () => {
+			active = false;
 			document.title = "Next Music";
 		};
-	}, [userId]);
+	}, [userId, reload]);
 
 	if (profile === "loading") {
 		return (
@@ -169,7 +143,21 @@ export default function PublicProfileClient({ userId }: { userId: string }) {
 	if (!profile) {
 		return (
 			<div className={styles.centered}>
-				<p className={styles.centeredText}>User not found</p>
+				{profileError ? (
+					<>
+						<p className={styles.statusError} role="alert">
+							Could not load this profile. Please retry.
+						</p>
+						<button
+							type="button"
+							onClick={() => setReload((value) => value + 1)}
+						>
+							Retry
+						</button>
+					</>
+				) : (
+					<p className={styles.centeredText}>User not found</p>
+				)}
 			</div>
 		);
 	}
@@ -205,6 +193,9 @@ export default function PublicProfileClient({ userId }: { userId: string }) {
 									{displayName[0].toUpperCase()}
 								</div>
 							)}
+						</div>
+						<h1 className={styles.username}>
+							{displayName}
 							{!banned &&
 								(starred ? (
 									<span className={styles.starBadge} title="Starred Next Music">
@@ -244,8 +235,7 @@ export default function PublicProfileClient({ userId }: { userId: string }) {
 										</svg>
 									</a>
 								))}
-						</div>
-						<h1 className={styles.username}>{displayName}</h1>
+						</h1>
 						{!banned && profile.created_at && (
 							<p
 								className={styles.joinDate}
@@ -254,50 +244,52 @@ export default function PublicProfileClient({ userId }: { userId: string }) {
 								{formatJoinDate(profile.created_at, exactDate)}
 							</p>
 						)}
+						{!banned && profile.status && (
+							<ProfileStatus text={profile.status} />
+						)}
+						{stats && (
+							<div className={styles.headerStats}>
+								<div>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="17"
+										height="15"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									>
+										<path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" />
+									</svg>
+									<strong>{stats.likes}</strong>
+									<span>Liked tracks</span>
+								</div>
+								<div>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="17"
+										height="15"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										strokeWidth="2"
+										strokeLinecap="round"
+										strokeLinejoin="round"
+									>
+										<path d="M16 5H3" />
+										<path d="M11 12H3" />
+										<path d="M11 19H3" />
+										<path d="M21 16V5" />
+										<circle cx="18" cy="16" r="3" />
+									</svg>
+									<strong>{stats.playlists}</strong>
+									<span>Playlists</span>
+								</div>
+							</div>
+						)}
 					</div>
-
-					{stats && (
-						<div className={styles.statsCard}>
-							<div className={styles.statItem}>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									width="17"
-									height="15"
-									viewBox="0 0 24 24"
-									fill="currentColor"
-									stroke="currentColor"
-									strokeWidth="2"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								>
-									<path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" />
-								</svg>
-								<span className={styles.statValue}>{stats.likes}</span>
-								<span className={styles.statLabel}>Liked tracks</span>
-							</div>
-							<div className={styles.statItem}>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									width="17"
-									height="15"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="2"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								>
-									<path d="M16 5H3" />
-									<path d="M11 12H3" />
-									<path d="M11 19H3" />
-									<path d="M21 16V5" />
-									<circle cx="18" cy="16" r="3" />
-								</svg>
-								<span className={styles.statValue}>{stats.playlists}</span>
-								<span className={styles.statLabel}>Playlists</span>
-							</div>
-						</div>
-					)}
 				</aside>
 
 				<div className={styles.content}>
@@ -319,37 +311,86 @@ export default function PublicProfileClient({ userId }: { userId: string }) {
 							This user has been banned.
 						</div>
 					)}
-					{!banned && profile.bio && (
-						<section className={styles.section}>
-							<div className={styles.sectionHeader}>
-								<h2 className={styles.sectionTitle}>Bio</h2>
-							</div>
+					{!banned && (
+						<div className={likesStyles.main}>
 							<div
-								className={styles.bioRendered}
-								dangerouslySetInnerHTML={{ __html: renderBio(profile.bio) }}
-							/>
-							<div className={styles.separator}></div>
-						</section>
+								className={`${styles.statsCard} ${likesStyles.tabs}`}
+								aria-label="Profile sections"
+							>
+								<button
+									type="button"
+									aria-pressed={!playlistId && (tab === "bio" || !showLikes)}
+									onClick={() => openTab("bio")}
+								>
+									<UserRound size={16} aria-hidden="true" />
+									Bio
+								</button>
+								{showLikes && (
+									<button
+										type="button"
+										aria-pressed={!playlistId && tab === "likes"}
+										onClick={() => openTab("likes")}
+									>
+										<Heart
+											size={16}
+											aria-hidden="true"
+											fill={
+												!playlistId && tab === "likes" ? "currentColor" : "none"
+											}
+										/>
+										Liked tracks
+									</button>
+								)}
+							</div>
+							{playlistId && (
+								<PlaylistTracks
+									key={`${userId}/${playlistId}`}
+									userId={userId}
+									playlistId={playlistId}
+								/>
+							)}
+							{!playlistId && showLikes && tab === "likes" && (
+								<PublicLikedTracks key={userId} userId={profile.user_id} />
+							)}
+							{!banned && !playlistId && (tab === "bio" || !showLikes) && (
+								<Card
+									as="section"
+									variant="modal"
+									heading="Bio"
+									className={styles.profileContentCard}
+								>
+									{profile.bio?.trim() ? (
+										<div
+											className={styles.bioRendered}
+											dangerouslySetInnerHTML={{
+												__html: renderBio(profile.bio),
+											}}
+										/>
+									) : (
+										<div className={styles.empty}>No bio</div>
+									)}
+								</Card>
+							)}
+						</div>
 					)}
 
 					{!banned && (
-						<section
-							className={styles.section}
-							style={profile.bio ? { marginTop: 20 } : undefined}
+						<Card
+							as="section"
+							variant="modal"
+							heading="Pinned Playlists"
+							className={styles.pinnedSection}
 						>
-							<div className={styles.sectionHeader}>
-								<h2 className={styles.sectionTitle}>Pinned Playlists</h2>
-							</div>
 							{playlists.length === 0 ? (
 								<div className={styles.empty}>No pinned playlists</div>
 							) : (
 								<div className={styles.playlistList}>
 									{playlists.map((pl) => (
-										<PublicPlaylistSection key={pl.id} playlist={pl} />
+										<PlaylistCard key={pl.id} playlist={pl} userId={userId} />
 									))}
 								</div>
 							)}
-						</section>
+						</Card>
 					)}
 				</div>
 			</div>

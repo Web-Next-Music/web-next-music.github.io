@@ -14,6 +14,48 @@ export interface PlaylistTrack {
 	position: number;
 }
 
+export async function getPlaylistDetail(
+	userId: string,
+	playlistId: string,
+): Promise<{ playlist: Playlist; tracks: PlaylistTrack[] } | null> {
+	const sb = getSupabase();
+	if (!sb) throw new Error("Playlist service is unavailable");
+	const { data: playlist, error } = await sb
+		.from("playlists")
+		.select("id, name, created_at")
+		.eq("user_id", userId)
+		.eq("id", playlistId)
+		.maybeSingle();
+	if (error) throw error;
+	if (!playlist) return null;
+	const { data: tracks, error: tracksError } = await sb
+		.from("playlist_tracks")
+		.select("id, playlist_id, track_id, position")
+		.eq("playlist_id", playlistId)
+		.order("position", { ascending: true });
+	if (tracksError) throw tracksError;
+	return {
+		playlist: playlist as Playlist,
+		tracks: (tracks ?? []) as PlaylistTrack[],
+	};
+}
+
+export async function removePlaylistDetailTrack(
+	playlistId: string,
+	trackId: string,
+): Promise<void> {
+	const sb = getSupabase();
+	if (!sb) throw new Error("Playlist service is unavailable");
+	const { data, error } = await sb
+		.from("playlist_tracks")
+		.delete()
+		.eq("playlist_id", playlistId)
+		.eq("track_id", trackId)
+		.select("id");
+	if (error) throw error;
+	if (!data?.length) throw new Error("Track was not removed");
+}
+
 export async function getPlaylists(userId: string): Promise<Playlist[]> {
 	const sb = getSupabase();
 	if (!sb) return [];

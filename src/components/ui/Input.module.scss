@@ -106,19 +106,19 @@
 .size-smLayout {
 	height: 1.75rem;
 	padding-inline: 0.75rem;
-	color: var(--fs-xs);
+	font-size: var(--fs-xs);
 }
 
 .size-mdLayout {
 	height: var(--control-h-md);
 	padding-inline: 0.75rem;
-	color: var(--fs-sm);
+	font-size: var(--fs-sm);
 }
 
 .size-lgLayout {
 	height: var(--control-h-lg);
 	padding-inline: 1rem;
-	color: var(--fs-md);
+	font-size: var(--fs-md);
 }
 
 .smStyle {
@@ -164,6 +164,8 @@
 
 .inputLayout {
 	width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
 	border-style: solid;
 	border-width: 1px;
 }

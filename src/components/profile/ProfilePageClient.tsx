@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -34,40 +34,53 @@ function LoadingDots() {
 
 export default function ProfilePageClient({
 	idOverride,
+	playlistIdOverride,
 }: {
 	idOverride?: string;
+	playlistIdOverride?: string;
 }) {
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
-	const router = useRouter();
-	const { user, loading } = useAuth();
+	const { user, loading, banChecking } = useAuth();
+	const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+	const playlistMatch = pathname?.match(
+		new RegExp(`^/(?:profile/)?(${uuid})/(${uuid})/?$`, "i"),
+	);
+	const profileMatch = pathname?.match(/^\/profile\/([^/]+)\/?$/);
+	const id = (
+		playlistMatch?.[1] ??
+		(profileMatch
+			? decodeURIComponent(profileMatch[1])
+			: pathname === "/profile"
+				? (searchParams.get("id") ?? idOverride ?? "")
+				: (idOverride ?? ""))
+	).toLowerCase();
+	const playlistId = playlistMatch
+		? playlistMatch[2].toLowerCase()
+		: profileMatch || pathname === "/profile"
+			? undefined
+			: playlistIdOverride?.toLowerCase();
 
-	const resolvedId =
-		idOverride ??
-		searchParams.get("id") ??
-		pathname?.match(/^\/profile\/([^/]+)\/?$/)?.[1] ??
-		"";
-	const [id, setId] = useState(resolvedId);
 	useEffect(() => {
-		if (resolvedId && resolvedId !== id) setId(resolvedId);
-	}, [resolvedId, id]);
-
-	useEffect(() => {
-		if (!id || idOverride) return;
-		if (pathname !== "/profile") return;
-		router.replace(`/profile/${id}`);
-	}, [id, idOverride, pathname, router]);
+		if (!id || pathname !== "/profile") return;
+		const query = searchParams.toString();
+		window.history.replaceState(
+			null,
+			"",
+			`/profile/${encodeURIComponent(id)}${query ? `?${query}` : ""}`,
+		);
+	}, [id, pathname, searchParams]);
 
 	if (!id) return <NotFoundView />;
 
 	return (
 		<ProfileShell>
-			{loading ? (
+			{loading || banChecking ? (
 				<LoadingDots />
-			) : user && id === user.id ? (
-				<ProfileClient />
+			) : user && id === user.id.toLowerCase() ? (
+				<ProfileClient playlistId={playlistId} />
 			) : (
-				<PublicProfileClient userId={id} />
+				<PublicProfileClient key={id} userId={id} playlistId={playlistId} />
 			)}
 		</ProfileShell>
 	);

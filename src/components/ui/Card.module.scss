@@ -1,3 +1,39 @@
+.modalCard {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+	padding: 10px;
+	min-width: 0;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius-2xl);
+
+	overflow: hidden;
+}
+
+.modalCard .modalHead {
+	box-sizing: border-box;
+	height: 50px;
+	min-height: 50px;
+	max-height: 50px;
+	flex-shrink: 0;
+	margin: 0;
+	background: var(--surface2);
+}
+
+.modalBody {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+	min-width: 0;
+	color: var(--text);
+}
+
+.modalHeading {
+	margin: 0;
+	flex: 1;
+}
+
 .base {
 	background: var(--surface);
 	border: 1px solid var(--border);

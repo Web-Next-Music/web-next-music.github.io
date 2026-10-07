@@ -1,6 +1,58 @@
 import { getSupabase } from ".";
 import { config } from "../config";
 import type { Playlist } from "./playlists";
+import type { TrackLikeMeta } from "./likesContext";
+
+export async function getProfileLikesVisibility(
+	userId: string,
+): Promise<boolean> {
+	const sb = getSupabase();
+	if (!sb) throw new Error("Profile service is unavailable");
+	const { data, error } = await sb
+		.from("profile_visibility_settings")
+		.select("public_liked_tracks")
+		.eq("user_id", userId)
+		.maybeSingle();
+	if (error) throw error;
+	return data?.public_liked_tracks === true;
+}
+
+export async function saveProfileLikesVisibility(
+	userId: string,
+	enabled: boolean,
+): Promise<void> {
+	const sb = getSupabase();
+	if (!sb) throw new Error("Profile service is unavailable");
+	const { error } = await sb
+		.from("profile_visibility_settings")
+		.upsert(
+			{ user_id: userId, public_liked_tracks: enabled },
+			{ onConflict: "user_id" },
+		);
+	if (error) throw error;
+}
+
+export interface PublicLikedTrack extends TrackLikeMeta {
+	track_id: string;
+}
+
+export async function getPublicLikedTracks(
+	userId: string,
+): Promise<PublicLikedTrack[]> {
+	const sb = getSupabase();
+	if (!sb) throw new Error("Profile service is unavailable");
+	const { data, error } = await sb.rpc("get_public_liked_tracks", {
+		p_user_id: userId,
+	});
+	if (error) throw error;
+	return (data ?? []).map((row: Record<string, string | null>) => ({
+		track_id: row.track_id as string,
+		title: row.title ?? undefined,
+		artist: row.artist ?? undefined,
+		cover: row.cover ?? undefined,
+		mp3_url: row.mp3_url ?? undefined,
+	}));
+}
 
 export interface UserProfile {
 	user_id: string;
@@ -9,6 +61,7 @@ export interface UserProfile {
 	display_name: string | null;
 	avatar_url: string | null;
 	bio: string | null;
+	status: string | null;
 	github_starred: boolean;
 	created_at?: string | null;
 }
@@ -21,7 +74,7 @@ export async function getProfileByGithubId(
 	const { data } = await sb
 		.from("user_profiles")
 		.select(
-			"user_id, github_id, github_login, display_name, avatar_url, bio, github_starred",
+			"user_id, github_id, github_login, display_name, avatar_url, bio, status, github_starred",
 		)
 		.eq("github_id", githubId)
 		.single();
@@ -36,7 +89,7 @@ export async function getProfileByUsername(
 	const { data } = await sb
 		.from("user_profiles")
 		.select(
-			"user_id, github_id, github_login, display_name, avatar_url, bio, github_starred",
+			"user_id, github_id, github_login, display_name, avatar_url, bio, status, github_starred",
 		)
 		.eq("github_login", githubLogin)
 		.single();
@@ -51,7 +104,7 @@ export async function getOwnProfile(
 	const { data } = await sb
 		.from("user_profiles")
 		.select(
-			"user_id, github_login, display_name, avatar_url, bio, github_starred",
+			"user_id, github_id, github_login, display_name, avatar_url, bio, status, github_starred",
 		)
 		.eq("user_id", userId)
 		.single();
@@ -75,6 +128,40 @@ export async function syncGitHubMeta(
 			{ user_id: userId, github_id, github_login, display_name, avatar_url },
 			{ onConflict: "user_id" },
 		);
+}
+
+export async function getOwnStatus(userId: string): Promise<string> {
+	const sb = getSupabase();
+	if (!sb) throw new Error("Profile service is unavailable");
+	const { data, error } = await sb
+		.from("user_profiles")
+		.select("status")
+		.eq("user_id", userId)
+		.maybeSingle();
+	if (error) throw error;
+	return data?.status ?? "";
+}
+
+export async function saveStatus(
+	userId: string,
+	status: string,
+): Promise<string> {
+	if (/[\r\n]/.test(status)) throw new Error("Status must be a single line");
+	if (Array.from(status).length > 64)
+		throw new Error("Status must be at most 64 characters");
+	const sb = getSupabase();
+	if (!sb) throw new Error("Profile service is unavailable");
+	const { data, error } = await sb
+		.from("user_profiles")
+		.upsert(
+			{ user_id: userId, status, updated_at: new Date().toISOString() },
+			{ onConflict: "user_id" },
+		)
+		.select("status")
+		.single();
+	if (error) throw error;
+	if (!data) throw new Error("Status was not saved");
+	return data.status ?? "";
 }
 
 export async function saveBio(userId: string, bio: string): Promise<boolean> {
@@ -179,6 +266,7 @@ export async function getPublicProfile(
 		display_name: row.display_name,
 		avatar_url: row.avatar_url,
 		bio: row.bio,
+		status: row.status ?? null,
 		github_starred: row.github_starred,
 		created_at: row.created_at ?? null,
 	};
@@ -190,14 +278,13 @@ export async function getPublicProfileByUserId(
 	userId: string,
 ): Promise<PublicProfileResult | null> {
 	const sb = getSupabase();
-	if (!sb) return null;
+	if (!sb) throw new Error("Profile service is unavailable");
 
 	const { data, error } = await sb.rpc("resolve_public_profile_by_user_id", {
 		p_user_id: userId,
 	});
 
-	if (error)
-		console.error("[profile] getPublicProfileByUserId:", error.message);
+	if (error) throw error;
 
 	const row = Array.isArray(data) ? data[0] : data;
 	if (!row) return null;
@@ -209,6 +296,7 @@ export async function getPublicProfileByUserId(
 		display_name: row.display_name,
 		avatar_url: row.avatar_url,
 		bio: row.bio,
+		status: row.status ?? null,
 		github_starred: row.github_starred,
 		created_at: row.created_at ?? null,
 	};

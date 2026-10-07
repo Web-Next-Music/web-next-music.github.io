@@ -73,10 +73,6 @@ export default function Header({
 		href === "/"
 			? pathname === "/"
 			: pathname === href || pathname.startsWith(`${href}/`);
-	const getLinkColor = (href: string) =>
-		isActiveLink(href)
-			? "var(--text)"
-			: "color-mix(in srgb, var(--text) 70%, var(--muted))";
 
 	useClickOutside(burgerWrapRef, open, closeMenu);
 
@@ -116,7 +112,6 @@ export default function Header({
 									key={l.href}
 									href={l.href}
 									aria-current={isActiveLink(l.href) ? "page" : undefined}
-									style={{ color: getLinkColor(l.href) }}
 								>
 									{l.label}
 								</Link>
@@ -153,7 +148,6 @@ export default function Header({
 										href={l.href}
 										className={dropdownStyles.item}
 										aria-current={isActiveLink(l.href) ? "page" : undefined}
-										style={{ color: getLinkColor(l.href) }}
 										onClick={closeMenu}
 									>
 										{l.label}

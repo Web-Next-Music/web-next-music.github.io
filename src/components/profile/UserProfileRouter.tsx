@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import NotFoundView from "@/components/not-found/NotFoundView";
 import TrackPageClient from "@/components/track/TrackPageClient";
 import ProfilePageClient from "./ProfilePageClient";
+
 import styles from "./profile.module.scss";
 
 function ProfileShell({ children }: { children: React.ReactNode }) {
@@ -55,10 +56,13 @@ export default function UserProfileRouter() {
 		return <TrackPageClient idOverride={decodeURIComponent(trackMatch[1])} />;
 	}
 
-	const match = pathname?.match(/^\/profile\/([^/]+)\/?$/);
-	const id = match ? decodeURIComponent(match[1]) : null;
+	const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+	const playlistMatch = pathname?.match(
+		new RegExp(`^/(?:profile/)?(${uuid})/(${uuid})/?$`, "i"),
+	);
+	const profileMatch = pathname?.match(/^\/profile\/([^/]+)\/?$/);
 
-	if (!id) return <NotFoundView />;
+	if (!playlistMatch && !profileMatch) return <NotFoundView />;
 
-	return <ProfilePageClient idOverride={id} />;
+	return <ProfilePageClient />;
 }

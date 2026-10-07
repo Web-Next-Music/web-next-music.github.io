@@ -1,8 +1,15 @@
 "use client";
 
-import type { ElementType, HTMLAttributes, Ref } from "react";
+import {
+	useId,
+	type ElementType,
+	type HTMLAttributes,
+	type Ref,
+	type ReactNode,
+} from "react";
 import { cx } from "@/lib/cx";
 import styles from "./Card.module.scss";
+import modalStyles from "./Modal.module.scss";
 
 export type CardPadding = "none" | "sm" | "md" | "lg";
 export type CardRadius = "md" | "lg" | "xl";
@@ -14,6 +21,9 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
 	radius?: CardRadius;
 	tone?: CardTone;
 	interactive?: boolean;
+	variant?: "default" | "modal";
+	heading?: ReactNode;
+	headerActions?: ReactNode;
 	ref?: Ref<HTMLDivElement>;
 }
 
@@ -23,11 +33,39 @@ export default function Card({
 	radius = "lg",
 	tone = "surface",
 	interactive = false,
+	variant = "default",
+	heading,
+	headerActions,
 	className,
 	children,
 	...rest
 }: Props) {
+	const headingId = useId();
 	const Tag = as as ElementType;
+	if (variant === "modal") {
+		return (
+			<Tag
+				className={cx(styles.modalCard, className)}
+				aria-labelledby={heading ? headingId : undefined}
+				{...rest}
+			>
+				{(heading || headerActions) && (
+					<div className={cx(modalStyles.head, styles.modalHead)}>
+						{heading && (
+							<h2
+								id={headingId}
+								className={cx(modalStyles.title, styles.modalHeading)}
+							>
+								{heading}
+							</h2>
+						)}
+						{headerActions}
+					</div>
+				)}
+				<div className={styles.modalBody}>{children}</div>
+			</Tag>
+		);
+	}
 	const paddingClasses: Record<CardPadding, string> = {
 		none: styles["pad-none"],
 		sm: styles["pad-sm"],

@@ -1,29 +1,35 @@
 "use client";
 
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import { navigateProfile } from "@/lib/profile/navigation";
 
 import styles from "./profile.module.scss";
+import ProfileStatus from "./ProfileStatus";
+import ProfileSettings from "./ProfileSettings";
+import PlaylistCard from "./PlaylistCard";
+import PlaylistTracks from "./PlaylistTracks";
+import PlaylistActions, {
+	type PlaylistManagementProps,
+} from "./PlaylistActions";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
 
-import { useState, useEffect, useEffectEvent, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { config } from "@/lib/config";
 import { useAuth } from "@/lib/auth";
-import { useLikes, type TrackLikeMeta } from "@/lib/supabase/likesContext";
+import { useLikes } from "@/lib/supabase/likesContext";
 import {
 	ensureTracksLoaded,
 	subscribeStore,
 	getStoreSnapshot,
 } from "@/lib/track/trackStore";
 import { syncGitHubMeta, syncGithubStar } from "@/lib/supabase/publicProfile";
-import {
-	getPlaylistTracks,
-	removeTrackFromPlaylist,
-	type Playlist,
-	type PlaylistTrack,
-} from "@/lib/supabase/playlists";
+import { getPlaylistDetail, type Playlist } from "@/lib/supabase/playlists";
 import TrackRow from "@/components/common/TrackRow";
-import IconButton from "@/components/ui/IconButton";
-import { cx } from "@/lib/cx";
+
 import { useProfileBio } from "@/lib/profile/useProfileBio";
+import { useProfileStatus } from "@/lib/profile/useProfileStatus";
 import { useProfilePlaylists } from "@/lib/profile/useProfilePlaylists";
 import {
 	renderBio,
@@ -33,225 +39,55 @@ import {
 
 function PlaylistSection({
 	playlist,
-	likedMeta,
-	isPinned,
+	userId,
 	readOnly,
-	onDelete,
-	onRename,
-	onTogglePin,
-	onContentsLoaded,
-	onTrackRemoved,
-}: {
+	...management
+}: PlaylistManagementProps & {
 	playlist: Playlist;
-	likedMeta: Map<string, TrackLikeMeta>;
-	isPinned: boolean;
+	userId: string;
 	readOnly?: boolean;
-	onDelete: (id: string) => void;
-	onRename: (id: string, name: string) => void;
-	onTogglePin: (id: string) => void;
-	onContentsLoaded: (playlistId: string, trackIds: string[]) => void;
-	onTrackRemoved: (playlistId: string, trackId: string) => void;
 }) {
-	const [open, setOpen] = useState(false);
-	const [tracks, setTracks] = useState<PlaylistTrack[]>([]);
-	const [loadingTracks, setLoadingTracks] = useState(false);
-	const [editing, setEditing] = useState(false);
-	const [editName, setEditName] = useState(playlist.name);
-	const inputRef = useRef<HTMLInputElement>(null);
-
-	const loadTracks = useEffectEvent(() => {
-		if (tracks.length === 0) {
-			setLoadingTracks(true);
-			getPlaylistTracks(playlist.id).then((data) => {
-				setTracks(data);
-				setLoadingTracks(false);
-				onContentsLoaded(
-					playlist.id,
-					data.map((t) => t.track_id),
-				);
-			});
-		}
-	});
-
-	useEffect(() => {
-		if (open) loadTracks();
-	}, [open, playlist.id]);
-
-	useEffect(() => {
-		if (editing) inputRef.current?.focus();
-	}, [editing]);
-
-	const handleRename = async () => {
-		const trimmed = editName.trim();
-		if (!trimmed || trimmed === playlist.name) {
-			setEditing(false);
-			return;
-		}
-		await onRename(playlist.id, trimmed);
-		setEditing(false);
-	};
-
-	const handleRemoveTrack = async (trackId: string) => {
-		await removeTrackFromPlaylist(playlist.id, trackId);
-		setTracks((prev) => prev.filter((t) => t.track_id !== trackId));
-		onTrackRemoved(playlist.id, trackId);
-	};
-
 	return (
-		<div className={styles.playlistItem}>
-			<div className={styles.playlistHeader} onClick={() => setOpen((v) => !v)}>
-				<div className={styles.playlistChevron} data-open={open}>
-					<svg
-						width="12"
-						height="12"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="2.5"
-						strokeLinecap="round"
-					>
-						<path d="M9 18l6-6-6-6" />
-					</svg>
-				</div>
-				{editing ? (
-					<input
-						ref={inputRef}
-						className={styles.playlistNameInput}
-						value={editName}
-						onChange={(e) => setEditName(e.target.value)}
-						onBlur={handleRename}
-						onKeyDown={(e) => {
-							if (e.key === "Enter") handleRename();
-							if (e.key === "Escape") setEditing(false);
-						}}
-						onClick={(e) => e.stopPropagation()}
-					/>
-				) : (
-					<span className={styles.playlistName}>{playlist.name}</span>
-				)}
-				<span className={styles.playlistCount}>
-					{tracks.length > 0 ? `${tracks.length} tracks` : ""}
-				</span>
-				{!readOnly && (
-					<div
-						className={styles.playlistActions}
-						onClick={(e) => e.stopPropagation()}
-					>
-						<IconButton
-							className={cx(styles.iconBtn, isPinned && styles.iconBtnPinned)}
-							onClick={() => onTogglePin(playlist.id)}
-							label={
-								isPinned ? "Unpin from public profile" : "Pin to public profile"
-							}
-						>
-							<svg
-								width="17"
-								height="17"
-								viewBox="0 0 24 24"
-								fill={isPinned ? "currentColor" : "none"}
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							>
-								<line x1="12" y1="17" x2="12" y2="22" />
-								<path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
-							</svg>
-						</IconButton>
-						<IconButton
-							className={styles.iconBtn}
-							onClick={() => setEditing(true)}
-							label="Rename"
-						>
-							<svg
-								width="17"
-								height="17"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-							>
-								<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-								<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-							</svg>
-						</IconButton>
-						<IconButton
-							className={cx(styles.iconBtn, styles.iconBtnDanger)}
-							onClick={() => onDelete(playlist.id)}
-							label="Delete playlist"
-						>
-							<svg
-								width="17"
-								height="17"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2"
-								strokeLinecap="round"
-							>
-								<polyline points="3 6 5 6 21 6" />
-								<path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-								<path d="M10 11v6M14 11v6" />
-								<path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-							</svg>
-						</IconButton>
-					</div>
-				)}
-			</div>
-
-			{open && (
-				<div className={styles.playlistTracks}>
-					{loadingTracks ? (
-						<div className={styles.tracksSkeleton}>
-							{[68, 52, 75].map((w, i) => (
-								<div key={i} className={styles.tracksSkeletonRow}>
-									<span className={styles.skeletonBlock} />
-									<span
-										className={styles.skeletonLine}
-										style={{ width: `${w}%` }}
-									/>
-								</div>
-							))}
-						</div>
-					) : tracks.length === 0 ? (
-						<div className={styles.emptySmall}>No tracks yet</div>
-					) : (
-						tracks.map((pt, i) => {
-							const meta = resolveTrackMeta(pt.track_id, likedMeta);
-							const dbMeta = likedMeta.get(pt.track_id);
-							return (
-								<TrackRow
-									key={pt.id}
-									trackId={pt.track_id}
-									index={i}
-									title={meta?.title ?? `Track #${pt.track_id}`}
-									artist={meta?.artist}
-									cover={meta?.cover}
-									dbMeta={dbMeta}
-									onRemove={(e) => {
-										e.stopPropagation();
-										handleRemoveTrack(pt.track_id);
-									}}
-								/>
-							);
-						})
-					)}
-				</div>
-			)}
-		</div>
+		<PlaylistCard
+			playlist={playlist}
+			userId={userId}
+			variant={readOnly ? "compact" : "grid"}
+		>
+			{!readOnly && <PlaylistActions playlist={playlist} {...management} />}
+		</PlaylistCard>
 	);
 }
 
-export default function ProfileClient() {
+export default function ProfileClient({ playlistId }: { playlistId?: string }) {
+	const searchParams = useSearchParams();
 	const { user, loading, banChecking, openAuthModal, isBanned } = useAuth();
 	const { likedTrackIds, likedMeta } = useLikes();
 	const newNameRef = useRef<HTMLInputElement>(null);
-	const [tab, setTab] = useState<"bio" | "liked" | "playlists">("bio");
+	const requestedTab = searchParams.get("tab");
+	const initialTab =
+		requestedTab === "likes" || requestedTab === "liked"
+			? "liked"
+			: requestedTab === "playlists" || requestedTab === "settings"
+				? requestedTab
+				: "bio";
+	const [tab, setActiveTab] = useState<
+		"bio" | "liked" | "playlists" | "settings" | "playlist"
+	>(playlistId ? "playlist" : initialTab);
+	const setTab = (nextTab: "bio" | "liked" | "playlists" | "settings") => {
+		if (user) {
+			navigateProfile(`/profile/${encodeURIComponent(user.id)}?tab=${nextTab}`);
+		} else {
+			setActiveTab(nextTab);
+		}
+	};
+	useEffect(() => {
+		setActiveTab(playlistId ? "playlist" : initialTab);
+	}, [playlistId, initialTab]);
 	const [, setStoreReady] = useState(() => getStoreSnapshot().loaded);
 	const [githubStarred, setGithubStarred] = useState<boolean | null>(null);
 	const [starLoading, setStarLoading] = useState(false);
 	const [exactDate, setExactDate] = useState(false);
+	const status = useProfileStatus(user?.id);
 
 	const {
 		bio,
@@ -272,13 +108,27 @@ export default function ProfileClient() {
 		newName,
 		setNewName,
 		pinnedIds,
-		handleContentsLoaded,
-		handleTrackRemoved,
 		handleCreatePlaylist,
 		handleDeletePlaylist,
 		handleRenamePlaylist,
 		handleTogglePin,
 	} = useProfilePlaylists(user?.id);
+
+	const deleteManagedPlaylist = async (id: string) => {
+		if (!user || isBanned)
+			throw new Error("Playlist management is unavailable");
+		await handleDeletePlaylist(id);
+		if (await getPlaylistDetail(user.id, id))
+			throw new Error("Playlist was not deleted");
+	};
+	const renameManagedPlaylist = async (id: string, name: string) => {
+		if (!user || isBanned)
+			throw new Error("Playlist management is unavailable");
+		await handleRenamePlaylist(id, name);
+		const updated = await getPlaylistDetail(user.id, id);
+		if (updated?.playlist.name !== name)
+			throw new Error("Playlist was not renamed");
+	};
 
 	useEffect(() => {
 		if (getStoreSnapshot().loaded) return;
@@ -391,6 +241,12 @@ export default function ProfileClient() {
 		);
 	}
 
+	const pinnedPlaylists = playlists.filter((pl) => pinnedIds.has(pl.id));
+	const orderedPlaylists = [
+		...pinnedPlaylists,
+		...playlists.filter((pl) => !pinnedIds.has(pl.id)),
+	];
+
 	return (
 		<div className={`${styles.page} ${styles.profilePage}`}>
 			<div className={styles.layout}>
@@ -410,6 +266,9 @@ export default function ProfileClient() {
 									{(username ?? "?")[0].toUpperCase()}
 								</div>
 							)}
+						</div>
+						<h1 className={styles.username}>
+							{displayName || username}
 							{(starLoading || githubStarred !== null) && (
 								<span className={styles.starBadge} aria-hidden="true">
 									{starLoading ? (
@@ -471,8 +330,7 @@ export default function ProfileClient() {
 									)}
 								</span>
 							)}
-						</div>
-						<h1 className={styles.username}>{displayName || username}</h1>
+						</h1>
 						{user.created_at && (
 							<p
 								className={styles.joinDate}
@@ -481,6 +339,47 @@ export default function ProfileClient() {
 								{formatJoinDate(user.created_at, exactDate)}
 							</p>
 						)}
+						<ProfileStatus text={status.status} editor={status} />
+						<div className={styles.headerStats}>
+							<div>
+								<svg
+									aria-hidden="true"
+									width="17"
+									height="15"
+									viewBox="0 0 24 24"
+									fill="currentColor"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								>
+									<path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" />
+								</svg>
+								<strong>{likedIds.length}</strong>
+								<span>Liked tracks</span>
+							</div>
+							<div>
+								<svg
+									aria-hidden="true"
+									width="17"
+									height="15"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								>
+									<path d="M16 5H3" />
+									<path d="M11 12H3" />
+									<path d="M11 19H3" />
+									<path d="M21 16V5" />
+									<circle cx="18" cy="16" r="3" />
+								</svg>
+								<strong>{playlists.length}</strong>
+								<span>Playlists</span>
+							</div>
+						</div>
 					</div>
 
 					<div className={styles.statsCard}>
@@ -503,7 +402,7 @@ export default function ProfileClient() {
 								<circle cx="12" cy="7" r="4" />
 							</svg>
 							<span className={`${styles.statLabel} ${styles.statLabelGrow}`}>
-								Public profile
+								Bio
 							</span>
 						</button>
 						<button
@@ -551,43 +450,132 @@ export default function ProfileClient() {
 					</div>
 				</aside>
 
+				<div className={`${styles.pinnedSection} ${styles.profileRightColumn}`}>
+					<Card
+						as="section"
+						variant="modal"
+						heading="Pinned Playlists"
+						headerActions={
+							<button
+								className={styles.managePlaylistsBtn}
+								onClick={() => setTab("playlists")}
+							>
+								Manage
+								<svg
+									width="11"
+									height="11"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2.5"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									className={styles.chevronInline}
+								>
+									<path d="M9 18l6-6-6-6" />
+								</svg>
+							</button>
+						}
+					>
+						{pinnedPlaylists.length === 0 ? (
+							<div className={styles.empty}>No pinned playlists</div>
+						) : (
+							<div className={styles.playlistList}>
+								{pinnedPlaylists.map((pl) => (
+									<PlaylistSection
+										key={pl.id}
+										playlist={pl}
+										userId={user.id}
+										isPinned={true}
+										readOnly
+										onDelete={deleteManagedPlaylist}
+										onRename={renameManagedPlaylist}
+										onTogglePin={handleTogglePin}
+									/>
+								))}
+							</div>
+						)}
+					</Card>
+					<Button
+						variant="secondary"
+						size="lg"
+						fullWidth
+						aria-pressed={tab === "settings"}
+						onClick={() => setTab("settings")}
+					>
+						Profile settings
+					</Button>
+				</div>
 				<div className={styles.content}>
+					{tab === "playlist" && playlistId && (
+						<PlaylistTracks
+							key={playlistId}
+							userId={user.id}
+							playlistId={playlistId}
+							management={
+								!isBanned
+									? {
+											isPinned: pinnedIds.has(playlistId),
+											onRename: renameManagedPlaylist,
+											onDelete: async (id) => {
+												await deleteManagedPlaylist(id);
+												navigateProfile(
+													`/profile/${encodeURIComponent(user.id)}?tab=playlists`,
+												);
+											},
+											onTogglePin: handleTogglePin,
+										}
+									: undefined
+							}
+						/>
+					)}
+					{tab === "settings" && (
+						<ProfileSettings
+							key={user.id}
+							userId={user.id}
+							disabled={isBanned}
+						/>
+					)}
 					{tab === "bio" &&
 						(() => {
-							const pinnedPlaylists = playlists.filter((pl) =>
-								pinnedIds.has(pl.id),
-							);
 							return (
 								<>
-									<section className={styles.section}>
-										<div className={styles.sectionHeader}>
-											<h2 className={styles.sectionTitle}>Bio</h2>
-											{!editingBio && !isBanned && (
-												<button
-													className={styles.newPlaylistBtn}
-													onClick={() => {
-														setBioInput(bio);
-														setEditingBio(true);
-													}}
-												>
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														width="12"
-														height="12"
-														viewBox="0 0 24 24"
-														fill="none"
-														stroke="currentColor"
-														strokeWidth="2"
-														strokeLinecap="round"
-														strokeLinejoin="round"
+									<Card
+										as="section"
+										variant="modal"
+										heading="Bio"
+										className={styles.profileContentCard}
+										headerActions={
+											<>
+												{" "}
+												{!editingBio && !isBanned && (
+													<button
+														className={styles.newPlaylistBtn}
+														onClick={() => {
+															setBioInput(bio);
+															setEditingBio(true);
+														}}
 													>
-														<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
-														<path d="m15 5 4 4" />
-													</svg>
-													{bio ? "Edit bio" : "Add bio"}
-												</button>
-											)}
-										</div>
+														<svg
+															xmlns="http://www.w3.org/2000/svg"
+															width="12"
+															height="12"
+															viewBox="0 0 24 24"
+															fill="none"
+															stroke="currentColor"
+															strokeWidth="2"
+															strokeLinecap="round"
+															strokeLinejoin="round"
+														>
+															<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
+															<path d="m15 5 4 4" />
+														</svg>
+														{bio ? "Edit bio" : "Add bio"}
+													</button>
+												)}
+											</>
+										}
+									>
 										{editingBio ? (
 											<div className={styles.bioEditArea}>
 												<textarea
@@ -638,71 +626,23 @@ export default function ProfileClient() {
 												something
 											</div>
 										)}
-
-										<div className={styles.separator}></div>
-									</section>
-
-									<section
-										className={`${styles.section} ${styles.sectionSpaced}`}
-									>
-										<div className={styles.sectionHeader}>
-											<h2 className={styles.sectionTitle}>Pinned Playlists</h2>
-											<button
-												className={styles.newPlaylistBtn}
-												onClick={() => setTab("playlists")}
-											>
-												Manage
-												<svg
-													width="11"
-													height="11"
-													viewBox="0 0 24 24"
-													fill="none"
-													stroke="currentColor"
-													strokeWidth="2.5"
-													strokeLinecap="round"
-													strokeLinejoin="round"
-													className={styles.chevronInline}
-												>
-													<path d="M9 18l6-6-6-6" />
-												</svg>
-											</button>
-										</div>
-										{pinnedPlaylists.length === 0 ? (
-											<div className={styles.empty}>
-												No pinned playlists - go to <strong>Playlists</strong>{" "}
-												and pin some with the 📌 button
-											</div>
-										) : (
-											<div className={styles.playlistList}>
-												{pinnedPlaylists.map((pl) => (
-													<PlaylistSection
-														key={pl.id}
-														playlist={pl}
-														likedMeta={likedMeta}
-														isPinned={true}
-														readOnly
-														onDelete={handleDeletePlaylist}
-														onRename={handleRenamePlaylist}
-														onTogglePin={handleTogglePin}
-														onContentsLoaded={handleContentsLoaded}
-														onTrackRemoved={handleTrackRemoved}
-													/>
-												))}
-											</div>
-										)}
-									</section>
+									</Card>
 								</>
 							);
 						})()}
 
 					{tab === "liked" && (
-						<section>
-							<div className={styles.sectionHeader}>
-								<h2 className={styles.sectionTitle}>Liked Tracks</h2>
-								{likedIds.length > 0 && (
+						<Card
+							as="section"
+							variant="modal"
+							heading="Liked Tracks"
+							className={styles.profileContentCard}
+							headerActions={
+								likedIds.length > 0 && (
 									<span className={styles.sectionCount}>{likedIds.length}</span>
-								)}
-							</div>
+								)
+							}
+						>
 							{likedIds.length === 0 ? (
 								<div className={styles.empty}>No liked tracks yet</div>
 							) : (
@@ -726,47 +666,52 @@ export default function ProfileClient() {
 									})}
 								</div>
 							)}
-						</section>
+						</Card>
 					)}
 
 					{tab === "playlists" && (
-						<section className={styles.section}>
-							<div className={styles.sectionHeader}>
-								<h2 className={styles.sectionTitle}>Playlists</h2>
-								{playlists.length > 0 && (
-									<span className={styles.sectionCount}>
-										{playlists.length}
-									</span>
-								)}
-								<button
-									className={styles.newPlaylistBtn}
-									onClick={() => !isBanned && setCreating(true)}
-									disabled={isBanned}
-									title={isBanned ? "Your account is banned" : undefined}
-									style={
-										isBanned
-											? { opacity: 0.4, cursor: "not-allowed" }
-											: undefined
-									}
-								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="17"
-										height="17"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										strokeWidth="2"
-										strokeLinecap="round"
-										strokeLinejoin="round"
+						<Card
+							as="section"
+							variant="modal"
+							heading="Playlists"
+							className={styles.profileContentCard}
+							headerActions={
+								<>
+									{playlists.length > 0 && (
+										<span className={styles.sectionCount}>
+											{playlists.length}
+										</span>
+									)}
+									<button
+										className={styles.newPlaylistBtn}
+										onClick={() => !isBanned && setCreating(true)}
+										disabled={isBanned}
+										title={isBanned ? "Your account is banned" : undefined}
+										style={
+											isBanned
+												? { opacity: 0.4, cursor: "not-allowed" }
+												: undefined
+										}
 									>
-										<path d="M5 12h14" />
-										<path d="M12 5v14" />
-									</svg>
-									New Playlist
-								</button>
-							</div>
-
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="17"
+											height="17"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											strokeWidth="2"
+											strokeLinecap="round"
+											strokeLinejoin="round"
+										>
+											<path d="M5 12h14" />
+											<path d="M12 5v14" />
+										</svg>
+										New Playlist
+									</button>
+								</>
+							}
+						>
 							{creating && (
 								<div className={styles.createRow}>
 									<input
@@ -815,23 +760,22 @@ export default function ProfileClient() {
 							) : playlists.length === 0 && !creating ? (
 								<div className={styles.empty}>No playlists yet</div>
 							) : (
-								<div className={styles.playlistList}>
-									{playlists.map((pl) => (
+								<div className={styles.playlistGrid}>
+									{orderedPlaylists.map((pl) => (
 										<PlaylistSection
 											key={pl.id}
 											playlist={pl}
-											likedMeta={likedMeta}
+											userId={user.id}
 											isPinned={pinnedIds.has(pl.id)}
-											onDelete={handleDeletePlaylist}
-											onRename={handleRenamePlaylist}
+											readOnly={isBanned}
+											onDelete={deleteManagedPlaylist}
+											onRename={renameManagedPlaylist}
 											onTogglePin={handleTogglePin}
-											onContentsLoaded={handleContentsLoaded}
-											onTrackRemoved={handleTrackRemoved}
 										/>
 									))}
 								</div>
 							)}
-						</section>
+						</Card>
 					)}
 				</div>
 			</div>
