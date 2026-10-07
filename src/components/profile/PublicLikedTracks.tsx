@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { Heart } from "lucide-react";
 import {
 	getPublicLikedTracks,
 	type PublicLikedTrack,
@@ -50,7 +51,12 @@ export default function PublicLikedTracks({ userId }: { userId: string }) {
 		<Card
 			as="section"
 			variant="modal"
-			heading="Liked Tracks"
+			heading={
+				<span className={styles.privacyLabel}>
+					<Heart size={18} aria-hidden="true" />
+					<span>Liked Tracks</span>
+				</span>
+			}
 			className={styles.profileContentCard}
 			aria-busy={loading}
 			headerActions={

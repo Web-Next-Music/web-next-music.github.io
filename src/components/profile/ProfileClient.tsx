@@ -1,30 +1,33 @@
 "use client";
 
 import Image from "next/image";
+import LogoIcon from "@/components/common/LogoIcon";
+import { Settings, UserRound, Heart, ListMusic } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { navigateProfile } from "@/lib/profile/navigation";
 
 import styles from "./profile.module.scss";
 import ProfileStatus from "./ProfileStatus";
 import ProfileSettings from "./ProfileSettings";
+import { PublicProfileConnections } from "./ProfileConnections";
 import PlaylistCard from "./PlaylistCard";
 import PlaylistTracks from "./PlaylistTracks";
 import PlaylistActions, {
 	type PlaylistManagementProps,
 } from "./PlaylistActions";
 import Card from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
 
 import { useState, useEffect, useRef } from "react";
 import { config } from "@/lib/config";
 import { useAuth } from "@/lib/auth";
+import { getPreferredAvatarUrl } from "@/lib/auth/accountLinks";
 import { useLikes } from "@/lib/supabase/likesContext";
 import {
 	ensureTracksLoaded,
 	subscribeStore,
 	getStoreSnapshot,
 } from "@/lib/track/trackStore";
-import { syncGitHubMeta, syncGithubStar } from "@/lib/supabase/publicProfile";
+import { syncGithubStar } from "@/lib/supabase/publicProfile";
 import { getPlaylistDetail, type Playlist } from "@/lib/supabase/playlists";
 import TrackRow from "@/components/common/TrackRow";
 
@@ -147,17 +150,6 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 		return true;
 	});
 
-	useEffect(() => {
-		if (!user) return;
-		const githubId = (user.user_metadata?.provider_id ??
-			user.user_metadata?.sub) as string | undefined;
-		const login = user.user_metadata?.user_name as string | undefined;
-		const name = user.user_metadata?.full_name as string | undefined;
-		const avatar = user.user_metadata?.avatar_url as string | undefined;
-		if (githubId && login)
-			syncGitHubMeta(user.id, githubId, login, name ?? null, avatar ?? null);
-	}, [user]);
-
 	const userId = user?.id;
 
 	useEffect(() => {
@@ -196,11 +188,17 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 		);
 	}
 
-	const avatarUrl = user.user_metadata?.avatar_url as string | undefined;
-	const username = user.user_metadata?.user_name as string | undefined;
-	const displayName = user.user_metadata?.full_name as string | undefined;
-	const githubId = (user.user_metadata?.provider_id ??
-		user.user_metadata?.sub) as string | undefined;
+	const avatarUrl = getPreferredAvatarUrl(user);
+	const username = (user.user_metadata?.user_name ??
+		user.user_metadata?.preferred_username) as string | undefined;
+	const displayName = (user.user_metadata?.full_name ??
+		user.user_metadata?.name ??
+		"Music listener") as string;
+	const githubIdentity = user.identities?.find(
+		(identity) => identity.provider === "github",
+	);
+	const githubId = (githubIdentity?.identity_data?.provider_id ??
+		githubIdentity?.identity_data?.sub) as string | undefined;
 
 	if (isBanned) {
 		return (
@@ -267,58 +265,40 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 								</div>
 							)}
 						</div>
-						<h1 className={styles.username}>
-							{displayName || username}
-							{(starLoading || githubStarred !== null) && (
-								<span className={styles.starBadge} aria-hidden="true">
-									{starLoading ? (
-										<svg
-											width="17"
-											height="15"
-											viewBox="0 0 24 24"
-											fill="none"
-											className={styles.starSpinner}
-										>
-											<circle
-												cx="12"
-												cy="12"
-												r="9"
-												stroke="currentColor"
-												strokeWidth="2.5"
-												strokeOpacity="0.25"
-											/>
-											<path
-												d="M21 12a9 9 0 0 0-9-9"
-												stroke="currentColor"
-												strokeWidth="2.5"
-												strokeLinecap="round"
-											/>
-										</svg>
-									) : githubStarred ? (
-										<svg
-											width="17"
-											height="17"
-											viewBox="0 0 24 24"
-											fill="currentColor"
-											stroke="currentColor"
-											strokeWidth="1.5"
-											strokeLinecap="round"
-											strokeLinejoin="round"
-										>
-											<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-										</svg>
-									) : (
-										<a
-											href={config.github.client.url}
-											target="_blank"
-											rel="noopener noreferrer"
-											title="Star Web-Next-Music/Next-Music-Client on GitHub"
-										>
+						<div className={styles.nameRow}>
+							<h1 className={styles.username}>
+								{displayName || username}
+								{(starLoading || githubStarred !== null) && (
+									<span className={styles.starBadge} aria-hidden="true">
+										{starLoading ? (
+											<svg
+												width="17"
+												height="15"
+												viewBox="0 0 24 24"
+												fill="none"
+												className={styles.starSpinner}
+											>
+												<circle
+													cx="12"
+													cy="12"
+													r="9"
+													stroke="currentColor"
+													strokeWidth="2.5"
+													strokeOpacity="0.25"
+												/>
+												<path
+													d="M21 12a9 9 0 0 0-9-9"
+													stroke="currentColor"
+													strokeWidth="2.5"
+													strokeLinecap="round"
+												/>
+											</svg>
+										) : githubStarred ? (
 											<svg
 												width="17"
 												height="17"
 												viewBox="0 0 24 24"
-												fill="none"
+												fill="currentColor"
 												stroke="currentColor"
 												strokeWidth="1.5"
 												strokeLinecap="round"
@@ -326,19 +306,47 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 											>
 												<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
 											</svg>
-										</a>
-									)}
-								</span>
+										) : (
+											<a
+												href={config.github.client.url}
+												target="_blank"
+												rel="noopener noreferrer"
+												title="Star Web-Next-Music/Next-Music-Client on GitHub"
+											>
+												<svg
+													width="17"
+													height="17"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													strokeWidth="1.5"
+													strokeLinecap="round"
+													strokeLinejoin="round"
+												>
+													<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+												</svg>
+											</a>
+										)}
+									</span>
+								)}
+							</h1>
+							{user.created_at && (
+								<>
+									<span className={styles.nameSeparator} aria-hidden="true">
+										·
+									</span>
+									<button
+										type="button"
+										className={styles.joinDate}
+										onClick={() => setExactDate((v) => !v)}
+									>
+										<LogoIcon size={14} aria-hidden="true" />
+										{formatJoinDate(user.created_at, exactDate)}
+									</button>
+								</>
 							)}
-						</h1>
-						{user.created_at && (
-							<p
-								className={styles.joinDate}
-								onClick={() => setExactDate((v) => !v)}
-							>
-								{formatJoinDate(user.created_at, exactDate)}
-							</p>
-						)}
+						</div>
+
 						<ProfileStatus text={status.status} editor={status} />
 						<div className={styles.headerStats}>
 							<div>
@@ -496,15 +504,18 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 							</div>
 						)}
 					</Card>
-					<Button
-						variant="secondary"
-						size="lg"
-						fullWidth
-						aria-pressed={tab === "settings"}
-						onClick={() => setTab("settings")}
-					>
-						Profile settings
-					</Button>
+					<PublicProfileConnections userId={user.id} user={user} />
+					<div className={styles.statsCard}>
+						<button
+							type="button"
+							className={`${styles.statItem} ${styles.statTab} ${tab === "settings" ? styles.statItemActive : ""}`}
+							aria-pressed={tab === "settings"}
+							onClick={() => setTab("settings")}
+						>
+							<Settings size={16} aria-hidden="true" />
+							<span className={styles.settingsLabel}>Profile settings</span>
+						</button>
+					</div>
 				</div>
 				<div className={styles.content}>
 					{tab === "playlist" && playlistId && (
@@ -543,7 +554,12 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 									<Card
 										as="section"
 										variant="modal"
-										heading="Bio"
+										heading={
+											<span className={styles.privacyLabel}>
+												<UserRound size={18} aria-hidden="true" />
+												<span>Bio</span>
+											</span>
+										}
 										className={styles.profileContentCard}
 										headerActions={
 											<>
@@ -635,7 +651,12 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 						<Card
 							as="section"
 							variant="modal"
-							heading="Liked Tracks"
+							heading={
+								<span className={styles.privacyLabel}>
+									<Heart size={18} aria-hidden="true" />
+									<span>Liked Tracks</span>
+								</span>
+							}
 							className={styles.profileContentCard}
 							headerActions={
 								likedIds.length > 0 && (
@@ -673,7 +694,12 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 						<Card
 							as="section"
 							variant="modal"
-							heading="Playlists"
+							heading={
+								<span className={styles.privacyLabel}>
+									<ListMusic size={18} aria-hidden="true" />
+									<span>Playlists</span>
+								</span>
+							}
 							className={styles.profileContentCard}
 							headerActions={
 								<>

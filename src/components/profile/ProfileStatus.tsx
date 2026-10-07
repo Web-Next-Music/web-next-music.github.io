@@ -18,6 +18,34 @@ export default function ProfileStatus({
 	const [overflow, setOverflow] = useState(false);
 	const [open, setOpen] = useState(false);
 	const countId = useId();
+	const [quote, setQuote] = useState("Where words fail, music speaks.");
+	const showQuote = !editor && !text.trim();
+	const displayText = showQuote ? quote : text;
+
+	useEffect(() => {
+		if (!showQuote) return;
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 5000);
+		void fetch("https://dummyjson.com/quotes/random", {
+			signal: controller.signal,
+			credentials: "omit",
+			referrerPolicy: "no-referrer",
+		})
+			.then(async (response) => {
+				if (!response.ok) return;
+				const data: unknown = await response.json();
+				if (!data || typeof data !== "object" || !("quote" in data)) return;
+				if (typeof data.quote !== "string" || !data.quote.trim()) return;
+				if (!controller.signal.aborted)
+					setQuote(data.quote.trim().slice(0, 1000));
+			})
+			.catch(() => {})
+			.finally(() => clearTimeout(timeout));
+		return () => {
+			controller.abort();
+			clearTimeout(timeout);
+		};
+	}, [showQuote]);
 
 	useEffect(() => {
 		const element = textRef.current;
@@ -35,7 +63,7 @@ export default function ProfileStatus({
 			active = false;
 			observer.disconnect();
 		};
-	}, [text, editor?.editing, editor?.loading]);
+	}, [displayText, editor?.editing, editor?.loading]);
 
 	const close = () => {
 		if (editor?.editing) void editor.save();
@@ -96,7 +124,8 @@ export default function ProfileStatus({
 				<button
 					type="button"
 					className={styles.statusField}
-					data-empty={!text}
+					data-empty={!text.trim()}
+					title={showQuote ? "Random quote, not a user status" : undefined}
 					disabled={!editor && !overflow}
 					aria-label={
 						editor?.error
@@ -105,7 +134,9 @@ export default function ProfileStatus({
 								? "Read full status"
 								: editor
 									? "Edit status"
-									: "Profile status"
+									: showQuote
+										? "Random quote"
+										: "Profile status"
 					}
 					aria-haspopup={overflow ? "dialog" : undefined}
 					onClick={() => {
@@ -119,7 +150,7 @@ export default function ProfileStatus({
 						className={styles.statusText}
 						data-overflow={overflow}
 					>
-						{editor?.error ? "Retry" : text || "Add status…"}
+						{editor?.error ? "Retry" : displayText || "Add status…"}
 					</span>
 				</button>
 			)}
@@ -128,8 +159,17 @@ export default function ProfileStatus({
 					{editor.error}
 				</p>
 			)}
-			<Modal open={open} onClose={close} title="Profile status" size="sm">
-				{editor ? statusInput : <p className={styles.statusFullText}>{text}</p>}
+			<Modal
+				open={open}
+				onClose={close}
+				title={showQuote ? "Random quote" : "Profile status"}
+				size="sm"
+			>
+				{editor ? (
+					statusInput
+				) : (
+					<p className={styles.statusFullText}>{displayText}</p>
+				)}
 				{editor?.error && (
 					<p className={styles.statusError} role="alert">
 						{editor.error}

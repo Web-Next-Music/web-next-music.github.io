@@ -62,6 +62,8 @@ export function LikesProvider({ children }: { children: ReactNode }) {
 		sb.from("track_likes")
 			.select("track_id, title, artist, cover, mp3_url")
 			.eq("user_id", userId)
+			.order("created_at", { ascending: false })
+			.order("id", { ascending: false })
 			.abortSignal(controller.signal)
 			.then(({ data, error }) => {
 				if (error) {
@@ -110,9 +112,9 @@ export function LikesProvider({ children }: { children: ReactNode }) {
 
 			// Immediate optimistic update
 			setLikedTrackIds((prev) => {
+				if (willBeLiked) return new Set([trackId, ...prev]);
 				const next = new Set(prev);
-				if (willBeLiked) next.add(trackId);
-				else next.delete(trackId);
+				next.delete(trackId);
 				return next;
 			});
 			if (willBeLiked && meta) {

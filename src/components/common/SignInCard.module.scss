@@ -130,6 +130,22 @@
 	margin: auto;
 }
 
+.multiProvider {
+	height: auto;
+	min-height: 17.5rem;
+	padding-top: 5rem;
+
+	.copy {
+		width: 100%;
+		max-width: 100%;
+	}
+
+	.githubBtnLayout {
+		width: 100%;
+		justify-content: center;
+	}
+}
+
 .closeBtnLayout {
 	position: absolute;
 	top: 0.875rem;
@@ -185,9 +201,20 @@
 
 .githubBtnLayout:disabled {
 	cursor: not-allowed;
+	opacity: 0.65;
+}
+
+.githubBtnLayout:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+.githubBtnLayout svg {
+	flex-shrink: 0;
 }
 
 .errorLayout {
+	overflow-wrap: anywhere;
 	font-size: 13px;
 	color: var(--danger);
 	background: var(--danger-hover);

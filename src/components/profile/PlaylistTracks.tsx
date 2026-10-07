@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { ListMusic } from "lucide-react";
 import { useLikes } from "@/lib/supabase/likesContext";
 import { useAuth } from "@/lib/auth";
 import {
@@ -95,7 +96,12 @@ export default function PlaylistTracks({
 		<Card
 			as="section"
 			variant="modal"
-			heading={detail?.playlist.name ?? "Playlist"}
+			heading={
+				<span className={styles.privacyLabel}>
+					<ListMusic size={18} aria-hidden="true" />
+					<span>{detail?.playlist.name ?? "Playlist"}</span>
+				</span>
+			}
 			className={styles.profileContentCard}
 			aria-busy={loading || authLoading || removing}
 			headerActions={

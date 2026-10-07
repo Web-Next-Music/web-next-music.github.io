@@ -12,7 +12,9 @@ export function getSupabase(): SupabaseClient | null {
 				storage: cookieStorage,
 				persistSession: true,
 				autoRefreshToken: true,
-				detectSessionInUrl: true,
+				detectSessionInUrl:
+					typeof window !== "undefined" &&
+					!/^\/auth-link\/?$/.test(window.location.pathname),
 			},
 		});
 	return _client;

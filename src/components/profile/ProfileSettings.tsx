@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Heart, ListMusic, Link, Shield } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Switch from "@/components/ui/Switch";
+import AccountConnections from "./AccountConnections";
 import {
 	getProfileLikesVisibility,
 	saveProfileLikesVisibility,
+	getProfileAccountLinksVisibility,
+	saveProfileAccountLinksVisibility,
+	getProfilePlaylistsVisibility,
+	saveProfilePlaylistsVisibility,
 } from "@/lib/supabase/publicProfile";
 import styles from "./profile.module.scss";
 
@@ -17,7 +23,9 @@ export default function ProfileSettings({
 	userId: string;
 	disabled: boolean;
 }) {
-	const [enabled, setEnabled] = useState(false);
+	const [enabled, setEnabled] = useState(true);
+	const [playlistsEnabled, setPlaylistsEnabled] = useState(true);
+	const [accountsEnabled, setAccountsEnabled] = useState(true);
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -27,9 +35,17 @@ export default function ProfileSettings({
 		let active = true;
 		setLoading(true);
 		setError(null);
-		getProfileLikesVisibility(userId)
-			.then((value) => {
-				if (active) setEnabled(value);
+		Promise.all([
+			getProfileLikesVisibility(userId),
+			getProfilePlaylistsVisibility(userId),
+			getProfileAccountLinksVisibility(userId),
+		])
+			.then(([likes, playlists, accounts]) => {
+				if (active) {
+					setEnabled(likes);
+					setPlaylistsEnabled(playlists);
+					setAccountsEnabled(accounts);
+				}
 			})
 			.catch(() => {
 				if (active) setError("Could not load profile settings.");
@@ -42,13 +58,24 @@ export default function ProfileSettings({
 		};
 	}, [userId, reload]);
 
-	const save = async (value: boolean) => {
+	const save = async (
+		value: boolean,
+		setting: "likes" | "playlists" | "accounts",
+	) => {
 		if (disabled || loading || saving) return;
 		setSaving(true);
 		setError(null);
 		try {
-			await saveProfileLikesVisibility(userId, value);
-			setEnabled(value);
+			if (setting === "likes") {
+				await saveProfileLikesVisibility(userId, value);
+				setEnabled(value);
+			} else if (setting === "playlists") {
+				await saveProfilePlaylistsVisibility(userId, value);
+				setPlaylistsEnabled(value);
+			} else {
+				await saveProfileAccountLinksVisibility(userId, value);
+				setAccountsEnabled(value);
+			}
 		} catch {
 			setError("Could not save profile settings. Please try again.");
 		} finally {
@@ -57,37 +84,86 @@ export default function ProfileSettings({
 	};
 
 	return (
-		<Card
-			as="section"
-			variant="modal"
-			heading="Profile settings"
-			className={styles.profileContentCard}
-			aria-busy={loading || saving}
-		>
-			{loading ? (
-				<div className={styles.loadingSmall}>Loading…</div>
-			) : (
-				<Switch
-					className={styles.profileSettingsRow}
-					checked={enabled}
-					onCheckedChange={(value) => void save(value)}
-					disabled={
-						disabled || saving || error === "Could not load profile settings."
-					}
-					label="Show liked tracks on public profile"
-				/>
-			)}
-			{error && (
-				<div role="alert">
-					<p className={styles.statusError}>{error}</p>
-					<Button
-						variant="secondary"
-						onClick={() => setReload((value) => value + 1)}
-					>
-						Retry
-					</Button>
-				</div>
-			)}
-		</Card>
+		<div className={styles.profileSettingsStack}>
+			<Card
+				as="section"
+				variant="modal"
+				heading={
+					<span className={styles.privacyLabel}>
+						<Shield size={18} aria-hidden="true" />
+						<span>Privacy</span>
+					</span>
+				}
+				className={styles.profileContentCard}
+				aria-busy={loading || saving}
+			>
+				{loading ? (
+					<div className={styles.loadingSmall}>Loading…</div>
+				) : (
+					<>
+						<Switch
+							className={styles.profileSettingsRow}
+							checked={enabled}
+							onCheckedChange={(value) => void save(value, "likes")}
+							disabled={
+								disabled ||
+								saving ||
+								error === "Could not load profile settings."
+							}
+							label={
+								<span className={styles.privacyLabel}>
+									<Heart size={18} aria-hidden="true" />
+									<span>Show liked tracks on public profile</span>
+								</span>
+							}
+						/>
+						<Switch
+							className={styles.profileSettingsRow}
+							checked={playlistsEnabled}
+							onCheckedChange={(value) => void save(value, "playlists")}
+							disabled={
+								disabled ||
+								saving ||
+								error === "Could not load profile settings."
+							}
+							label={
+								<span className={styles.privacyLabel}>
+									<ListMusic size={18} aria-hidden="true" />
+									<span>Show playlists on public profile</span>
+								</span>
+							}
+						/>
+						<Switch
+							className={styles.profileSettingsRow}
+							checked={accountsEnabled}
+							onCheckedChange={(value) => void save(value, "accounts")}
+							disabled={
+								disabled ||
+								saving ||
+								error === "Could not load profile settings."
+							}
+							label={
+								<span className={styles.privacyLabel}>
+									<Link size={18} aria-hidden="true" />
+									<span>Show connected accounts on public profile</span>
+								</span>
+							}
+						/>
+					</>
+				)}
+				{error && (
+					<div role="alert">
+						<p className={styles.statusError}>{error}</p>
+						<Button
+							variant="secondary"
+							onClick={() => setReload((value) => value + 1)}
+						>
+							Retry
+						</Button>
+					</div>
+				)}
+			</Card>
+			<AccountConnections disabled={disabled} />
+		</div>
 	);
 }

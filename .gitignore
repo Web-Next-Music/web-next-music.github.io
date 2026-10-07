@@ -42,7 +42,4 @@ next-env.d.ts
 
 src/data
 
-!/supabase/
-/supabase/*
-!/supabase/migrations/
-!/supabase/migrations/*.sql
+supabase/

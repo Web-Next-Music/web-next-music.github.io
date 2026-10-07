@@ -52,7 +52,7 @@ export default function ProfilePageClient({
 		(profileMatch
 			? decodeURIComponent(profileMatch[1])
 			: pathname === "/profile"
-				? (searchParams.get("id") ?? idOverride ?? "")
+				? (searchParams.get("id") ?? idOverride ?? user?.id ?? "")
 				: (idOverride ?? ""))
 	).toLowerCase();
 	const playlistId = playlistMatch
@@ -67,9 +67,17 @@ export default function ProfilePageClient({
 		window.history.replaceState(
 			null,
 			"",
-			`/profile/${encodeURIComponent(id)}${query ? `?${query}` : ""}`,
+			`/profile/${encodeURIComponent(id)}${query ? `?${query}` : ""}${window.location.hash}`,
 		);
 	}, [id, pathname, searchParams]);
+
+	if (!id && pathname === "/profile" && (loading || banChecking)) {
+		return (
+			<ProfileShell>
+				<LoadingDots />
+			</ProfileShell>
+		);
+	}
 
 	if (!id) return <NotFoundView />;
 

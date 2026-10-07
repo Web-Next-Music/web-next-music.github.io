@@ -6,6 +6,7 @@ import { useCallback, useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import { getPreferredAvatarUrl } from "@/lib/auth/accountLinks";
 import { syncGithubStar } from "@/lib/supabase/publicProfile";
 import { checkDDetectorAccess } from "@/lib/track/ddetector";
 import { cx } from "@/lib/cx";
@@ -68,7 +69,7 @@ export default function AuthButton() {
 
 	const avatarUrl = isBanned
 		? "/avatars/avatar-fallback.png"
-		: (user.user_metadata?.avatar_url as string | undefined);
+		: getPreferredAvatarUrl(user);
 	const initial = (user.user_metadata?.user_name ??
 		user.email ??
 		"?")[0].toUpperCase();

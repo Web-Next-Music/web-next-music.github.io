@@ -1,7 +1,15 @@
+import type { User } from "@supabase/supabase-js";
 import { getSupabase } from ".";
 import { config } from "../config";
 import type { Playlist } from "./playlists";
 import type { TrackLikeMeta } from "./likesContext";
+
+export async function syncAuthProfile(user: User): Promise<void> {
+	const sb = getSupabase();
+	if (!sb || !user.id) return;
+	const { error } = await sb.rpc("sync_own_auth_profile");
+	if (error) throw error;
+}
 
 export async function getProfileLikesVisibility(
 	userId: string,
@@ -14,7 +22,7 @@ export async function getProfileLikesVisibility(
 		.eq("user_id", userId)
 		.maybeSingle();
 	if (error) throw error;
-	return data?.public_liked_tracks === true;
+	return data?.public_liked_tracks !== false;
 }
 
 export async function saveProfileLikesVisibility(
@@ -30,6 +38,71 @@ export async function saveProfileLikesVisibility(
 			{ onConflict: "user_id" },
 		);
 	if (error) throw error;
+}
+
+export async function getProfilePlaylistsVisibility(
+	userId: string,
+): Promise<boolean> {
+	const sb = getSupabase();
+	if (!sb) throw new Error("Profile service is unavailable");
+	const { data, error } = await sb
+		.from("profile_visibility_settings")
+		.select("public_playlists")
+		.eq("user_id", userId)
+		.maybeSingle();
+	if (error) throw error;
+	return data?.public_playlists !== false;
+}
+
+export async function saveProfilePlaylistsVisibility(
+	userId: string,
+	enabled: boolean,
+): Promise<void> {
+	const sb = getSupabase();
+	if (!sb) throw new Error("Profile service is unavailable");
+	const { error } = await sb
+		.from("profile_visibility_settings")
+		.upsert(
+			{ user_id: userId, public_playlists: enabled },
+			{ onConflict: "user_id" },
+		);
+	if (error) throw error;
+}
+
+export const ACCOUNT_LINKS_VISIBILITY_EVENT = "account-links-visibility-change";
+
+export async function getProfileAccountLinksVisibility(
+	userId: string,
+): Promise<boolean> {
+	const sb = getSupabase();
+	if (!sb) throw new Error("Profile service is unavailable");
+	const { data, error } = await sb
+		.from("profile_visibility_settings")
+		.select("show_account_links")
+		.eq("user_id", userId)
+		.maybeSingle();
+	if (error) throw error;
+	return data?.show_account_links !== false;
+}
+
+export async function saveProfileAccountLinksVisibility(
+	userId: string,
+	enabled: boolean,
+): Promise<void> {
+	const sb = getSupabase();
+	if (!sb) throw new Error("Profile service is unavailable");
+	const { error } = await sb
+		.from("profile_visibility_settings")
+		.upsert(
+			{ user_id: userId, show_account_links: enabled },
+			{ onConflict: "user_id" },
+		);
+	if (error) throw error;
+	window.dispatchEvent(
+		new CustomEvent(ACCOUNT_LINKS_VISIBILITY_EVENT, {
+			detail: { userId, enabled },
+		}),
+	);
 }
 
 export interface PublicLikedTrack extends TrackLikeMeta {
