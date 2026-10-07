@@ -27,16 +27,8 @@ export default function SignInCard({
 		: AUTH_SERVICES.filter((service) => service.provider === "github");
 
 	return (
-		<div
-			className={`${styles.cardLayout}${onProviderSignIn ? ` ${styles.multiProvider}` : ""}`}
-			style={{
-				backgroundImage:
-					"linear-gradient(135deg, var(--surface) 0%, transparent 30%, var(--surface) 100%), url(/ui/Kagami.webp)",
-				backgroundPosition: "center",
-				backgroundSize: "cover",
-				backgroundRepeat: "no-repeat",
-			}}
-		>
+		<div className={styles.cardLayout}>
+			<div className={styles.artwork} aria-hidden="true" />
 			{onClose && (
 				<button
 					type="button"
@@ -54,37 +46,43 @@ export default function SignInCard({
 					</svg>
 				</button>
 			)}
-			<span className={styles.title}>Sign in</span>
-			<div className={styles.copy}>
-				{services.map((service) => {
-					const redirecting =
-						busy &&
-						(loadingProvider
-							? loadingProvider === service.provider
-							: service.provider === "github");
-					return (
-						<button
-							key={service.provider}
-							type="button"
-							className={styles.githubBtnLayout}
-							onClick={() =>
-								onProviderSignIn
-									? onProviderSignIn(service.provider)
-									: onSignIn()
-							}
-							disabled={busy}
-							aria-busy={redirecting}
-						>
-							<ServiceIcon provider={service.provider} width={17} height={17} />
-							{redirecting ? "Redirecting…" : `Continue with ${service.name}`}
-						</button>
-					);
-				})}
-				{error && (
-					<span className={styles.errorLayout} role="alert">
-						{error}
-					</span>
-				)}
+			<div className={styles.panel}>
+				<h2 className={styles.title}>Sign in</h2>
+				<div className={styles.copy}>
+					{services.map((service) => {
+						const redirecting =
+							busy &&
+							(loadingProvider
+								? loadingProvider === service.provider
+								: service.provider === "github");
+						return (
+							<button
+								key={service.provider}
+								type="button"
+								className={styles.githubBtnLayout}
+								onClick={() =>
+									onProviderSignIn
+										? onProviderSignIn(service.provider)
+										: onSignIn()
+								}
+								disabled={busy}
+								aria-busy={redirecting}
+							>
+								<ServiceIcon
+									provider={service.provider}
+									width={17}
+									height={17}
+								/>
+								{redirecting ? "Redirecting…" : `Continue with ${service.name}`}
+							</button>
+						);
+					})}
+					{error && (
+						<span className={styles.errorLayout} role="alert">
+							{error}
+						</span>
+					)}
+				</div>
 			</div>
 		</div>
 	);
