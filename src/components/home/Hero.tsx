@@ -306,6 +306,13 @@ export default function Hero() {
 							return (
 								<div
 									key={`${selectedFeature.title}-content-${index}`}
+									onErrorCapture={(event) => {
+										const image = event.target;
+										if (!(image instanceof HTMLImageElement)) return;
+										const message = document.createElement("p");
+										message.textContent = "Image unavailable";
+										image.replaceWith(message);
+									}}
 									dangerouslySetInnerHTML={{ __html: part }}
 								/>
 							);

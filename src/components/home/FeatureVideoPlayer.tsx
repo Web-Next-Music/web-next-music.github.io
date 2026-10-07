@@ -22,6 +22,7 @@ export default function FeatureVideoPlayer({ src }: Props) {
 	const [muted, setMuted] = useState(false);
 	const [currentTime, setCurrentTime] = useState(0);
 	const [duration, setDuration] = useState(0);
+	const [aspectRatio, setAspectRatio] = useState(16 / 9);
 	const [error, setError] = useState(false);
 
 	const togglePlayback = async () => {
@@ -45,7 +46,7 @@ export default function FeatureVideoPlayer({ src }: Props) {
 	};
 
 	return (
-		<div ref={playerRef} className={styles.player}>
+		<div ref={playerRef} className={styles.player} style={{ aspectRatio }}>
 			<video
 				ref={videoRef}
 				className={styles.video}
@@ -57,7 +58,19 @@ export default function FeatureVideoPlayer({ src }: Props) {
 				onPlay={() => setPlaying(true)}
 				onPause={() => setPlaying(false)}
 				onEnded={() => setPlaying(false)}
-				onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
+				onLoadedMetadata={(event) => {
+					const video = event.currentTarget;
+					setDuration(video.duration);
+					if (video.videoWidth && video.videoHeight) {
+						setAspectRatio(video.videoWidth / video.videoHeight);
+					}
+				}}
+				onResize={(event) => {
+					const video = event.currentTarget;
+					if (video.videoWidth && video.videoHeight) {
+						setAspectRatio(video.videoWidth / video.videoHeight);
+					}
+				}}
 				onTimeUpdate={(event) =>
 					setCurrentTime(event.currentTarget.currentTime)
 				}

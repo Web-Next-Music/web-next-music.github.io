@@ -326,19 +326,32 @@
 }
 
 .featureModalContent {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-5);
+
 	:global(p),
 	:global(blockquote) {
 		color: var(--muted);
 		font-size: 14px;
-		font-weight: 600;
-		line-height: 1.65;
+		font-weight: 500;
+		line-height: 1.8;
 	}
 
 	:global(blockquote) {
-		padding: 10px 12px;
-		background: var(--surface);
-		border: 1px solid var(--border);
-		border-radius: 10px;
+		position: relative;
+		padding: var(--space-2) var(--space-4);
+		background: color-mix(in srgb, var(--text) 4%, transparent);
+		border-radius: var(--radius-sm);
+
+		&::before {
+			content: "";
+			position: absolute;
+			inset: var(--space-2) auto var(--space-2) 0;
+			width: 3px;
+			background: var(--border);
+			border-radius: var(--radius-pill);
+		}
 	}
 
 	:global(a) {
@@ -354,16 +367,15 @@
 		height: auto;
 		max-height: min(520px, 65vh);
 		object-fit: contain;
-		margin: 12px auto 0;
-		border-radius: 10px;
-		opacity: 0.88;
+		margin: var(--space-2) auto 0;
+		border-radius: var(--radius-xl);
 		border: 1px solid var(--border);
 	}
 
-	:global(div) {
+	> :global(div) {
 		display: flex;
 		flex-direction: column;
-		gap: 10px;
+		gap: var(--space-4);
 	}
 }
 

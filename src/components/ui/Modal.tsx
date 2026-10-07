@@ -1,7 +1,13 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, useRef, type HTMLAttributes, type ReactNode } from "react";
+import {
+	useEffect,
+	useRef,
+	useState,
+	type HTMLAttributes,
+	type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { cx } from "@/lib/cx";
 import { useIsClient } from "@/lib/useIsClient";
@@ -43,9 +49,31 @@ export default function Modal({
 }: Props) {
 	const mounted = useIsClient();
 	const lastFocused = useRef<HTMLElement | null>(null);
+	const [retained, setRetained] = useState(open);
+	const contentRef = useRef({ title, children, footer });
+	const visible = open || retained;
+	const content = open ? { title, children, footer } : contentRef.current;
 
 	useEffect(() => {
-		if (!open) return;
+		if (open) {
+			contentRef.current = { title, children, footer };
+		}
+	}, [open, title, children, footer]);
+
+	useEffect(() => {
+		if (open) {
+			setRetained(true);
+			return;
+		}
+		const delay = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+			? 0
+			: 160;
+		const timer = window.setTimeout(() => setRetained(false), delay);
+		return () => window.clearTimeout(timer);
+	}, [open]);
+
+	useEffect(() => {
+		if (!visible) return;
 
 		lastFocused.current = document.activeElement as HTMLElement | null;
 		const container = getScrollContainer();
@@ -56,7 +84,7 @@ export default function Modal({
 			if (container) container.style.overflowY = previous ?? "";
 			lastFocused.current?.focus?.();
 		};
-	}, [open]);
+	}, [visible]);
 
 	useEffect(() => {
 		if (!open || !closeOnEscape) return;
@@ -68,12 +96,14 @@ export default function Modal({
 		return () => document.removeEventListener("keydown", onKeyDown);
 	}, [open, closeOnEscape, onClose]);
 
-	if (!mounted || !open) return null;
+	if (!mounted || !visible) return null;
 
 	return createPortal(
 		<div
 			className={styles.overlay}
-			onClick={closeOnOverlay ? onClose : undefined}
+			data-state={open ? "open" : "closing"}
+			inert={!open}
+			onClick={open && closeOnOverlay ? onClose : undefined}
 		>
 			<div
 				role="dialog"
@@ -81,9 +111,11 @@ export default function Modal({
 				className={cx(styles.box, styles[`size-${size}`], className)}
 				onClick={(e) => e.stopPropagation()}
 			>
-				{(title || showClose) && (
+				{(content.title || showClose) && (
 					<div className={styles.head}>
-						{title && <div className={styles.title}>{title}</div>}
+						{content.title && (
+							<div className={styles.title}>{content.title}</div>
+						)}
 						{showClose && (
 							<IconButton
 								label="Close"
@@ -96,8 +128,20 @@ export default function Modal({
 						)}
 					</div>
 				)}
-				<div className={cx(styles.body, bodyClassName)}>{children}</div>
-				{footer && <div className={styles.footer}>{footer}</div>}
+				{content.title || showClose ? (
+					<div className={styles.bodyFrame}>
+						<div className={cx(styles.body, bodyClassName)}>
+							{content.children}
+						</div>
+					</div>
+				) : (
+					<div className={cx(styles.body, bodyClassName)}>
+						{content.children}
+					</div>
+				)}
+				{content.footer && (
+					<div className={styles.footer}>{content.footer}</div>
+				)}
 			</div>
 		</div>,
 		document.body,
