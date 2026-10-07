@@ -100,6 +100,7 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 		bioInput,
 		setBioInput,
 		bioSaving,
+		bioError,
 		handleSaveBio,
 	} = useProfileBio(user?.id);
 
@@ -592,10 +593,16 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 											</>
 										}
 									>
+										{bioError && (
+											<p role="alert" className={styles.statusError}>
+												{bioError}
+											</p>
+										)}
 										{editingBio ? (
 											<div className={styles.bioEditArea}>
 												<textarea
 													className={styles.bioTextarea}
+													maxLength={10000}
 													value={bioInput}
 													onChange={(e) => setBioInput(e.target.value)}
 													placeholder="Write something about yourself… (Markdown supported)"

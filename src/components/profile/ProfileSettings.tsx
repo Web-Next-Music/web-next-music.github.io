@@ -7,11 +7,9 @@ import Button from "@/components/ui/Button";
 import Switch from "@/components/ui/Switch";
 import AccountConnections from "./AccountConnections";
 import {
-	getProfileLikesVisibility,
+	getProfileVisibility,
 	saveProfileLikesVisibility,
-	getProfileAccountLinksVisibility,
 	saveProfileAccountLinksVisibility,
-	getProfilePlaylistsVisibility,
 	saveProfilePlaylistsVisibility,
 } from "@/lib/supabase/publicProfile";
 import styles from "./profile.module.scss";
@@ -35,16 +33,12 @@ export default function ProfileSettings({
 		let active = true;
 		setLoading(true);
 		setError(null);
-		Promise.all([
-			getProfileLikesVisibility(userId),
-			getProfilePlaylistsVisibility(userId),
-			getProfileAccountLinksVisibility(userId),
-		])
-			.then(([likes, playlists, accounts]) => {
+		getProfileVisibility(userId)
+			.then((settings) => {
 				if (active) {
-					setEnabled(likes);
-					setPlaylistsEnabled(playlists);
-					setAccountsEnabled(accounts);
+					setEnabled(settings.public_liked_tracks);
+					setPlaylistsEnabled(settings.public_playlists);
+					setAccountsEnabled(settings.show_account_links);
 				}
 			})
 			.catch(() => {
@@ -113,7 +107,7 @@ export default function ProfileSettings({
 							label={
 								<span className={styles.privacyLabel}>
 									<Heart size={18} aria-hidden="true" />
-									<span>Show liked tracks on public profile</span>
+									<span>Show liked tracks and their count</span>
 								</span>
 							}
 						/>
@@ -129,7 +123,7 @@ export default function ProfileSettings({
 							label={
 								<span className={styles.privacyLabel}>
 									<ListMusic size={18} aria-hidden="true" />
-									<span>Show playlists on public profile</span>
+									<span>Show playlists and their count</span>
 								</span>
 							}
 						/>
@@ -145,7 +139,7 @@ export default function ProfileSettings({
 							label={
 								<span className={styles.privacyLabel}>
 									<Link size={18} aria-hidden="true" />
-									<span>Show connected accounts on public profile</span>
+									<span>Show connected accounts and GitHub identity</span>
 								</span>
 							}
 						/>

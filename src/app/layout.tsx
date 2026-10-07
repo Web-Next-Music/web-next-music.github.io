@@ -31,6 +31,21 @@ export const metadata: Metadata = {
 	},
 };
 
+const securityPolicy = [
+	"default-src 'self'",
+	"base-uri 'self'",
+	"object-src 'none'",
+	"form-action 'self'",
+	"frame-ancestors 'none'",
+	"script-src 'self' 'unsafe-inline'",
+	"style-src 'self' 'unsafe-inline'",
+	"img-src 'self' data: blob: https:",
+	"media-src 'self' blob: https:",
+	"connect-src 'self' https:",
+	"font-src 'self' data: https://fonts.gstatic.com",
+	"frame-src 'self' https://accounts.spotify.com https://discord.com",
+].join("; ");
+
 const nunito = Nunito({
 	subsets: ["latin", "cyrillic"],
 	variable: "--font-nunito",
@@ -83,6 +98,7 @@ export default function RootLayout({
 			suppressHydrationWarning
 		>
 			<body suppressHydrationWarning>
+				<meta httpEquiv="Content-Security-Policy" content={securityPolicy} />
 				<AuthProvider devToken={devAuthToken}>
 					<LikesProvider>
 						<ThemeProvider>

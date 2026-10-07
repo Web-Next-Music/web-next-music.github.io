@@ -1,10 +1,10 @@
 import { getSupabase } from ".";
+import { collectPages } from "./pagination";
 
 export interface Playlist {
 	id: string;
 	name: string;
 	created_at: string;
-	track_count?: number;
 }
 
 export interface PlaylistTrack {
@@ -28,15 +28,10 @@ export async function getPlaylistDetail(
 		.maybeSingle();
 	if (error) throw error;
 	if (!playlist) return null;
-	const { data: tracks, error: tracksError } = await sb
-		.from("playlist_tracks")
-		.select("id, playlist_id, track_id, position")
-		.eq("playlist_id", playlistId)
-		.order("position", { ascending: true });
-	if (tracksError) throw tracksError;
+	const tracks = await getPlaylistTracks(playlistId);
 	return {
 		playlist: playlist as Playlist,
-		tracks: (tracks ?? []) as PlaylistTrack[],
+		tracks,
 	};
 }
 
@@ -58,14 +53,16 @@ export async function removePlaylistDetailTrack(
 
 export async function getPlaylists(userId: string): Promise<Playlist[]> {
 	const sb = getSupabase();
-	if (!sb) return [];
-	const { data, error } = await sb
-		.from("playlists")
-		.select("id, name, created_at")
-		.eq("user_id", userId)
-		.order("created_at", { ascending: false });
-	if (error) console.error("[playlists] getPlaylists:", error.message);
-	return (data ?? []) as Playlist[];
+	if (!sb) throw new Error("Playlist service is unavailable");
+	return collectPages((offset, limit) =>
+		sb
+			.from("playlists")
+			.select("id, name, created_at")
+			.eq("user_id", userId)
+			.order("created_at", { ascending: false })
+			.order("id", { ascending: false })
+			.range(offset, offset + limit - 1),
+	);
 }
 
 export async function createPlaylist(
@@ -73,22 +70,29 @@ export async function createPlaylist(
 	name: string,
 ): Promise<Playlist | null> {
 	const sb = getSupabase();
-	if (!sb) return null;
+	if (!sb) throw new Error("Playlist service is unavailable");
 	const { data, error } = await sb
 		.from("playlists")
 		.insert({ user_id: userId, name })
 		.select("id, name, created_at")
 		.single();
-	if (error) console.error("[playlists] createPlaylist:", error.message);
-	return (data ?? null) as Playlist | null;
+	if (error) throw error;
+	if (!data) throw new Error("Playlist was not created");
+	return data;
 }
 
 export async function deletePlaylist(playlistId: string): Promise<boolean> {
 	const sb = getSupabase();
-	if (!sb) return false;
-	const { error } = await sb.from("playlists").delete().eq("id", playlistId);
-	if (error) console.error("[playlists] deletePlaylist:", error.message);
-	return !error;
+	if (!sb) throw new Error("Playlist service is unavailable");
+	const { data, error } = await sb
+		.from("playlists")
+		.delete()
+		.eq("id", playlistId)
+		.select("id")
+		.single();
+	if (error) throw error;
+	if (!data) throw new Error("Playlist was not deleted");
+	return true;
 }
 
 export async function renamePlaylist(
@@ -96,27 +100,32 @@ export async function renamePlaylist(
 	name: string,
 ): Promise<boolean> {
 	const sb = getSupabase();
-	if (!sb) return false;
-	const { error } = await sb
+	if (!sb) throw new Error("Playlist service is unavailable");
+	const { data, error } = await sb
 		.from("playlists")
-		.update({ name })
-		.eq("id", playlistId);
-	if (error) console.error("[playlists] renamePlaylist:", error.message);
-	return !error;
+		.update({ name: name.trim() })
+		.eq("id", playlistId)
+		.select("id")
+		.single();
+	if (error) throw error;
+	if (!data) throw new Error("Playlist was not renamed");
+	return true;
 }
 
 export async function getPlaylistTracks(
 	playlistId: string,
 ): Promise<PlaylistTrack[]> {
 	const sb = getSupabase();
-	if (!sb) return [];
-	const { data, error } = await sb
-		.from("playlist_tracks")
-		.select("id, playlist_id, track_id, position")
-		.eq("playlist_id", playlistId)
-		.order("position", { ascending: true });
-	if (error) console.error("[playlists] getPlaylistTracks:", error.message);
-	return (data ?? []) as PlaylistTrack[];
+	if (!sb) throw new Error("Playlist service is unavailable");
+	return collectPages((offset, limit) =>
+		sb
+			.from("playlist_tracks")
+			.select("id, playlist_id, track_id, position")
+			.eq("playlist_id", playlistId)
+			.order("position")
+			.order("id")
+			.range(offset, offset + limit - 1),
+	);
 }
 
 export async function addTrackToPlaylist(
@@ -125,29 +134,21 @@ export async function addTrackToPlaylist(
 	position: number,
 ): Promise<boolean> {
 	const sb = getSupabase();
-	if (!sb) return false;
+	if (!sb) throw new Error("Playlist service is unavailable");
 	const { error } = await sb
 		.from("playlist_tracks")
 		.upsert(
 			{ playlist_id: playlistId, track_id: trackId, position },
 			{ onConflict: "playlist_id,track_id", ignoreDuplicates: true },
 		);
-	if (error) console.error("[playlists] addTrackToPlaylist:", error.message);
-	return !error;
+	if (error) throw error;
+	return true;
 }
 
 export async function removeTrackFromPlaylist(
 	playlistId: string,
 	trackId: string,
 ): Promise<boolean> {
-	const sb = getSupabase();
-	if (!sb) return false;
-	const { error } = await sb
-		.from("playlist_tracks")
-		.delete()
-		.eq("playlist_id", playlistId)
-		.eq("track_id", trackId);
-	if (error)
-		console.error("[playlists] removeTrackFromPlaylist:", error.message);
-	return !error;
+	await removePlaylistDetailTrack(playlistId, trackId);
+	return true;
 }

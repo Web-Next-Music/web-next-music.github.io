@@ -1,57 +1,62 @@
-const MAX_CHUNK = 3000;
-const MAX_AGE = 60 * 60 * 24 * 365;
+const MAX_ENCODED_CHUNK = 3000;
+const MAX_CHUNKS = 32;
+const MAX_AGE = 60 * 60 * 24 * 30;
 
-function cookieAttrs(): string {
-	const secure =
-		typeof location !== "undefined" && location.protocol === "https:"
-			? "; Secure"
-			: "";
-	return `; Path=/; Max-Age=${MAX_AGE}; SameSite=Lax${secure}`;
+function attributes(maxAge: number): string {
+	return `; Path=/; Max-Age=${maxAge}; SameSite=Lax${typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : ""}`;
 }
 
 function readCookie(name: string): string | null {
 	const prefix = `${encodeURIComponent(name)}=`;
-	for (const part of document.cookie.split("; ")) {
+	for (const part of document.cookie.split(/;\s*/)) {
 		if (part.startsWith(prefix)) {
-			return decodeURIComponent(part.slice(prefix.length));
+			try {
+				return decodeURIComponent(part.slice(prefix.length));
+			} catch {
+				return null;
+			}
 		}
 	}
 	return null;
 }
 
-function writeCookie(name: string, value: string) {
-	document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}${cookieAttrs()}`;
-}
-
-function deleteCookie(name: string) {
-	const secure =
-		typeof location !== "undefined" && location.protocol === "https:"
-			? "; Secure"
-			: "";
-	document.cookie = `${encodeURIComponent(name)}=; Path=/; Max-Age=0; SameSite=Lax${secure}`;
+function writeCookie(name: string, value: string, maxAge = MAX_AGE) {
+	document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}${attributes(maxAge)}`;
 }
 
 function clearChunks(key: string) {
-	deleteCookie(key);
-	for (let i = 0; ; i++) {
-		const name = `${key}.${i}`;
-		if (readCookie(name) === null) break;
-		deleteCookie(name);
+	writeCookie(key, "", 0);
+	for (let i = 0; i < MAX_CHUNKS; i++) writeCookie(`${key}.${i}`, "", 0);
+}
+
+export function splitCookieValue(value: string): string[] {
+	const chunks: string[] = [];
+	let chunk = "";
+	let size = 0;
+	for (const character of value) {
+		const length = encodeURIComponent(character).length;
+		if (size + length > MAX_ENCODED_CHUNK) {
+			chunks.push(chunk);
+			chunk = "";
+			size = 0;
+		}
+		chunk += character;
+		size += length;
 	}
+	chunks.push(chunk);
+	if (chunks.length > MAX_CHUNKS)
+		throw new Error("Session is too large to persist");
+	return chunks;
 }
 
 export const cookieStorage = {
 	getItem(key: string): string | null {
 		if (typeof document === "undefined") return null;
-
 		const base = readCookie(key);
-		if (base === null) return null;
-
-		if (readCookie(`${key}.0`) === null) return base;
-
-		const count = Number.parseInt(base, 10);
-		if (!Number.isFinite(count)) return base;
-
+		if (base === null || readCookie(`${key}.0`) === null) return base;
+		if (!/^\d+$/.test(base)) return null;
+		const count = Number(base);
+		if (count < 1 || count > MAX_CHUNKS) return null;
 		let value = "";
 		for (let i = 0; i < count; i++) {
 			const chunk = readCookie(`${key}.${i}`);
@@ -60,27 +65,15 @@ export const cookieStorage = {
 		}
 		return value;
 	},
-
 	setItem(key: string, value: string): void {
 		if (typeof document === "undefined") return;
-
+		const chunks = splitCookieValue(value);
 		clearChunks(key);
-
-		if (value.length <= MAX_CHUNK) {
-			writeCookie(key, value);
-			return;
-		}
-
-		const chunks: string[] = [];
-		for (let i = 0; i < value.length; i += MAX_CHUNK) {
-			chunks.push(value.slice(i, i + MAX_CHUNK));
-		}
+		if (chunks.length === 1) return writeCookie(key, value);
+		chunks.forEach((chunk, index) => writeCookie(`${key}.${index}`, chunk));
 		writeCookie(key, String(chunks.length));
-		chunks.forEach((chunk, i) => writeCookie(`${key}.${i}`, chunk));
 	},
-
 	removeItem(key: string): void {
-		if (typeof document === "undefined") return;
-		clearChunks(key);
+		if (typeof document !== "undefined") clearChunks(key);
 	},
 };

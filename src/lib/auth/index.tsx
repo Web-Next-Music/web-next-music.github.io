@@ -22,13 +22,13 @@ const BAN_CACHE_KEY = "ban_status_v1";
 function getSavedGitHubToken(user: User | null): string | null {
 	if (
 		!user?.identities?.some((identity) => identity.provider === "github") ||
-		cookieStorage.getItem(GH_TOKEN_USER_KEY) !== user.id
+		sessionStorage.getItem(GH_TOKEN_USER_KEY) !== user.id
 	) {
-		cookieStorage.removeItem(GH_TOKEN_KEY);
-		cookieStorage.removeItem(GH_TOKEN_USER_KEY);
+		sessionStorage.removeItem(GH_TOKEN_KEY);
+		sessionStorage.removeItem(GH_TOKEN_USER_KEY);
 		return null;
 	}
-	return cookieStorage.getItem(GH_TOKEN_KEY);
+	return sessionStorage.getItem(GH_TOKEN_KEY);
 }
 
 function getGitHubToken(session: Session | null): string | null {
@@ -40,8 +40,8 @@ function getGitHubToken(session: Session | null): string | null {
 		session.provider_token &&
 		getSessionProvider(session) === "github"
 	) {
-		cookieStorage.setItem(GH_TOKEN_KEY, session.provider_token);
-		cookieStorage.setItem(GH_TOKEN_USER_KEY, session.user.id);
+		sessionStorage.setItem(GH_TOKEN_KEY, session.provider_token);
+		sessionStorage.setItem(GH_TOKEN_USER_KEY, session.user.id);
 		return session.provider_token;
 	}
 	return saved;
@@ -109,10 +109,10 @@ export function AuthProvider({
 			return;
 		}
 
-		// Migrate: The GH provider token used to live in localStorage/sessionStorage
 		try {
 			localStorage.removeItem(GH_TOKEN_KEY);
-			sessionStorage.removeItem(GH_TOKEN_KEY);
+			cookieStorage.removeItem(GH_TOKEN_KEY);
+			cookieStorage.removeItem(GH_TOKEN_USER_KEY);
 		} catch {}
 
 		const initialize = async () => {

@@ -13,7 +13,7 @@ export const AUTH_SERVICES = [
 export type AccountProvider = (typeof AUTH_SERVICES)[number]["provider"];
 export interface LinkedAccount {
 	provider: AccountProvider;
-	identityId: string;
+	identityId?: string;
 	label: string;
 	url: string | null;
 }
@@ -104,9 +104,10 @@ export async function getPublicAccountLinks(
 		p_user_id: userId,
 	});
 	if (error) throw error;
-	return (data ?? []).filter((row: LinkedAccount) =>
-		isAccountProvider(row.provider),
-	);
+	return (data ?? []).flatMap((row) => {
+		if (!isAccountProvider(row.provider)) return [];
+		return [{ provider: row.provider, label: row.label, url: row.url }];
+	});
 }
 
 function requireSupabase() {
@@ -282,6 +283,11 @@ export async function confirmAccountTransfer(): Promise<void> {
 	if (!readTransfer()) throw new Error("No account transfer is pending.");
 	await transferRequest(true);
 	await cancelAccountTransfer();
+	const { error } = await requireSupabase().auth.refreshSession();
+	if (error)
+		throw new Error(
+			"Account transferred. Sign in again to refresh your session.",
+		);
 }
 
 export async function cancelAccountTransfer(): Promise<void> {

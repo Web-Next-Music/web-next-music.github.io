@@ -1,5 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import { getSupabase } from ".";
+import { collectPages } from "./pagination";
 import { config } from "../config";
 import type { Playlist } from "./playlists";
 import type { TrackLikeMeta } from "./likesContext";
@@ -9,6 +10,24 @@ export async function syncAuthProfile(user: User): Promise<void> {
 	if (!sb || !user.id) return;
 	const { error } = await sb.rpc("sync_own_auth_profile");
 	if (error) throw error;
+}
+
+export async function getProfileVisibility(userId: string) {
+	const sb = getSupabase();
+	if (!sb) throw new Error("Profile service is unavailable");
+	const { data, error } = await sb
+		.from("profile_visibility_settings")
+		.select("public_liked_tracks, public_playlists, show_account_links")
+		.eq("user_id", userId)
+		.maybeSingle();
+	if (error) throw error;
+	return (
+		data ?? {
+			public_liked_tracks: true,
+			public_playlists: true,
+			show_account_links: true,
+		}
+	);
 }
 
 export async function getProfileLikesVisibility(
@@ -114,12 +133,26 @@ export async function getPublicLikedTracks(
 ): Promise<PublicLikedTrack[]> {
 	const sb = getSupabase();
 	if (!sb) throw new Error("Profile service is unavailable");
-	const { data, error } = await sb.rpc("get_public_liked_tracks", {
-		p_user_id: userId,
-	});
-	if (error) throw error;
-	return (data ?? []).map((row: Record<string, string | null>) => ({
-		track_id: row.track_id as string,
+	const rows = [];
+	let after: string | undefined;
+	let afterId: string | undefined;
+	for (;;) {
+		const { data, error } = await sb.rpc("get_public_liked_tracks_page", {
+			p_user_id: userId,
+			p_after: after,
+			p_after_id: afterId,
+			p_limit: 100,
+		});
+		if (error) throw error;
+		const page = data ?? [];
+		rows.push(...page);
+		if (page.length < 100) break;
+		const last = page[page.length - 1];
+		after = last.created_at;
+		afterId = last.id;
+	}
+	return rows.map((row) => ({
+		track_id: row.track_id,
 		title: row.title ?? undefined,
 		artist: row.artist ?? undefined,
 		cover: row.cover ?? undefined,
@@ -139,68 +172,20 @@ export interface UserProfile {
 	created_at?: string | null;
 }
 
-export async function getProfileByGithubId(
-	githubId: string,
-): Promise<UserProfile | null> {
-	const sb = getSupabase();
-	if (!sb) return null;
-	const { data } = await sb
-		.from("user_profiles")
-		.select(
-			"user_id, github_id, github_login, display_name, avatar_url, bio, status, github_starred",
-		)
-		.eq("github_id", githubId)
-		.single();
-	return (data as UserProfile) ?? null;
-}
-
-export async function getProfileByUsername(
-	githubLogin: string,
-): Promise<UserProfile | null> {
-	const sb = getSupabase();
-	if (!sb) return null;
-	const { data } = await sb
-		.from("user_profiles")
-		.select(
-			"user_id, github_id, github_login, display_name, avatar_url, bio, status, github_starred",
-		)
-		.eq("github_login", githubLogin)
-		.single();
-	return (data as UserProfile) ?? null;
-}
-
 export async function getOwnProfile(
 	userId: string,
 ): Promise<UserProfile | null> {
 	const sb = getSupabase();
 	if (!sb) return null;
-	const { data } = await sb
+	const { data, error } = await sb
 		.from("user_profiles")
 		.select(
 			"user_id, github_id, github_login, display_name, avatar_url, bio, status, github_starred",
 		)
 		.eq("user_id", userId)
 		.single();
-	return (data as UserProfile) ?? null;
-}
-
-// Syncs GitHub metadata to user_profiles on login.
-// Does NOT overwrite bio - only sets identity fields.
-export async function syncGitHubMeta(
-	userId: string,
-	github_id: string,
-	github_login: string,
-	display_name: string | null,
-	avatar_url: string | null,
-): Promise<void> {
-	const sb = getSupabase();
-	if (!sb) return;
-	await sb
-		.from("user_profiles")
-		.upsert(
-			{ user_id: userId, github_id, github_login, display_name, avatar_url },
-			{ onConflict: "user_id" },
-		);
+	if (error) throw error;
+	return data ?? null;
 }
 
 export async function getOwnStatus(userId: string): Promise<string> {
@@ -226,10 +211,8 @@ export async function saveStatus(
 	if (!sb) throw new Error("Profile service is unavailable");
 	const { data, error } = await sb
 		.from("user_profiles")
-		.upsert(
-			{ user_id: userId, status, updated_at: new Date().toISOString() },
-			{ onConflict: "user_id" },
-		)
+		.update({ status })
+		.eq("user_id", userId)
 		.select("status")
 		.single();
 	if (error) throw error;
@@ -237,33 +220,32 @@ export async function saveStatus(
 	return data.status ?? "";
 }
 
-export async function saveBio(userId: string, bio: string): Promise<boolean> {
+export async function saveBio(userId: string, bio: string): Promise<void> {
+	if (Array.from(bio).length > 10000)
+		throw new Error("Bio must be at most 10000 characters");
 	const sb = getSupabase();
-	if (!sb) return false;
-	const { error } = await sb
+	if (!sb) throw new Error("Profile service is unavailable");
+	const { data, error } = await sb
 		.from("user_profiles")
-		.upsert(
-			{ user_id: userId, bio, updated_at: new Date().toISOString() },
-			{ onConflict: "user_id" },
-		);
-	if (error) console.error("[profile] saveBio:", error.message);
-	return !error;
+		.update({ bio })
+		.eq("user_id", userId)
+		.select("user_id")
+		.single();
+	if (error) throw error;
+	if (!data) throw new Error("Bio was not saved");
 }
 
 export async function getUserPinnedPlaylists(
 	userId: string,
 ): Promise<Playlist[]> {
 	const sb = getSupabase();
-	if (!sb) return [];
+	if (!sb) throw new Error("Profile service is unavailable");
 	const { data, error } = await sb
 		.from("pinned_playlists")
 		.select("position, playlists(id, name, created_at)")
 		.eq("user_id", userId)
 		.order("position", { ascending: true });
-	if (error) {
-		console.error("[profile] getPinnedPlaylists:", error.message);
-		return [];
-	}
+	if (error) throw error;
 	return ((data ?? []) as unknown as { playlists: Playlist }[])
 		.map((r) => r.playlists)
 		.filter(Boolean);
@@ -273,11 +255,12 @@ export async function getPinnedPlaylistIds(
 	userId: string,
 ): Promise<Set<string>> {
 	const sb = getSupabase();
-	if (!sb) return new Set();
-	const { data } = await sb
+	if (!sb) throw new Error("Profile service is unavailable");
+	const { data, error } = await sb
 		.from("pinned_playlists")
 		.select("playlist_id")
 		.eq("user_id", userId);
+	if (error) throw error;
 	return new Set(
 		(data ?? []).map((r: { playlist_id: string }) => r.playlist_id),
 	);
@@ -289,15 +272,15 @@ export async function pinPlaylist(
 	position: number,
 ): Promise<boolean> {
 	const sb = getSupabase();
-	if (!sb) return false;
+	if (!sb) throw new Error("Profile service is unavailable");
 	const { error } = await sb
 		.from("pinned_playlists")
 		.upsert(
 			{ user_id: userId, playlist_id: playlistId, position },
 			{ onConflict: "user_id,playlist_id" },
 		);
-	if (error) console.error("[profile] pinPlaylist:", error.message);
-	return !error;
+	if (error) throw error;
+	return true;
 }
 
 export async function getUserStats(
@@ -306,7 +289,7 @@ export async function getUserStats(
 	const sb = getSupabase();
 	if (!sb) return { likes: 0, playlists: 0 };
 	const { data, error } = await sb.rpc("get_user_stats", { p_user_id: userId });
-	if (error) console.error("[profile] getUserStats:", error.message);
+	if (error) throw error;
 	return (
 		(data as { likes: number; playlists: number }) ?? { likes: 0, playlists: 0 }
 	);
@@ -315,36 +298,6 @@ export async function getUserStats(
 export interface PublicProfileResult {
 	profile: UserProfile;
 	banned: boolean;
-}
-
-export async function getPublicProfile(
-	githubId: string,
-): Promise<PublicProfileResult | null> {
-	const sb = getSupabase();
-	if (!sb) return null;
-
-	const { data, error } = await sb.rpc("resolve_public_profile", {
-		p_github_id: githubId,
-	});
-
-	if (error) console.error("[profile] getPublicProfile:", error.message);
-
-	const row = Array.isArray(data) ? data[0] : data;
-	if (!row) return null;
-
-	const profile: UserProfile = {
-		user_id: row.user_id,
-		github_id: row.github_id,
-		github_login: row.github_login,
-		display_name: row.display_name,
-		avatar_url: row.avatar_url,
-		bio: row.bio,
-		status: row.status ?? null,
-		github_starred: row.github_starred,
-		created_at: row.created_at ?? null,
-	};
-
-	return { profile, banned: row.is_banned };
 }
 
 export async function getPublicProfileByUserId(
@@ -378,12 +331,12 @@ export async function getPublicProfileByUserId(
 }
 
 export async function syncGithubStarForProfile(
-	githubId: string,
+	userId: string,
 ): Promise<boolean | null> {
 	if (!config.supabase.url) return null;
 	try {
 		const res = await fetch(
-			`${config.supabase.url}/functions/v1/sync-github-star?github_id=${encodeURIComponent(githubId)}`,
+			`${config.supabase.url}/functions/v1/sync-github-star?user_id=${encodeURIComponent(userId)}`,
 			{
 				headers: {
 					apikey: config.supabase.anonKey ?? "",
@@ -432,12 +385,14 @@ export async function unpinPlaylist(
 	playlistId: string,
 ): Promise<boolean> {
 	const sb = getSupabase();
-	if (!sb) return false;
-	const { error } = await sb
+	if (!sb) throw new Error("Profile service is unavailable");
+	const { data, error } = await sb
 		.from("pinned_playlists")
 		.delete()
 		.eq("user_id", userId)
-		.eq("playlist_id", playlistId);
-	if (error) console.error("[profile] unpinPlaylist:", error.message);
-	return !error;
+		.eq("playlist_id", playlistId)
+		.select("playlist_id");
+	if (error) throw error;
+	if (!data?.length) throw new Error("Playlist was not unpinned");
+	return true;
 }
