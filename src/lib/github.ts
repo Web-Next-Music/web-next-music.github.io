@@ -27,20 +27,20 @@ async function fetchWithFallback(
 }
 
 export async function fetchStargazers(): Promise<Stargazer[]> {
-	if (!config.supabase.url) return [];
-	try {
-		const res = await fetch(`${config.supabase.url}/functions/v1/stargazers`, {
-			headers: {
-				apikey: config.supabase.anonKey ?? "",
-				Authorization: `Bearer ${config.supabase.anonKey ?? ""}`,
-			},
-		});
-		if (!res.ok) return [];
-		const json = await res.json();
-		return Array.isArray(json.stargazers) ? json.stargazers : [];
-	} catch {
-		return [];
+	if (!config.supabase.url) throw new Error("Supabase is not configured");
+	const res = await fetch(`${config.supabase.url}/functions/v1/stargazers`, {
+		cache: "no-store",
+		headers: {
+			apikey: config.supabase.anonKey ?? "",
+			Authorization: `Bearer ${config.supabase.anonKey ?? ""}`,
+		},
+	});
+	if (!res.ok) throw new Error(`Stargazers request failed: ${res.status}`);
+	const json = await res.json();
+	if (!Array.isArray(json.stargazers)) {
+		throw new Error("Invalid stargazers response");
 	}
+	return json.stargazers;
 }
 
 export async function fetchLatestRelease(

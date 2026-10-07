@@ -11,12 +11,13 @@ const PAGE_SIZE = 12;
 export default function StarsSection() {
 	const [stargazers, setStargazers] = useState<Stargazer[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [failed, setFailed] = useState(false);
 	const [page, setPage] = useState(1);
 
 	useEffect(() => {
 		fetchStargazers()
 			.then(setStargazers)
-			.catch(() => setStargazers([]))
+			.catch(() => setFailed(true))
 			.finally(() => setLoading(false));
 	}, []);
 
@@ -38,7 +39,13 @@ export default function StarsSection() {
 				<div className={styles.gridLayout}>
 					{loading && <p className={styles.empty}>Loading…</p>}
 
-					{!loading && stargazers.length === 0 && (
+					{!loading && failed && (
+						<p className={styles.empty}>
+							Unable to load stargazers. Please try again later.
+						</p>
+					)}
+
+					{!loading && !failed && stargazers.length === 0 && (
 						<p className={styles.empty}>No stars yet</p>
 					)}
 
