@@ -15,7 +15,7 @@ import AuthModal from "@/components/common/AuthModal";
 import BanBanner from "@/components/layout/BanBanner";
 import { AppWrapper } from "@/components/layout/AppWrapper";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
-import "./globals.css";
+import "./globals.scss";
 
 export const metadata: Metadata = {
 	metadataBase: new URL("https://nm.diram1x.ru"),

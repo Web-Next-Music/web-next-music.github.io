@@ -12,6 +12,7 @@ import {
 import { encodeTrackKey, decodeTrackKey } from "@/lib/track/trackKey";
 import LikeButton from "@/components/common/LikeButton";
 import LogoIcon from "@/components/common/LogoIcon";
+import styles from "./MiniPlayer.module.scss";
 
 export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 	const player = usePlayer();
@@ -88,21 +89,11 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 	const trackId = nowPlaying.id;
 
 	return (
-		<div
-			className={
-				"items-center flex h-12 [background:var(--bg)] [border-bottom:1px_solid_var(--border)] fixed top-[calc(59px+var(--ban-banner-h,0px))] left-0 right-0 z-9 animate-[slideDown_0.2s_ease]"
-			}
-		>
-			<div
-				className={
-					"flex items-center gap-2.5 w-full p-[0_20px] [@media(max-width:_900px)]:p-[0_10px]"
-				}
-			>
-				<div className={"flex items-center gap-2 shrink-0"}>
+		<div className={styles.bar}>
+			<div className={styles.innerLayout}>
+				<div className={styles.leftLayout}>
 					<div
-						className={
-							"flex items-center gap-2.5 cursor-pointer opacity-100 [transition:opacity_0.15s] hover:opacity-[0.7]"
-						}
+						className={styles.leftClickableLayout}
 						style={{
 							pointerEvents: isHiddenMode ? "none" : "auto",
 						}}
@@ -135,42 +126,20 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 								alt=""
 								width={30}
 								height={30}
-								className={
-									"w-7.5 h-7.5 rounded-xs object-cover [border:1px_solid_var(--border)] shrink-0"
-								}
+								className={styles.coverLayout}
 							/>
 						) : (
-							<div
-								className={
-									"w-7.5 h-7.5 rounded-xs [background:var(--surface2)] [border:1px_solid_var(--border)] shrink-0"
-								}
-							/>
+							<div className={styles.coverPlaceholderLayout} />
 						)}
-						<div
-							className={
-								"flex flex-col min-w-0 w-full max-w-33 mr-2.5 [@media(max-width:_900px)]:hidden"
-							}
-						>
-							<span
-								className={
-									"text-[12px] font-extrabold whitespace-nowrap overflow-hidden text-ellipsis text-foreground"
-								}
-							>
-								{nowPlaying.title}
-							</span>
-							<span
-								className={
-									"text-[11px] font-bold text-muted whitespace-nowrap overflow-hidden text-ellipsis"
-								}
-							>
-								{nowPlaying.artist}
-							</span>
+						<div className={styles.infoLayout}>
+							<span className={styles.title}>{nowPlaying.title}</span>
+							<span className={styles.artist}>{nowPlaying.artist}</span>
 						</div>
 					</div>
 					{trackId && (
 						<LikeButton
 							compact
-							className={"opacity-100 w-7 h-7 rounded-xs"}
+							className={styles.likeBtnLayout}
 							target={{
 								type: "track",
 								trackId,
@@ -185,38 +154,17 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 					)}
 				</div>
 
-				<span
-					className={
-						"text-[11px] font-bold text-muted font-[SF_Mono,Fira_Code,monospace] whitespace-nowrap shrink-0 min-w-7.5 text-center"
-					}
-				>
-					{fmt(progress)}
-				</span>
-				<div
-					className={
-						'flex-1 h-5 flex items-center cursor-pointer relative [&::before]:[content:""] [&::before]:absolute [&::before]:left-0 [&::before]:right-0 [&::before]:h-0.75 [&::before]:[background:var(--surface2)] [&::before]:rounded-(--radius-pill) [&::before]:[transition:height_0.15s] [&:hover::before]:h-1.25 [&:hover_.progressFill]:h-1.25'
-					}
-					onClick={handleSeek}
-				>
+				<span className={styles.timeSingle}>{fmt(progress)}</span>
+				<div className={styles.progressWrapLayout} onClick={handleSeek}>
 					<div
-						className={
-							"[.progressWrap:hover_&]:h-1.25 absolute left-0 h-0.75 [background:linear-gradient(90deg,var(--accent2)_50%,var(--accent)_100%)] rounded-(--radius-pill) pointer-events-none [transition:width_0.1s_linear,height_0.15s]"
-						}
+						className={styles.progressFillLayout}
 						style={{ width: `${pct}%` }}
 					/>
 				</div>
-				<span
-					className={
-						"text-[11px] font-bold text-muted font-[SF_Mono,Fira_Code,monospace] whitespace-nowrap shrink-0 min-w-7.5 text-center"
-					}
-				>
-					{fmt(duration)}
-				</span>
+				<span className={styles.timeSingle}>{fmt(duration)}</span>
 
 				<button
-					className={
-						"flex items-center justify-center w-7 h-7 rounded-xs [border:1px_solid_var(--border)] [background:var(--surface)] text-foreground cursor-pointer shrink-0 [transition:background_0.15s,border-color_0.15s,color_0.15s] hover:[background:var(--surface2)] hover:border-accent hover:text-accent"
-					}
+					className={styles.btnLayout}
 					onClick={isPlaying ? pause : resume}
 					aria-label={isPlaying ? "Pause" : "Play"}
 				>
@@ -252,15 +200,9 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 					)}
 				</button>
 
-				<div
-					className={
-						"flex items-center shrink-0 hover:gap-1.25 focus-within:gap-1.25 [&:hover_.volumeSliderWrap]:w-18 [&:hover_.volumeSliderWrap]:opacity-100 [&:focus-within_.volumeSliderWrap]:w-18 [&:focus-within_.volumeSliderWrap]:opacity-100"
-					}
-				>
+				<div className={styles.volumeWrapLayout}>
 					<button
-						className={
-							"flex items-center justify-center w-7 h-7 rounded-xs [border:1px_solid_var(--border)] [background:var(--surface)] text-foreground cursor-pointer shrink-0 [transition:background_0.15s,border-color_0.15s,color_0.15s] hover:[background:var(--surface2)] hover:border-accent hover:text-accent"
-						}
+						className={styles.btnLayout}
 						onClick={toggleMute}
 						aria-label={muted ? "Unmute" : "Mute"}
 					>
@@ -313,11 +255,7 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 							</svg>
 						)}
 					</button>
-					<div
-						className={
-							"[.volumeWrap:hover_&]:w-18 [.volumeWrap:hover_&]:opacity-100 [.volumeWrap:focus-within_&]:w-18 [.volumeWrap:focus-within_&]:opacity-100 w-0 overflow-hidden opacity-0 -mt-2.5 [transition:width_0.2s_ease,opacity_0.2s_ease]"
-						}
-					>
+					<div className={styles.volumeSliderWrapLayout}>
 						<input
 							type="range"
 							min="0"
@@ -325,9 +263,7 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 							step="0.02"
 							value={muted ? 0 : volume}
 							onChange={handleVolumeChange}
-							className={
-								"[-webkit-appearance:none] appearance-none w-17 h-0.75 rounded-(--radius-pill) outline-none cursor-pointer [background:linear-gradient(to_right,var(--accent2)_0%,var(--accent)_var(--vol,100%),var(--surface2)_var(--vol,100%),var(--surface2)_100%)] [&::-webkit-slider-thumb]:[-webkit-appearance:none] [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-(--radius-full) [&::-webkit-slider-thumb]:[background:var(--accent)] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:[border:none] [&::-webkit-slider-thumb]:[transition:transform_0.1s] [&::-webkit-slider-thumb:hover]:transform-[scale(1.25)] [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-(--radius-full) [&::-moz-range-thumb]:[background:var(--accent)] [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:[border:none]"
-							}
+							className={styles.volumeSliderLayout}
 							aria-label="Volume"
 							style={
 								{
@@ -339,7 +275,7 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 				</div>
 
 				<button
-					className={`${"flex items-center justify-center w-7 h-7 rounded-xs [border:1px_solid_var(--border)] [background:var(--surface)] text-foreground cursor-pointer shrink-0 [transition:background_0.15s,border-color_0.15s,color_0.15s] hover:[background:var(--surface2)] hover:border-accent hover:text-accent"} ${"[@media(max-width:_640px)]:hidden"}`}
+					className={`${styles.btnLayout} ${styles.elementStyle}`}
 					onClick={() => setDesktopRpcEnabled(!rpcEnabled)}
 					aria-label={
 						rpcEnabled
@@ -357,9 +293,7 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 				</button>
 
 				<button
-					className={
-						"flex items-center justify-center w-7 h-7 rounded-xs [border:1px_solid_var(--border)] [background:var(--surface)] text-foreground cursor-pointer shrink-0 [transition:background_0.15s,border-color_0.15s,color_0.15s] hover:[background:var(--surface2)] hover:border-accent hover:text-accent"
-					}
+					className={styles.btnLayout}
 					onClick={close}
 					aria-label="Close player"
 				>

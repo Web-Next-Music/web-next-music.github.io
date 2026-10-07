@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import styles from "./SonicRunner.module.scss";
 
 // physics
 const SCALE = 2;
@@ -409,13 +410,10 @@ export default function SonicRunner() {
 	}, []);
 
 	return (
-		<div
-			ref={containerRef}
-			className="relative w-full overflow-hidden pointer-events-none"
-		>
+		<div ref={containerRef} className={styles.container}>
 			<canvas
 				ref={canvasRef}
-				className="block w-full h-full pointer-events-none will-change-contents [image-rendering:pixelated] transform-[translateZ(0)]"
+				className={styles.canvas}
 				style={started ? {} : { pointerEvents: "auto" }}
 				onMouseMove={handleCanvasMouseMove}
 				onMouseLeave={handleCanvasMouseLeave}

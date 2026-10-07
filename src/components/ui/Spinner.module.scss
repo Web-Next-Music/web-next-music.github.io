@@ -22,3 +22,25 @@
 	height: 24px;
 	border-width: 3px;
 }
+
+.baseLayout {
+	display: inline-block;
+	flex-shrink: 0;
+	animation: spin 1s linear infinite;
+	border-radius: 9999px;
+	border-style: solid;
+	border-width: 2px;
+	border-color: var(--border);
+	border-top-color: var(--accent);
+}
+.size-lgLayout {
+	width: 1.5rem;
+	height: 1.5rem;
+	border-style: solid;
+	border-width: 3px;
+}
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}

@@ -5,6 +5,7 @@ import FckCensorHero from "@/components/fckcensor/FckCensorHero";
 import Image from "next/image";
 import { Suspense } from "react";
 import { Metadata } from "next";
+import styles from "./page.module.scss";
 
 export const metadata: Metadata = {
 	title: "FckCensor Next - Track List",
@@ -15,43 +16,25 @@ export default function FckCensorPage() {
 	return (
 		<>
 			<Header />
-			<main className="max-w-250 m-[0_auto] p-[calc(20px+var(--mini-player-h))_40px_30px] [@media(max-width:_640px)]:p-[calc(20px+var(--mini-player-h))_20px_25px]">
+			<main className={styles.mainLayout}>
 				<FckCensorHero />
-				<div
-					className={
-						"flex items-start gap-5 [background:var(--surface)] rounded-2xl p-5 mb-5 relative overflow-hidden [border:1px_solid_var(--border)] [@media(max-width:_640px)]:flex-row [@media(max-width:_640px)]:items-start [@media(max-width:_640px)]:p-4 [@media(max-width:_640px)]:gap-3"
-					}
-				>
+				<div className={styles.creditsBlockLayout}>
 					<Image
 						src="https://avatars.githubusercontent.com/Hazzz895"
 						alt="Hazzz895"
 						width={48}
 						height={48}
-						className={
-							"w-12 h-12 rounded-(--radius-full) [border:1px_solid_var(--border)] shrink-0 mt-0.5 object-cover"
-						}
+						className={styles.creditsAvatar}
 					/>
-					<div className={"flex-1 min-w-0 [@media(max-width:_640px)]:flex-1"}>
-						<div
-							className={
-								"text-[20px] font-extrabold [letter-spacing:-0.3px] mb-1.5 font-(family-name:--font-heading-large) [@media(max-width:_640px)]:text-[18px]"
-							}
-						>
-							Special thanks
-						</div>
-						<p
-							className={
-								"text-[16px] text-muted leading-[1.6] max-w-175 [@media(max-width:_640px)]:text-[13px]"
-							}
-						>
+					<div className={styles.fckCensorInfoLayout}>
+						<div className={styles.creditsNameLayout}>Special thanks</div>
+						<p className={styles.fckCensorDescLayout}>
 							Special thanks to the original author&nbsp;
 							<a
 								href="https://github.com/Hazzz895/"
 								target="_blank"
 								rel="noopener noreferrer"
-								className={
-									"text-accent no-underline font-bold [transition:color_0.15s] hover:text-(--accent2)"
-								}
+								className={styles.creditsLinkLayout}
 							>
 								@Hazzz895
 							</a>{" "}

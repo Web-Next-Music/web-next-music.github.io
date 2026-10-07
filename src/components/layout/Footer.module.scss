@@ -161,3 +161,122 @@
 		text-align: center;
 	}
 }
+
+.contentLayout {
+	max-width: 75rem;
+	margin: 0 auto;
+	padding: 40px 40px;
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr 1fr;
+	gap: 2rem;
+}
+@media (max-width: 768px) {
+	.contentLayout {
+		grid-template-columns: 1fr 1fr;
+		padding: 40px 20px;
+	}
+}
+.elementStyle h4 {
+	font-size: 14px;
+	font-weight: 800;
+	color: var(--muted);
+	letter-spacing: 1px;
+	margin-bottom: 0.875rem;
+	font-family: var(--font-base);
+}
+.elementStyle a {
+	display: block;
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--muted);
+	margin-bottom: 0.5rem;
+	transition: color 0.2s;
+}
+.elementStyle a:hover {
+	color: var(--text);
+}
+.bottomLayout {
+	max-width: 75rem;
+	margin: 0 auto;
+	padding: 16px 40px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+}
+.bottomLayout p {
+	font-size: 13px;
+	font-weight: 700;
+	color: var(--muted);
+}
+@media (max-width: 768px) {
+	.bottomLayout {
+		padding: 16px 20px;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.75rem;
+		text-align: center;
+	}
+}
+.themeToggleLayout {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	background-image: none;
+	border: none;
+	outline-style: none;
+	cursor: pointer;
+	padding: 0px;
+	font-family: var(--font-heading-large);
+}
+.themeToggleLayout:focus-visible {
+	outline-style: none;
+}
+.themeToggleLayout:hover .toggleLabelLayout {
+	color: var(--text);
+}
+.toggleTrackLayout {
+	position: relative;
+	display: flex;
+	align-items: center;
+	width: 2.75rem;
+	height: 1.5rem;
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--border);
+	transition:
+		background 0.25s,
+		border-color 0.25s;
+	background: var(--surface2);
+}
+.toggleThumbLayout {
+	position: absolute;
+	left: 0.1875rem;
+	width: 1.125rem;
+	height: 1.125rem;
+	border-radius: var(--radius-full);
+	background: var(--surface);
+	border: 1px solid var(--border);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--accent);
+	transition:
+		transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+		background 0.25s;
+}
+.elementStyle2 {
+	transform: translateX(0);
+}
+.elementStyle3 {
+	transform: translateX(20px);
+}
+.themeToggleLayout:hover .toggleLabelLayout {
+	color: var(--text);
+}
+.toggleLabelLayout {
+	font-size: 12px;
+	font-weight: 700;
+	color: var(--muted);
+	transition: color 0.2s;
+	user-select: none;
+}

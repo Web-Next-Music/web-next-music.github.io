@@ -1,4 +1,5 @@
 "use client";
+import styles from "./SignInCard.module.scss";
 
 interface Props {
 	loading?: boolean;
@@ -15,9 +16,7 @@ export default function SignInCard({
 }: Props) {
 	return (
 		<div
-			className={
-				"relative flex items-end justify-end overflow-hidden w-full max-w-105 h-55 rounded-2xl [box-shadow:0_0_10px_0_rgba(0,0,0,0.6)] p-5 m-auto"
-			}
+			className={styles.cardLayout}
 			style={{
 				backgroundImage:
 					"linear-gradient(135deg, var(--surface) 0%, transparent 30%, var(--surface) 100%), url(/ui/Kagami.webp)",
@@ -29,9 +28,7 @@ export default function SignInCard({
 			{onClose && (
 				<button
 					type="button"
-					className={
-						"absolute top-3.5 right-3.5 z-2 [backdrop-filter:blur(30px)] [background:transparent] [border:none] [box-shadow:inset_0_0_0_1px_var(--border)] rounded-xs text-foreground cursor-pointer flex items-center justify-center w-7 h-7 [transition:color_0.15s,box-shadow_0.15s] hover:text-accent hover:[box-shadow:inset_0_0_0_1px_var(--border)]"
-					}
+					className={styles.closeBtnLayout}
 					onClick={onClose}
 					aria-label="Close"
 				>
@@ -45,19 +42,11 @@ export default function SignInCard({
 					</svg>
 				</button>
 			)}
-			<span
-				className={
-					'absolute top-4 left-5 z-1 font-["Lucky_Star"] font-normal text-[36px] text-foreground'
-				}
-			>
-				Sign in
-			</span>
-			<div className="relative z-1 flex flex-col items-end gap-2 text-right max-w-65">
+			<span className={styles.title}>Sign in</span>
+			<div className={styles.copy}>
 				<button
 					type="button"
-					className={
-						"inline-flex items-center gap-2.25 p-[11px_20px] rounded-sm [border:none] [box-shadow:inset_0_0_0_1px_var(--border)] [backdrop-filter:blur(30px)] [background:transparent] text-foreground font-(family-name:--font-heading-large) text-[14px] font-bold cursor-pointer [transition:background_0.15s,color_0.15s] [&:hover:not(:disabled)]:text-accent disabled:cursor-not-allowed"
-					}
+					className={styles.githubBtnLayout}
 					onClick={onSignIn}
 					disabled={loading}
 				>
@@ -66,15 +55,7 @@ export default function SignInCard({
 					</svg>
 					{loading ? "Redirecting…" : "Continue with GitHub"}
 				</button>
-				{error && (
-					<span
-						className={
-							"text-[13px] text-danger [background:var(--danger-hover)] [border:1px_solid_var(--danger-border)] rounded-sm p-[8px_12px]"
-						}
-					>
-						{error}
-					</span>
-				)}
+				{error && <span className={styles.errorLayout}>{error}</span>}
 			</div>
 		</div>
 	);

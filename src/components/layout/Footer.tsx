@@ -2,6 +2,7 @@
 
 import { useTheme } from "@/lib/theme";
 import Link from "next/link";
+import styles from "./Footer.module.scss";
 
 export default function Footer({
 	isHiddenMode = false,
@@ -97,40 +98,20 @@ export default function Footer({
 
 	return (
 		<>
-			<footer
-				className={
-					"[border-top:1px_solid_var(--border)] [border-bottom:1px_solid_var(--border)]"
-				}
-			>
-				<div
-					className={
-						"max-w-300 m-[0_auto] p-[40px_40px] grid grid-cols-[1fr_1fr_1fr_1fr] gap-8 [@media(max-width:_768px)]:grid-cols-[1fr_1fr] [@media(max-width:_768px)]:p-[40px_20px]"
-					}
-				>
-					<div
-						className={
-							"[&_h4]:text-[14px] [&_h4]:font-extrabold [&_h4]:text-muted [&_h4]:tracking-[1px] [&_h4]:mb-3.5 [&_h4]:font-sans [&_a]:block [&_a]:text-[13px] [&_a]:font-bold [&_a]:text-muted [&_a]:mb-2 [&_a]:[transition:color_0.2s] [&_a:hover]:text-foreground"
-						}
-					>
-						<div
-							className={
-								"text-[16px] font-extrabold [letter-spacing:-0.5px] mb-2"
-							}
-						>
+			<footer className={styles.footer}>
+				<div className={styles.contentLayout}>
+					<div className={styles.elementStyle}>
+						<div className={styles.brand}>
 							{isHiddenMode ? "UGC Share" : "Next Music"}
 						</div>
-						<p className={"text-[14px] font-bold text-muted leading-[1.6]"}>
+						<p className={styles.copy}>
 							{isHiddenMode
 								? "Add-on for sharing UGC tracks from Yandex Music"
 								: "Web client for Yandex Music"}
 						</p>
 					</div>
 
-					<div
-						className={
-							"[&_h4]:text-[14px] [&_h4]:font-extrabold [&_h4]:text-muted [&_h4]:tracking-[1px] [&_h4]:mb-3.5 [&_h4]:font-sans [&_a]:block [&_a]:text-[13px] [&_a]:font-bold [&_a]:text-muted [&_a]:mb-2 [&_a]:[transition:color_0.2s] [&_a:hover]:text-foreground"
-						}
-					>
+					<div className={styles.elementStyle}>
 						<h4>PRODUCT</h4>
 						{links.product.map((l) => (
 							<Link key={l.label} href={l.href}>
@@ -139,11 +120,7 @@ export default function Footer({
 						))}
 					</div>
 
-					<div
-						className={
-							"[&_h4]:text-[14px] [&_h4]:font-extrabold [&_h4]:text-muted [&_h4]:tracking-[1px] [&_h4]:mb-3.5 [&_h4]:font-sans [&_a]:block [&_a]:text-[13px] [&_a]:font-bold [&_a]:text-muted [&_a]:mb-2 [&_a]:[transition:color_0.2s] [&_a:hover]:text-foreground"
-						}
-					>
+					<div className={styles.elementStyle}>
 						<h4>RESOURCES</h4>
 						{links.resources.map((l) => (
 							<Link key={l.label} href={l.href}>
@@ -152,11 +129,7 @@ export default function Footer({
 						))}
 					</div>
 
-					<div
-						className={
-							"[&_h4]:text-[14px] [&_h4]:font-extrabold [&_h4]:text-muted [&_h4]:tracking-[1px] [&_h4]:mb-3.5 [&_h4]:font-sans [&_a]:block [&_a]:text-[13px] [&_a]:font-bold [&_a]:text-muted [&_a]:mb-2 [&_a]:[transition:color_0.2s] [&_a:hover]:text-foreground"
-						}
-					>
+					<div className={styles.elementStyle}>
 						<h4>LINKS</h4>
 						{links.links.map((l) => (
 							<Link key={l.label} href={l.href}>
@@ -167,33 +140,23 @@ export default function Footer({
 				</div>
 			</footer>
 
-			<div
-				className={
-					"max-w-300 m-[0_auto] p-[16px_40px] flex justify-between items-center gap-4 [&_p]:text-[13px] [&_p]:font-bold [&_p]:text-muted [@media(max-width:_768px)]:p-[16px_20px] [@media(max-width:_768px)]:flex-wrap [@media(max-width:_768px)]:justify-center [@media(max-width:_768px)]:gap-3 [@media(max-width:_768px)]:text-center"
-				}
-			>
+			<div className={styles.bottomLayout}>
 				<p>© 2026 Next Music. MIT License</p>
 
 				<button
-					className={
-						"flex items-center gap-2 bg-none [border:none] outline-none cursor-pointer p-0 font-(family-name:--font-heading-large) focus-visible:outline-none [&:hover_.toggleLabel]:text-foreground"
-					}
+					className={styles.themeToggleLayout}
 					onClick={toggle}
 					aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
 					title={isDark ? "Switch to light theme" : "Switch to dark theme"}
 				>
-					<span className="relative flex items-center w-11 h-6 rounded-lg [border:1px_solid_var(--border)] [transition:background_0.25s,border-color_0.25s] [background:var(--surface2)]">
+					<span className={styles.toggleTrackLayout}>
 						<span
-							className={`absolute left-0.75 w-4.5 h-4.5 rounded-(--radius-full) [background:var(--surface)] [border:1px_solid_var(--border)] flex items-center justify-center text-accent [transition:transform_0.25s_cubic-bezier(0.34,1.56,0.64,1),background_0.25s] ${isDark ? "transform-[translateX(0)]" : "transform-[translateX(20px)]"}`}
+							className={`${styles.toggleThumbLayout} ${isDark ? styles.elementStyle2 : styles.elementStyle3}`}
 						>
 							{isDark}
 						</span>
 					</span>
-					<span
-						className={
-							"[.themeToggle:hover_&]:text-foreground text-[12px] font-bold text-muted [transition:color_0.2s] [user-select:none]"
-						}
-					>
+					<span className={styles.toggleLabelLayout}>
 						{isDark ? "Dark" : "Light"}
 					</span>
 				</button>

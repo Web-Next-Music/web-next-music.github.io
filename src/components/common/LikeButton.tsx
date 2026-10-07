@@ -9,6 +9,7 @@ import {
 	addLike,
 	removeLike,
 } from "@/lib/supabase/likes";
+import styles from "./LikeButton.module.scss";
 
 type LikeTarget =
 	| { type: "track"; trackId: string; meta?: TrackLikeMeta }
@@ -110,12 +111,10 @@ export default function LikeButton({ target, className, compact }: Props) {
 	return (
 		<button
 			className={[
-				"inline-flex items-center gap-1.25 p-[6px_12px] [border:none] rounded-sm bg-none text-muted font-sans text-[12px] cursor-pointer [transition:color_0.15s] [&:hover:not(:disabled)]:text-accent [&:hover:not(:disabled)]:bg-none [&.liked]:text-accent [&.liked]:bg-none disabled:opacity-[0.5] disabled:cursor-default",
-				compact
-					? "w-7.5 h-7.5 p-0 rounded-sm justify-center [transition:color_0.15s]"
-					: "",
-				liked ? "[.btn&]:text-accent [.btn&]:bg-none" : "",
-				isBanned ? "opacity-[0.4] cursor-not-allowed" : "",
+				styles.btnLayout,
+				compact ? styles.compactLayout : "",
+				liked ? styles.elementStyle : "",
+				isBanned ? styles.banned : "",
 				className ?? "",
 			].join(" ")}
 			onClick={toggle}
@@ -124,7 +123,7 @@ export default function LikeButton({ target, className, compact }: Props) {
 			title={isBanned ? "Your account is banned" : liked ? "Unlike" : "Like"}
 		>
 			<svg
-				className={"shrink-0"}
+				className={styles.heart}
 				width="14"
 				height="14"
 				viewBox="0 0 24 24"
@@ -136,15 +135,7 @@ export default function LikeButton({ target, className, compact }: Props) {
 			>
 				<path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" />
 			</svg>
-			{!compact && !loading && (
-				<span
-					className={
-						"text-[12px] [font-variant-numeric:tabular-nums] min-w-2 text-left"
-					}
-				>
-					{count}
-				</span>
-			)}
+			{!compact && !loading && <span className={styles.count}>{count}</span>}
 		</button>
 	);
 }

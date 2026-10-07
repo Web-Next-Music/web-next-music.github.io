@@ -256,3 +256,133 @@
 .skeletonArtistLine {
 	margin-top: 4px;
 }
+
+.addToPlaylistBtnLayout {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.875rem;
+	height: 1.875rem;
+	border-radius: var(--radius-sm);
+	border: 1px solid transparent;
+	background-image: none;
+	color: var(--muted);
+	cursor: pointer;
+	flex-shrink: 0;
+	opacity: 100%;
+	transition:
+		opacity 0.15s,
+		background 0.15s,
+		color 0.15s,
+		border-color 0.15s;
+}
+@media (hover: hover) {
+	.addToPlaylistBtnLayout:hover {
+		background: var(--surface2);
+		color: var(--text);
+		border-color: var(--border);
+	}
+}
+.playBtnLayout {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.875rem;
+	height: 1.875rem;
+	border-radius: var(--radius-sm);
+	border: 1px solid var(--border);
+	background: var(--surface);
+	color: var(--muted);
+	cursor: pointer;
+	flex-shrink: 0;
+	opacity: 100%;
+	transition:
+		opacity 0.15s,
+		background 0.15s,
+		color 0.15s,
+		border-color 0.15s;
+}
+@media (hover: hover) {
+	.playBtnLayout:hover {
+		background: var(--surface2);
+		color: var(--accent);
+		border-color: var(--accent);
+	}
+}
+.textStyle {
+	color: var(--fs-sm);
+}
+.numLayout {
+	font-size: 12px;
+	font-weight: 700;
+	font-family: var(--font-base);
+	color: var(--muted);
+	width: 1.5625rem;
+	text-align: right;
+	flex-shrink: 0;
+}
+@media (max-width: 640px) {
+	.numLayout {
+		display: none;
+	}
+}
+.coverLayout {
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: var(--radius-xs);
+	object-fit: cover;
+	flex-shrink: 0;
+	border: 1px solid var(--border);
+}
+.legacyIconLayout {
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: var(--radius-xs);
+	background: var(--surface2);
+	border: 1px solid var(--border);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+.trackRowLayout {
+	display: flex;
+	align-items: center;
+	gap: 0.875rem;
+	padding: 9px 14px;
+	border-radius: 1rem;
+	border: 1px solid transparent;
+	transition: all 0.15s;
+	cursor: pointer;
+	text-decoration-line: none;
+	color: var(--text);
+}
+@media (hover: hover) {
+	.trackRowLayout:hover {
+		background: var(--surface);
+		border-color: var(--border);
+	}
+}
+.trackRowLayout:hover .playBtnLayout {
+	opacity: 100%;
+}
+.trackRowLayout:hover .addToPlaylistBtnLayout {
+	opacity: 100%;
+}
+.trackRowLayout:active {
+	transform: scale(0.995);
+}
+@media (max-width: 640px) {
+	.trackRowLayout {
+		gap: 0.625rem;
+		padding: 8px 10px;
+	}
+}
+.coverPlaceholderLayout {
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: var(--radius-xs);
+	background: var(--surface2);
+	border: 1px solid var(--border);
+	flex-shrink: 0;
+}

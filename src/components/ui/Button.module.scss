@@ -97,3 +97,108 @@
 		opacity: 0.88;
 	}
 }
+
+.pillLayout {
+	height: auto;
+	border-radius: 9999px;
+	background-color: var(--accent);
+	padding-inline: 1.75rem;
+	padding-block: 0.75rem;
+	font-size: 0.84rem;
+	color: var(--bg);
+}
+@media (hover: hover) {
+	.pillLayout:hover:not(:disabled) {
+		opacity: 0.88;
+	}
+}
+.size-smLayout {
+	height: 1.75rem;
+	padding-inline: 0.75rem;
+	color: var(--fs-xs);
+}
+.size-mdLayout {
+	height: var(--control-h-md);
+	padding-inline: 1rem;
+	color: var(--fs-sm);
+}
+.size-lgLayout {
+	height: var(--control-h-lg);
+	padding-inline: 1.5rem;
+	color: var(--fs-md);
+}
+.primaryStyle {
+	background-color: var(--accent);
+	color: var(--bg);
+}
+@media (hover: hover) {
+	.primaryStyle:hover:not(:disabled) {
+		opacity: 0.88;
+	}
+}
+.secondaryLayout {
+	border-color: var(--border);
+	background-color: var(--surface);
+	color: var(--text);
+}
+@media (hover: hover) {
+	.secondaryLayout:hover:not(:disabled) {
+		border-color: var(--accent-border);
+		background-color: var(--surface2);
+	}
+}
+.ghostStyle {
+	border-color: transparent;
+	background-color: transparent;
+	color: var(--muted);
+}
+@media (hover: hover) {
+	.ghostStyle:hover:not(:disabled) {
+		background-color: var(--surface2);
+		color: var(--text);
+	}
+}
+.dangerLayout {
+	border-color: var(--danger-border);
+	background-color: var(--danger-surface);
+	color: var(--danger);
+}
+@media (hover: hover) {
+	.dangerLayout:hover:not(:disabled) {
+		border-color: var(--danger-border-strong);
+		background-color: var(--danger-hover);
+	}
+}
+.baseLayout {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	border-radius: var(--radius-md);
+	border-style: solid;
+	border-width: 1px;
+	border-color: transparent;
+	font-family: var(--font-base);
+	font-weight: 700;
+	white-space: nowrap;
+	outline-style: none;
+	transition-property: background, border-color, color, opacity;
+	transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+	transition-duration: 150ms;
+}
+.baseLayout:disabled {
+	cursor: not-allowed;
+	opacity: 50%;
+}
+.baseLayout:focus-visible {
+	border-color: var(--accent-border-strong);
+	box-shadow: 0 0 0 3px var(--accent-surface);
+}
+.elementStyle {
+	flex-shrink: 0;
+}
+.iconLayout {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+}

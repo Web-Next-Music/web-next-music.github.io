@@ -12,6 +12,7 @@ import { cx } from "@/lib/cx";
 import Dropdown from "@/components/ui/Dropdown";
 import dropdownStyles from "@/components/ui/Dropdown.module.scss";
 import { useClickOutside } from "@/lib/useClickOutside";
+import styles from "./AuthButton.module.scss";
 
 const starredCache = new Map<string, boolean>();
 const ddetectorCache = new Map<string, boolean>();
@@ -55,23 +56,11 @@ export default function AuthButton() {
 		});
 	}, [userId]);
 
-	if (loading)
-		return (
-			<div
-				className={
-					"w-8 h-8 rounded-(--radius-full) [background:var(--accent-mark-bg)] [border:1px_solid_var(--accent-border)] animate-[nm-pulse_1.4s_var(--ease-in-out)_infinite]"
-				}
-			/>
-		);
+	if (loading) return <div className={styles.avatarSkeletonLayout} />;
 
 	if (!user) {
 		return (
-			<button
-				className={
-					"font-(family-name:--font-heading-large) text-[14px] font-bold text-muted p-[6px_14px] rounded-xs [border:1px_solid_var(--border)] bg-none cursor-pointer [transition:color_0.15s,border-color_0.15s,background_0.15s] whitespace-nowrap hover:text-accent hover:border-accent hover:[background:var(--badge-background-color)]"
-				}
-				onClick={openAuthModal}
-			>
+			<button className={styles.signInBtnLayout} onClick={openAuthModal}>
 				Sign In
 			</button>
 		);
@@ -85,14 +74,12 @@ export default function AuthButton() {
 		"?")[0].toUpperCase();
 
 	return (
-		<div className="relative" ref={wrapRef}>
+		<div className={styles.wrap} ref={wrapRef}>
 			<button
 				ref={anchorRef}
 				className={cx(
-					"relative w-8 h-8 rounded-(--radius-full) [background:var(--accent-mark-bg)] [border:1px_solid_var(--accent-border-strong)] text-accent font-(family-name:--font-heading-large) text-[13px] font-bold cursor-pointer flex items-center justify-center [transition:background_0.15s,border-color_0.15s] hover:[background:var(--accent-surface-hover)] hover:border-(--accent-border-strong)",
-					githubStarred &&
-						!isBanned &&
-						"mask-[radial-gradient(circle_at_26px_26px,transparent_8px,black_8px)]",
+					styles.avatarBtnLayout,
+					githubStarred && !isBanned && styles.avatarBtnStarred,
 				)}
 				onClick={() => setDropdownOpen((v) => !v)}
 				aria-label="Account menu"
@@ -104,21 +91,14 @@ export default function AuthButton() {
 						alt={initial}
 						width={32}
 						height={32}
-						className={
-							"w-full h-full rounded-(--radius-full) object-cover block"
-						}
+						className={styles.avatarImg}
 					/>
 				) : (
 					initial
 				)}
 			</button>
 			{githubStarred && !isBanned && (
-				<span
-					className={
-						"absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-(--radius-full) flex items-center justify-center text-[#e3b341] leading-0 pointer-events-none"
-					}
-					aria-hidden="true"
-				>
+				<span className={styles.avatarStar} aria-hidden="true">
 					<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
 						<polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
 					</svg>

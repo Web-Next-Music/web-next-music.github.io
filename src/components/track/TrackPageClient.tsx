@@ -35,6 +35,7 @@ import {
 	ExternalLink as ExternalLinkIcon,
 	Clock as ClockIcon,
 } from "lucide-react";
+import styles from "./TrackPageClient.module.scss";
 
 function downloadDirect(audioUrl: string) {
 	window.open(audioUrl, "_blank");
@@ -373,34 +374,29 @@ function TrackPageContent({
 
 	if (!storeReady) {
 		return (
-			<div className="flex min-h-[60vh] flex-col items-center justify-center gap-3.5 p-10 text-center">
-				<div className="flex items-center gap-1.5 [&_span]:size-1.75 [&_span]:animate-[nm-pulse-glow_1.2s_ease-in-out_infinite] [&_span]:rounded-full [&_span]:bg-accent [&_span]:opacity-40 [&_span:nth-child(2)]:[animation-delay:.2s] [&_span:nth-child(3)]:[animation-delay:.4s]">
+			<div className={styles.loadingState}>
+				<div className={styles.loadingDots}>
 					<span />
 					<span />
 					<span />
 				</div>
-				<p className="text-sm text-muted">Loading track…</p>
+				<p className={styles.loadingText}>Loading track…</p>
 			</div>
 		);
 	}
 
 	if (notFound) {
 		return (
-			<div className="flex min-h-[60vh] flex-col items-center justify-center gap-3.5 p-10 text-center">
-				<div className="opacity-50">
+			<div className={styles.loadingState}>
+				<div className={styles.errorIcon}>
 					<InfoCircleIcon width={48} height={48} />
 				</div>
-				<h2 className="font-(family-name:--font-heading-large) text-[22px] font-bold text-foreground">
-					Track not found
-				</h2>
+				<h2 className={styles.errorTitle}>Track not found</h2>
 
-				<p className="text-sm text-muted">
+				<p className={styles.loadingText}>
 					{id ? `Track with ID ${id} was not found` : "Track not found"}
 				</p>
-				<button
-					className="mt-2 rounded-sm border border-border bg-surface px-4.5 py-2.25 text-[13px] text-foreground transition hover:border-accent hover:text-accent"
-					onClick={() => router.back()}
-				>
+				<button className={styles.backButton} onClick={() => router.back()}>
 					Back
 				</button>
 			</div>
@@ -409,8 +405,8 @@ function TrackPageContent({
 
 	if (!displayTrack) {
 		return (
-			<div className="flex min-h-[60vh] flex-col items-center justify-center gap-3.5 p-10 text-center">
-				<div className="flex items-center gap-1.5 [&_span]:size-1.75 [&_span]:animate-[nm-pulse-glow_1.2s_ease-in-out_infinite] [&_span]:rounded-full [&_span]:bg-accent [&_span]:opacity-40 [&_span:nth-child(2)]:[animation-delay:.2s] [&_span:nth-child(3)]:[animation-delay:.4s]">
+			<div className={styles.loadingState}>
+				<div className={styles.loadingDots}>
 					<span />
 					<span />
 					<span />
@@ -426,12 +422,12 @@ function TrackPageContent({
 		: stableTrackKey(directUrl, paramTitle, paramArtist, paramCover);
 
 	return (
-		<div className="mx-auto max-w-255 py-5 max-[720px]:px-1.25 max-[720px]:pt-6.25 max-[720px]:pb-3.75">
+		<div className={styles.page}>
 			<div
-				className={`flex items-start gap-3 px-2.5 max-[720px]:flex-col max-[720px]:items-stretch ${!showLyrics ? "justify-center" : ""}`}
+				className={`${styles.trackLayout} ${!showLyrics ? styles.centeredLayout : ""}`}
 			>
 				<button
-					className="mt-0 flex size-8 shrink-0 items-center justify-center self-start rounded-sm border border-border bg-surface text-muted transition-[color,border-color,background] hover:border-accent hover:bg-surface-raised hover:text-foreground max-[720px]:mb-3.75"
+					className={styles.backIconButton}
 					onClick={() => router.back()}
 					style={{
 						display: isHiddenMode ? "none" : "auto",
@@ -440,26 +436,26 @@ function TrackPageContent({
 					<ArrowLeftIcon />
 				</button>
 				<div
-					className={`grid min-w-0 flex-1 grid-cols-[300px_1fr] items-start gap-4 max-[720px]:grid-cols-1 ${!showLyrics ? "flex-none grid-cols-[360px] max-[720px]:grid-cols-1" : ""}`}
+					className={`${styles.trackGrid} ${!showLyrics ? styles.singleColumnGrid : ""}`}
 				>
-					<div className="relative flex flex-col gap-2.5 overflow-hidden rounded-2xl border border-border bg-surface p-5 max-[720px]:static max-[720px]:flex-row max-[720px]:flex-wrap max-[720px]:gap-3">
-						<div className="group relative aspect-square w-full shrink-0 overflow-hidden rounded-md max-[720px]:w-22.5">
+					<div className={styles.trackCard}>
+						<div className={styles.cover}>
 							{displayTrack?.cover ? (
 								<Image
 									src={displayTrack?.cover}
 									alt={displayTrack?.title}
 									fill
 									sizes="(max-width: 720px) 90px, 300px"
-									className="block size-full rounded-md border border-border object-cover"
+									className={styles.coverImage}
 								/>
 							) : (
-								<div className="flex size-full items-center justify-center rounded-md border border-border bg-surface-raised">
+								<div className={styles.coverPlaceholder}>
 									<MusicNoteIcon width={48} height={48} />
 								</div>
 							)}
 
 							<button
-								className="absolute inset-0 z-2 flex items-center justify-center border-0 bg-transparent text-white opacity-0 transition-opacity group-hover:opacity-100"
+								className={styles.coverPlayButton}
 								onClick={
 									isThisPlaying
 										? player?.pause
@@ -471,7 +467,7 @@ function TrackPageContent({
 								aria-label={isThisPlaying ? "Pause" : "Play"}
 							>
 								{exclusiveLoading ? (
-									<div className="inline-flex items-center gap-0.75 [&_span]:size-1 [&_span]:animate-[nm-pulse-glow_1.2s_ease-in-out_infinite] [&_span]:rounded-full [&_span]:bg-accent [&_span]:opacity-50 [&_span:nth-child(2)]:[animation-delay:.2s] [&_span:nth-child(3)]:[animation-delay:.4s]">
+									<div className={styles.playLoadingDots}>
 										<span />
 										<span />
 
@@ -485,7 +481,7 @@ function TrackPageContent({
 							</button>
 
 							{isThisPlaying && (
-								<div className="absolute right-2.5 bottom-2.5 z-3 flex items-end gap-0.75 [&_span]:origin-bottom [&_span]:animate-[waveBar_1s_ease-in-out_infinite] [&_span]:rounded-xs [&_span]:bg-accent [&_span:nth-child(1)]:h-2 [&_span:nth-child(2)]:h-3.5 [&_span:nth-child(2)]:[animation-delay:.15s] [&_span:nth-child(3)]:h-1.5 [&_span:nth-child(3)]:[animation-delay:.3s]">
+								<div className={styles.playingBars}>
 									<span />
 									<span />
 
@@ -494,22 +490,20 @@ function TrackPageContent({
 							)}
 						</div>
 
-						<div className="flex flex-col gap-2.5 max-[720px]:min-w-0 max-[720px]:flex-1">
-							<div className="flex items-center justify-between gap-2">
+						<div className={styles.trackInfo}>
+							<div className={styles.titleRow}>
 								<div>
-									<div className="flex items-center justify-between gap-2">
-										<h1 className="mt-1 font-sans text-[18px] font-extrabold tracking-[-0.3px] text-foreground max-[720px]:text-base">
-											{displayTrack?.title}
-										</h1>
+									<div className={styles.titleRow}>
+										<h1 className={styles.title}>{displayTrack?.title}</h1>
 									</div>
-									<p className="mt-2.5 text-[13px] font-bold text-muted">
+									<p className={styles.artist}>
 										{displayTrack?.artist || "Unknown artist"}
 									</p>
 								</div>
 								{(displayTrack?.id || directUrl) && (
 									<LikeButton
 										compact
-										className="size-8.5 shrink-0 rounded-full opacity-100 [&_svg]:size-4.5"
+										className={styles.likeButton}
 										target={{
 											type: "track",
 
@@ -528,13 +522,11 @@ function TrackPageContent({
 								)}
 							</div>
 							{displayTrack?.id && (
-								<p className="m-0 text-[11px] font-bold text-muted opacity-50">
-									ID: {displayTrack?.id}
-								</p>
+								<p className={styles.trackId}>ID: {displayTrack?.id}</p>
 							)}
 						</div>
 
-						<div className="flex flex-col gap-2.5 max-[720px]:w-full max-[720px]:flex-row max-[720px]:flex-wrap">
+						<div className={styles.trackActions}>
 							{directUrl && !id && !isExclusive && (
 								<button
 									onClick={async () => {
@@ -553,7 +545,7 @@ function TrackPageContent({
 										}
 									}}
 									disabled={isDownloading}
-									className="inline-flex w-full items-center justify-center gap-1.75 rounded-sm border border-border bg-surface-raised px-3.5 py-2.25 text-[13px] font-bold text-foreground transition hover:border-accent hover:text-accent max-[720px]:min-w-25 max-[720px]:flex-1 max-[720px]:w-auto"
+									className={styles.trackAction}
 								>
 									<DownloadTrackIcon size={15} />
 
@@ -562,10 +554,7 @@ function TrackPageContent({
 							)}
 
 							{directUrl && !id && (
-								<button
-									onClick={handleCopyKey}
-									className="inline-flex w-full items-center justify-center gap-1.75 rounded-sm border border-border bg-surface-raised px-3.5 py-2.25 text-[13px] font-bold text-foreground transition hover:border-accent hover:text-accent max-[720px]:min-w-25 max-[720px]:flex-1 max-[720px]:w-auto"
-								>
+								<button onClick={handleCopyKey} className={styles.trackAction}>
 									<ClipboardIcon size={15} />
 
 									{copyKeyFeedback === "copied" ? "Copied!" : "Copy key"}
@@ -577,7 +566,7 @@ function TrackPageContent({
 									href={displayTrack?.yandexUrl}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="inline-flex w-full items-center justify-center gap-1.75 rounded-sm border border-border bg-surface-raised px-3.5 py-2.25 text-[13px] font-bold text-foreground transition hover:border-accent hover:text-accent max-[720px]:min-w-25 max-[720px]:flex-1 max-[720px]:w-auto"
+									className={styles.trackAction}
 								>
 									<ExternalLinkIcon size={14} />
 									Yandex Music
@@ -591,12 +580,12 @@ function TrackPageContent({
 					</div>
 
 					{showLyrics && (
-						<div className="sticky top-20 flex h-[calc(100dvh-160px)] min-h-100 max-h-205 flex-col overflow-hidden rounded-2xl border border-border bg-surface max-[720px]:static max-[720px]:h-[55vh] max-[720px]:min-h-75">
-							<div className="flex shrink-0 items-center justify-between border-b border-border px-4.5 py-3">
-								<span className="flex items-center gap-1.5 text-[11px] font-bold tracking-[.5px] text-muted uppercase">
+						<div className={styles.lyricsPanel}>
+							<div className={styles.lyricsHeader}>
+								<span className={styles.lyricsStatus}>
 									{lyricsLoading ? (
 										<>
-											<span className="inline-flex items-center gap-0.75 [&_span]:size-1 [&_span]:animate-[nm-pulse-glow_1.2s_ease-in-out_infinite] [&_span]:rounded-full [&_span]:bg-accent [&_span]:opacity-50 [&_span:nth-child(2)]:[animation-delay:.2s] [&_span:nth-child(3)]:[animation-delay:.4s]">
+											<span className={styles.playLoadingDots}>
 												<span />
 												<span />
 
@@ -620,7 +609,7 @@ function TrackPageContent({
 										href="https://lrclib.net/"
 										target="_blank"
 										rel="noopener noreferrer"
-										className="text-[11px] font-bold text-muted no-underline opacity-60 transition hover:text-accent hover:opacity-100"
+										className={styles.lyricsSource}
 									>
 										via lrclib.net
 									</a>
@@ -628,11 +617,11 @@ function TrackPageContent({
 							</div>
 
 							{lyricsLoading && (
-								<div className="flex flex-1 flex-col gap-4 p-4.5">
+								<div className={styles.lyricsSkeleton}>
 									{[80, 55, 90, 45, 70, 60, 85, 50, 75, 40].map((w, i) => (
 										<div
 											key={i}
-											className="h-4.25 animate-[shimmer_1.4s_ease-in-out_infinite] rounded-xs bg-surface-raised"
+											className={styles.lyricsSkeletonLine}
 											style={{
 												width: `${w}%`,
 
@@ -645,7 +634,7 @@ function TrackPageContent({
 
 							{!lyricsLoading && isSynced && (
 								<div
-									className="flex-1 overflow-y-auto overscroll-contain px-4.5 pt-4 [scrollbar-color:var(--border)_transparent] scrollbar-thin [&::-webkit-scrollbar]:w-0.75 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border"
+									className={styles.syncedLyrics}
 									ref={lyricsContainerRef}
 									onScroll={handleLyricsScroll}
 								>
@@ -656,11 +645,9 @@ function TrackPageContent({
 												lineRefs.current[i] = el;
 											}}
 											className={[
-												"cursor-pointer rounded-sm px-2.5 py-1.5 font-(family-name:--font-montserrat) text-[17px] font-bold leading-normal text-muted opacity-50 transition-[color,opacity,transform,background] hover:bg-surface-raised hover:text-foreground hover:opacity-85",
-												i === activeLine
-													? "translate-x-1 bg-(--active-lyrics-line-background-color) text-foreground! opacity-100"
-													: "",
-												i < activeLine ? "opacity-30" : "",
+												styles.lyricLine,
+												i === activeLine ? styles.activeLyricLine : "",
+												i < activeLine ? styles.pastLyricLine : "",
 											].join(" ")}
 											onClick={() => {
 												const audio = player?.audioRef.current;
@@ -683,21 +670,19 @@ function TrackPageContent({
 												if (!player?.isPlaying) player?.resume();
 											}}
 										>
-											<span className="inline-block w-[calc(100%-18px)] origin-left transition-transform">
-												{line.text}
-											</span>
+											<span className={styles.lyricText}>{line.text}</span>
 										</div>
 									))}
-									<div className="h-1/2 shrink-0" />
+									<div className={styles.lyricsSpacer} />
 								</div>
 							)}
 
 							{!lyricsLoading && !isSynced && hasLyrics && (
-								<div className="flex-1 overflow-y-auto px-6 py-4.5 [scrollbar-color:var(--border)_transparent] scrollbar-thin">
+								<div className={styles.plainLyrics}>
 									{lyrics!.plain!.split("\n").map((line, i) => (
 										<p
 											key={i}
-											className="m-0 animate-[lineIn_.35s_ease_both] font-(family-name:--font-heading-large) text-base leading-[1.85] text-foreground"
+											className={styles.plainLyricLine}
 											style={{
 												animationDelay: `${Math.min(i * 0.02, 0.5)}s`,
 											}}
@@ -709,7 +694,7 @@ function TrackPageContent({
 							)}
 
 							{!lyricsLoading && lyrics !== null && !hasLyrics && (
-								<div className="flex flex-1 flex-col items-center justify-center gap-3.5 p-10 text-center text-sm text-muted">
+								<div className={styles.emptyLyrics}>
 									<p>No lyrics found for this track.</p>
 								</div>
 							)}

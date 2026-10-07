@@ -155,3 +155,103 @@
 		grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
 	}
 }
+
+.sectionLayout {
+	margin: 0 auto;
+	padding: 60px 0;
+	background-color: var(--bg);
+	border-top: 1px solid var(--border);
+}
+@media (max-width: 900px) {
+	.sectionLayout {
+		padding: 1.25rem;
+	}
+}
+.gridLayout {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+	gap: 0.625rem;
+	min-height: 14.25rem;
+}
+@media (max-width: 900px) {
+	.gridLayout {
+		grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+	}
+}
+.cardLayout {
+	background: var(--bg);
+	border-radius: 1rem;
+	height: 6.75rem;
+	padding: 0.9375rem;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.9375rem;
+	transition: all 0.2s;
+	cursor: pointer;
+	border: 1px solid var(--border);
+}
+@media (hover: hover) {
+	.cardLayout:hover {
+		background: var(--surface);
+		border-color: var(--border);
+	}
+}
+.pageBtnLayout {
+	display: flex;
+	height: 2.125rem;
+	width: 2.125rem;
+	cursor: pointer;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--radius-full);
+}
+.pageBtnActiveLayout {
+	border-color: var(--accent);
+}
+.pageBtnLayout {
+	padding: 0px;
+	font-family: var(--font-base);
+	font-size: 13px;
+}
+.pageBtnActiveLayout {
+	font-weight: 700;
+}
+.pageBtnLayout {
+	font-weight: 800;
+}
+.pageBtnActiveLayout {
+	color: var(--bg);
+}
+.pageBtnLayout {
+	color: var(--text);
+}
+.pageBtnActiveLayout {
+	background: var(--accent);
+}
+.pageBtnLayout {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	transition:
+		background 0.15s,
+		border-color 0.15s,
+		color 0.15s;
+}
+.pageBtnLayout:disabled {
+	cursor: default;
+	opacity: 0.35;
+}
+.pageBtnActiveLayout:hover:not(:disabled) {
+	border-color: var(--accent2);
+}
+.pageBtnLayout:hover:not(:disabled) {
+	border-color: var(--accent);
+	color: var(--accent);
+}
+.pageBtnActiveLayout:hover:not(:disabled) {
+	color: var(--bg);
+	background: var(--accent2);
+}
+.pageBtnLayout:hover:not(:disabled) {
+	background: var(--surface2);
+}

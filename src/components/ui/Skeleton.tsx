@@ -2,6 +2,7 @@
 
 import type { CSSProperties, HTMLAttributes } from "react";
 import { cx } from "@/lib/cx";
+import styles from "./Skeleton.module.scss";
 
 export type SkeletonVariant = "line" | "block" | "circle";
 export type SkeletonRadius = "sm" | "md" | "lg" | "pill" | "full";
@@ -26,22 +27,21 @@ export default function Skeleton({
 	...rest
 }: Props) {
 	const variants: Record<SkeletonVariant, string> = {
-		line: "h-3 w-full",
-		block: "h-20 w-full",
-		circle: "size-9",
+		line: styles.line,
+		block: styles.block,
+		circle: styles.circle,
 	};
 	const radii: Record<SkeletonRadius, string> = {
-		sm: "rounded-xs",
-		md: "rounded-md",
-		lg: "rounded-lg",
-		pill: "rounded-full",
-		full: "rounded-full",
+		sm: styles.smStyle,
+		md: styles["radius-sm"],
+		lg: styles.lgStyle,
+		pill: styles["radius-pill"],
+		full: styles["radius-pill"],
 	};
 	const animations: Record<SkeletonAnimation, string> = {
 		none: "",
-		pulse: "animate-[nm-pulse_1.4s_var(--ease-in-out)_infinite]",
-		shimmer:
-			"animate-[nm-shimmer_1.4s_linear_infinite] bg-[linear-gradient(90deg,var(--surface)_25%,var(--surface2)_50%,var(--surface)_75%)] bg-[length:200%_100%]",
+		pulse: styles.pulseStyle,
+		shimmer: styles["anim-shimmerLayout"],
 	};
 	const resolvedRadius = radius ?? (variant === "circle" ? "full" : "sm");
 	const sizeStyle: CSSProperties = { ...style };
@@ -52,7 +52,7 @@ export default function Skeleton({
 		<div
 			aria-hidden="true"
 			className={cx(
-				"bg-surface-raised",
+				styles.elementStyle,
 				variants[variant],
 				radii[resolvedRadius],
 				animations[animation],
@@ -72,7 +72,7 @@ export function SkeletonText({
 	className?: string;
 }) {
 	return (
-		<div className={cx("flex flex-col gap-2", className)}>
+		<div className={cx(styles.text, className)}>
 			{Array.from({ length: lines }, (_, i) => (
 				<Skeleton
 					key={i}

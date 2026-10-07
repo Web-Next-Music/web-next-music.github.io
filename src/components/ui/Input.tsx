@@ -2,6 +2,7 @@
 
 import type { InputHTMLAttributes, ReactNode, Ref } from "react";
 import { cx } from "@/lib/cx";
+import styles from "./Input.module.scss";
 
 export type InputSize = "sm" | "md" | "lg";
 export type InputRadius = "sm" | "lg" | "pill";
@@ -30,42 +31,35 @@ export default function Input({
 	...rest
 }: InputProps) {
 	const sizes: Record<InputSize, string> = {
-		sm: "h-7 px-3 text-[var(--fs-xs)]",
-		md: "h-[var(--control-h-md)] px-3 text-[var(--fs-sm)]",
-		lg: "h-[var(--control-h-lg)] px-4 text-[var(--fs-md)]",
+		sm: styles["size-smLayout"],
+		md: styles["size-mdLayout"],
+		lg: styles["size-lgLayout"],
 	};
 	const radii: Record<InputRadius, string> = {
-		sm: "rounded-sm",
-		lg: "rounded-2xl",
-		pill: "rounded-full",
+		sm: styles.smStyle,
+		lg: styles["radius-lg"],
+		pill: styles["radius-pill"],
 	};
-	const iconOffset = size === "lg" ? "pl-10" : "pl-[34px]";
-	const rightIconOffset = size === "lg" ? "pr-10" : "pr-[34px]";
+	const iconOffset = size === "lg" ? styles.spacingStyle : styles.hasLeftLayout;
+	const rightIconOffset =
+		size === "lg" ? styles.elementStyle : styles.hasRightLayout;
 	return (
-		<div className={cx("relative flex w-full items-center", wrapperClassName)}>
-			{iconLeft && (
-				<span className="pointer-events-none absolute top-1/2 left-3 flex -translate-y-1/2 items-center text-muted">
-					{iconLeft}
-				</span>
-			)}
+		<div className={cx(styles.wrap, wrapperClassName)}>
+			{iconLeft && <span className={styles.iconLayout}>{iconLeft}</span>}
 			<input
 				aria-invalid={invalid || undefined}
 				className={cx(
-					"w-full border border-border bg-surface font-sans font-bold text-foreground outline-none transition-colors duration-200 focus:border-(--accent-border-strong) placeholder:text-muted disabled:cursor-not-allowed disabled:opacity-50",
+					styles.inputLayout,
 					sizes[size],
 					radii[radius],
 					iconLeft && iconOffset,
 					iconRight && rightIconOffset,
-					invalid && "focus:border-danger border-(--danger-border-strong)",
+					invalid && styles.invalidLayout,
 					className,
 				)}
 				{...rest}
 			/>
-			{iconRight && (
-				<span className="absolute top-1/2 right-2 flex -translate-y-1/2 items-center text-muted">
-					{iconRight}
-				</span>
-			)}
+			{iconRight && <span className={styles.iconLayout2}>{iconRight}</span>}
 		</div>
 	);
 }

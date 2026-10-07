@@ -19,6 +19,7 @@ import { cx } from "@/lib/cx";
 import IconButton from "@/components/ui/IconButton";
 import AddToPlaylistMenu from "./AddToPlaylistMenu";
 import LikeButton from "./LikeButton";
+import styles from "./TrackRow.module.scss";
 
 function buildHref(trackId: string, dbMeta?: TrackLikeMeta): string {
 	if (trackId.endsWith("-e")) return `/track?key=${trackId}`;
@@ -105,8 +106,8 @@ function PlayBtn({
 			variant="surface"
 			active={isThis}
 			className={cx(
-				"[&:hover:not(:disabled)]:[background:var(--surface2)] [&:hover:not(:disabled)]:text-accent [&:hover:not(:disabled)]:border-accent",
-				isThis ? "text-accent border-accent" : "text-muted",
+				styles.elementStyle,
+				isThis ? styles.textStyle : styles.textStyle2,
 			)}
 			onClick={handleClick}
 		>
@@ -152,60 +153,31 @@ export default function TrackRow({
 	return (
 		<TrackLink
 			href={href}
-			className={cx(
-				"flex items-center gap-3 p-[9px_12px] rounded-2xl [border:1px_solid_transparent] text-inherit no-underline [transition:background_var(--dur-base)_var(--ease-out),border-color_var(--dur-base)_var(--ease-out)] hover:[background:var(--surface)] hover:border-border [&:hover_.actions]:opacity-100",
-				isThis && "[background:var(--accent-bg-hover)]",
-			)}
+			className={cx(styles.rowLayout, isThis && styles.rowActive)}
 		>
-			<span
-				className={"text-[12px] font-bold text-muted w-4.5 text-right shrink-0"}
-			>
-				{index + 1}
-			</span>
-			<div className="relative w-10 h-10 shrink-0">
+			<span className={styles.num}>{index + 1}</span>
+			<div className={styles.coverLayout}>
 				{cover ? (
 					<Image
 						src={cover}
 						alt=""
 						width={40}
 						height={40}
-						className={
-							"w-10 h-10 rounded-xs object-cover block [border:1px_solid_var(--border)]"
-						}
+						className={styles.coverImgLayout}
 						loading="lazy"
 					/>
 				) : (
-					<div
-						className={
-							"w-10 h-10 rounded-xs [background:var(--surface2)] [border:1px_solid_var(--border)] flex items-center justify-center"
-						}
-					>
+					<div className={styles.coverPlaceholderLayout}>
 						<MusicIcon size={14} color="var(--muted)" />
 					</div>
 				)}
 			</div>
-			<div className={"flex-1 min-w-0 flex flex-col gap-0.5"}>
-				<span
-					className={
-						"text-[14px] font-extrabold text-foreground whitespace-nowrap overflow-hidden text-ellipsis"
-					}
-				>
-					{title}
-				</span>
-				{artist && (
-					<span
-						className={
-							"text-[12px] font-bold text-muted whitespace-nowrap overflow-hidden text-ellipsis"
-						}
-					>
-						{artist}
-					</span>
-				)}
+			<div className={styles.info}>
+				<span className={styles.title}>{title}</span>
+				{artist && <span className={styles.artist}>{artist}</span>}
 			</div>
 			<div
-				className={
-					"flex items-center gap-1.5 shrink-0 opacity-100 [transition:opacity_0.15s]"
-				}
+				className={styles.actionsLayout}
 				onClick={(e) => {
 					e.preventDefault();
 					e.stopPropagation();

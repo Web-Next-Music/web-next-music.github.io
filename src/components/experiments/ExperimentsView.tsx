@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import SearchInput from "@/components/ui/SearchInput";
 import Select from "@components/ui/Select";
+import styles from "./ExperimentsView.module.scss";
 
 const ROW_H = 36;
 const ITEM_MIN_W = 280;
@@ -62,7 +63,7 @@ function ExperimentFlag({
 	return (
 		<code
 			ref={codeRef}
-			className={`${"flex items-center w-full h-7.5 font-sans text-[12px] font-bold text-foreground [background:var(--surface)] [border:1px_solid_var(--border)] rounded-sm p-[0_12px] cursor-pointer overflow-hidden max-w-full min-w-0 [transition:border-color_0.6s_ease,color_0.6s_ease] hover:border-(--accent-border-strong) hover:[background:var(--accent-bg-hover)] hover:text-accent hover:[transition:border-color_0.15s,background_0.15s,color_0.15s] [&:hover_.flagTextScroll]:animate-[flag-scroll_3s_0.4s_linear_infinite_alternate]"} ${copied ? "border-[#22c55e] text-[#22c55e] [transition:border-color_0.15s_ease,color_0.15s_ease]" : ""}`}
+			className={`${styles.flagLayout} ${copied ? styles.flagCopied : ""}`}
 			onClick={onCopy}
 			style={
 				overflows
@@ -75,9 +76,7 @@ function ExperimentFlag({
 			<span
 				ref={textRef}
 				className={
-					overflows
-						? "whitespace-nowrap inline-block [.flag:hover_&]:animate-[flag-scroll_3s_0.4s_linear_infinite_alternate]"
-						: "whitespace-nowrap overflow-hidden text-ellipsis"
+					overflows ? styles.flagTextScrollLayout : styles.flagTextLayout
 				}
 			>
 				{name}
@@ -173,43 +172,19 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 	const spacerBottom = Math.max(0, (rows - endRow) * ROW_H);
 
 	return (
-		<div
-			className={
-				"grid grid-cols-[300px_1fr] h-[calc(100vh-var(--mini-player-h)-60px)] overflow-hidden max-w-300 ml-auto mr-auto [border-left:1px_solid_var(--border)] [border-right:1px_solid_var(--border)] [@media(max-width:_600px)]:grid-cols-[1fr] [@media(max-width:_600px)]:grid-rows-[auto_1fr] [@media(max-width:_600px)]:h-auto [@media(max-width:_600px)]:overflow-visible"
-			}
-		>
+		<div className={styles.layoutLayout}>
 			{/* Left sidebar */}
-			<aside
-				className={
-					"[border-right:1px_solid_var(--border)] p-5 flex flex-col gap-0 overflow-hidden min-w-0 [@media(max-width:_600px)]:p-[20px_20px_0]"
-				}
-			>
-				<div
-					className={
-						"flex flex-col gap-2.5 p-[14px_0] first:pt-0 [&+.sidebarBlock]:[border-top:1px_solid_var(--border)]"
-					}
-				>
-					<div
-						className={
-							"flex items-center gap-5 flex-wrap [&_h1]:font-(family-name:--font-heading-large) [&_h1]:text-[2rem] [&_h1]:font-extrabold [&_h1]:tracking-[-0.03em] [&_h1]:leading-none"
-						}
-					>
+			<aside className={styles.sidebarLayout}>
+				<div className={styles.sidebarBlockLayout}>
+					<div className={styles.heroTitleLayout}>
 						<h1>Experiments</h1>
 					</div>
-					<p
-						className={
-							"font-sans font-bold text-[13px] text-muted leading-[1.6]"
-						}
-					>
+					<p className={styles.heroSub}>
 						Yandex Music A/B experiment flags fetched from the API
 					</p>
 				</div>
-				<div
-					className={
-						"flex flex-col gap-2.5 p-[14px_0] first:pt-0 [&+.sidebarBlock]:[border-top:1px_solid_var(--border)]"
-					}
-				>
-					<ul className={"[list-style:none] flex flex-col gap-2.5"}>
+				<div className={styles.sidebarBlockLayout}>
+					<ul className={styles.platformStats}>
 						{(
 							[
 								{ label: "Total", value: "all" },
@@ -224,59 +199,23 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 									? experiments.length
 									: experiments.filter((e) => getPlatform(e) === value).length;
 							return (
-								<li
-									key={value}
-									className={
-										"flex items-center justify-between font-sans text-[12px] font-bold"
-									}
-								>
-									<span className={"text-muted font-extrabold text-[13px]"}>
-										{label}
-									</span>
-									<span
-										className={
-											"text-foreground [font-variant-numeric:tabular-nums] font-extrabold text-[13px]"
-										}
-									>
-										{count}
-									</span>
+								<li key={value} className={styles.platformStatLayout}>
+									<span className={styles.platformStatLabel}>{label}</span>
+									<span className={styles.platformStatCount}>{count}</span>
 								</li>
 							);
 						})}
 					</ul>
 				</div>
-				<div
-					className={
-						"flex flex-col gap-2.5 p-[14px_0] first:pt-0 [&+.sidebarBlock]:[border-top:1px_solid_var(--border)]"
-					}
-				>
-					<span
-						className={
-							"font-sans text-[12px] tracking-widest font-extrabold uppercase text-muted"
-						}
-					>
-						Last fetched
-					</span>
-					<span
-						className={"font-sans text-[12px] font-extrabold text-foreground"}
-					>
-						{localDate ?? fetchedAt}
-					</span>
+				<div className={styles.sidebarBlockLayout}>
+					<span className={styles.fetchLabel}>Last fetched</span>
+					<span className={styles.fetchTime}>{localDate ?? fetchedAt}</span>
 				</div>
 			</aside>
 
 			{/* Right panel: sticky toolbar + scrollable list */}
-			<div
-				ref={rightRef}
-				className={
-					"flex flex-col overflow-y-auto overflow-x-hidden min-w-0 [@media(max-width:_600px)]:overflow-visible"
-				}
-			>
-				<div
-					className={
-						"sticky top-0 z-20 [background:var(--bg)] [border-bottom:1px_solid_var(--border)] p-2.5 flex items-center gap-3"
-					}
-				>
+			<div ref={rightRef} className={styles.rightLayout}>
+				<div className={styles.toolbarLayout}>
 					<SearchInput
 						radius="pill"
 						size="sm"
@@ -285,17 +224,11 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 						onChange={(e) => setQuery(e.target.value)}
 						onClear={() => setQuery("")}
 						spellCheck={false}
-						wrapperClassName={
-							"flex-1 [max-width:400px] [@media(max-width:_600px)]:max-w-full"
-						}
+						wrapperClassName={styles.searchWrapLayout}
 					/>
-					<div className={"ml-auto shrink-0 flex items-center gap-2.5"}>
+					<div className={styles.toolbarRight}>
 						{(query || platform !== "all") && (
-							<span
-								className={
-									"font-sans text-[0.62rem] text-muted whitespace-nowrap"
-								}
-							>
+							<span className={styles.resultCount}>
 								{filtered.length} / {experiments.length}
 							</span>
 						)}
@@ -307,25 +240,17 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 					</div>
 				</div>
 
-				<main className={"p-5 flex-1 [@media(max-width:_600px)]:p-2.5"}>
+				<main className={styles.mainLayout}>
 					{filtered.length === 0 ? (
-						<p
-							className={
-								"font-sans text-[0.78rem] text-muted p-[48px_0] text-center"
-							}
-						>
+						<p className={styles.empty}>
 							No experiments match &quot;{query}&quot;
 						</p>
 					) : (
 						<div ref={wrapRef}>
 							<div style={{ height: spacerTop }} />
-							<ul
-								className={
-									"[list-style:none] grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-1.5 [@media(max-width:_600px)]:grid-cols-[1fr]"
-								}
-							>
+							<ul className={styles.listLayout}>
 								{visibleItems.map((name) => (
-									<li key={name} className={"flex min-w-0 overflow-hidden"}>
+									<li key={name} className={styles.item}>
 										<ExperimentFlag
 											name={name}
 											copied={copied === name}

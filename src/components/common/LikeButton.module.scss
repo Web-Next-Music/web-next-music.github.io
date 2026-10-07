@@ -52,3 +52,42 @@
 	opacity: 0.4;
 	cursor: not-allowed;
 }
+
+.compactLayout {
+	width: 1.875rem;
+	height: 1.875rem;
+	padding: 0px;
+	border-radius: 0.25rem;
+	justify-content: center;
+	transition: color 0.15s;
+}
+.btnLayout {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3125rem;
+	padding: 6px 12px;
+	border: none;
+	border-radius: var(--radius-sm);
+	background-image: none;
+	color: var(--muted);
+	font-family: var(--font-base);
+	font-size: 12px;
+	cursor: pointer;
+	transition: color 0.15s;
+}
+.btnLayout:hover:not(:disabled) {
+	color: var(--accent);
+	background-image: none;
+}
+.btnLayout.liked {
+	color: var(--accent);
+	background-image: none;
+}
+.btnLayout:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+.btnLayout.elementStyle {
+	color: var(--accent);
+	background-image: none;
+}

@@ -25,6 +25,7 @@ import {
 } from "@/lib/la/laAdmin";
 import { fetchClientTags } from "@/lib/la/laClientTags";
 import ServerLoadError from "@/components/la/ServerLoadError";
+import styles from "./LaSettingsClient.module.scss";
 
 export default function LaSettingsClient() {
 	const searchParams = useSearchParams();
@@ -164,46 +165,30 @@ export default function LaSettingsClient() {
 	return (
 		<>
 			<Header />
-			<div className={"max-w-160 m-[0_auto] p-5"}>
+			<div className={styles.page}>
 				{!signedOut && (
-					<div className={"flex justify-center items-center gap-4 mb-7"}>
+					<div className={styles.heroLayout}>
 						{(settings?.serverCoverUrl || publicInfo?.cover) && (
 							<Image
 								src={settings?.serverCoverUrl || publicInfo?.cover || ""}
 								alt=""
 								width={70}
 								height={70}
-								className={
-									"shrink-0 w-17.5 h-17.5 rounded-md object-cover [border:1px_solid_var(--border)] [background:var(--surface)]"
-								}
+								className={styles.avatarLayout}
 							/>
 						)}
-						<div className={"flex-1 min-w-0"}>
-							<h1
-								className={
-									"font-extrabold text-[1.7rem] tracking-[-0.02em] leading-[1.15] m-[0_0_6px] [word-break:break-word]"
-								}
-							>
+						<div className={styles.heroMain}>
+							<h1 className={styles.title}>
 								{settings?.name ||
 									publicInfo?.name ||
 									(missingParams ? "Server settings" : address)}
 							</h1>
 							{!missingParams && (settings?.name || publicInfo?.name) && (
-								<span
-									className={
-										"inline-flex items-center font-sans text-[0.82rem] text-muted tracking-[0.01em]"
-									}
-								>
-									{address}
-								</span>
+								<span className={styles.address}>{address}</span>
 							)}
 						</div>
 						{publicInfo?.version && (
-							<span
-								className={
-									"shrink-0 inline-flex items-center gap-1.5 font-sans text-[0.72rem] font-bold text-muted [background:var(--surface)] [border:1px_solid_var(--border)] rounded-(--radius-pill) p-[6px_13px] whitespace-nowrap mt-1.5"
-								}
-							>
+							<span className={styles.versionBadge}>
 								{publicInfo.version.startsWith("v")
 									? publicInfo.version
 									: `v${publicInfo.version}`}
@@ -213,11 +198,7 @@ export default function LaSettingsClient() {
 				)}
 
 				{missingParams && (
-					<div
-						className={
-							"font-sans text-[0.78rem] text-muted [background:var(--surface2,var(--surface))] [border:1px_solid_var(--border)] rounded-lg p-[16px_18px]"
-						}
-					>
+					<div className={styles.noticeLayout}>
 						Open this page with <code>?server=host</code> (optionally{" "}
 						<code>&amp;port=port</code>) to manage a server
 					</div>
@@ -232,21 +213,11 @@ export default function LaSettingsClient() {
 				)}
 
 				{!missingParams && !signedOut && (
-					<div
-						className={
-							"flex flex-col [background:var(--surface)] [border:1px_solid_var(--border)] rounded-2xl p-(--space-5) gap-(--space-5)"
-						}
-					>
-						{authLoading && (
-							<div
-								className={
-									"[background:var(--surface)] [border:1px_solid_var(--border)] h-45"
-								}
-							/>
-						)}
+					<div className={styles.card}>
+						{authLoading && <div className={styles.skeletonCard} />}
 
 						{!authLoading && user && !confirmed && (
-							<div className={"flex flex-col gap-4.5"}>
+							<div className={styles.confirmBlock}>
 								<Callout
 									tone="warning"
 									title="Confirm connection"
@@ -266,18 +237,14 @@ export default function LaSettingsClient() {
 									<strong>{address}</strong> to check admin access. Only
 									continue if you trust this server
 								</Callout>
-								<div
-									className={
-										"flex items-center gap-2.5 pt-4.5 [border-top:1px_solid_var(--border)]"
-									}
-								>
+								<div className={styles.confirmActions}>
 									<Button onClick={() => setConfirmed(true)}>Continue</Button>
 								</div>
 							</div>
 						)}
 
 						{!authLoading && user && confirmed && !githubToken && (
-							<div className={"flex flex-col gap-4.5"}>
+							<div className={styles.confirmBlock}>
 								<Callout
 									tone="warning"
 									title="GitHub session expired"
@@ -296,11 +263,7 @@ export default function LaSettingsClient() {
 									Your GitHub session needs to be refreshed before we can check
 									admin access on <strong>{address}</strong>
 								</Callout>
-								<div
-									className={
-										"flex items-center gap-2.5 pt-4.5 [border-top:1px_solid_var(--border)]"
-									}
-								>
+								<div className={styles.confirmActions}>
 									<Button disabled={signingIn} onClick={handleSignIn}>
 										{signingIn ? "Connecting…" : "Reconnect GitHub"}
 									</Button>
@@ -309,11 +272,7 @@ export default function LaSettingsClient() {
 						)}
 
 						{!authLoading && user && confirmed && loadingSettings && (
-							<div
-								className={
-									"[background:var(--surface)] [border:1px_solid_var(--border)] h-45"
-								}
-							/>
+							<div className={styles.skeletonCard} />
 						)}
 
 						{!authLoading &&
@@ -331,35 +290,13 @@ export default function LaSettingsClient() {
 
 						{confirmed && settings && !loadingSettings && (
 							<>
-								<div
-									className={
-										"[background:var(--surface2,var(--surface))] [border:1px_solid_var(--border)] rounded-lg p-(--space-5)"
-									}
-								>
-									<div
-										className={
-											"font-sans text-[1.05rem] font-extrabold text-(--text,inherit) tracking-[-0.01em] mb-4.5"
-										}
-									>
-										General
-									</div>
+								<div className={styles.sectionLayout}>
+									<div className={styles.sectionTitle}>General</div>
 
-									<div
-										className={
-											"flex flex-col gap-1.5 mb-4.5 pb-4.5 [border-bottom:1px_solid_var(--border)] last:mb-0 last:pb-0 last:[border-bottom:none]"
-										}
-									>
-										<span
-											className={
-												"font-sans text-[0.72rem] font-bold text-muted uppercase tracking-[0.03em]"
-											}
-										>
-											Cover URL
-										</span>
+									<div className={styles.fieldLayout}>
+										<span className={styles.label}>Cover URL</span>
 										<Input
-											className={
-												"[background:var(--surface2,var(--surface))] h-(--control-h-lg) text-[0.84rem]"
-											}
+											className={styles.input}
 											placeholder="https://example.com/cover.png"
 											value={draft.serverCoverUrl ?? ""}
 											onChange={(e) =>
@@ -371,22 +308,10 @@ export default function LaSettingsClient() {
 										/>
 									</div>
 
-									<div
-										className={
-											"flex flex-col gap-1.5 mb-4.5 pb-4.5 [border-bottom:1px_solid_var(--border)] last:mb-0 last:pb-0 last:[border-bottom:none]"
-										}
-									>
-										<span
-											className={
-												"font-sans text-[0.72rem] font-bold text-muted uppercase tracking-[0.03em]"
-											}
-										>
-											Name
-										</span>
+									<div className={styles.fieldLayout}>
+										<span className={styles.label}>Name</span>
 										<Input
-											className={
-												"[background:var(--surface2,var(--surface))] h-(--control-h-lg) text-[0.84rem]"
-											}
+											className={styles.input}
 											value={draft.name ?? ""}
 											onChange={(e) =>
 												setDraft((d) => ({
@@ -397,22 +322,10 @@ export default function LaSettingsClient() {
 										/>
 									</div>
 
-									<div
-										className={
-											"flex flex-col gap-1.5 mb-4.5 pb-4.5 [border-bottom:1px_solid_var(--border)] last:mb-0 last:pb-0 last:[border-bottom:none]"
-										}
-									>
-										<span
-											className={
-												"font-sans text-[0.72rem] font-bold text-muted uppercase tracking-[0.03em]"
-											}
-										>
-											Description
-										</span>
+									<div className={styles.fieldLayout}>
+										<span className={styles.label}>Description</span>
 										<Textarea
-											className={
-												"[background:var(--surface2,var(--surface))] min-h-19 text-[0.84rem] leading-normal"
-											}
+											className={styles.textarea}
 											value={draft.description ?? ""}
 											onChange={(e) =>
 												setDraft((d) => ({
@@ -424,32 +337,14 @@ export default function LaSettingsClient() {
 									</div>
 								</div>
 
-								<div
-									className={
-										"[background:var(--surface2,var(--surface))] [border:1px_solid_var(--border)] rounded-lg p-(--space-5)"
-									}
-								>
-									<div
-										className={
-											"font-sans text-[1.05rem] font-extrabold text-(--text,inherit) tracking-[-0.01em] mb-4.5"
-										}
-									>
-										Connection
-									</div>
+								<div className={styles.sectionLayout}>
+									<div className={styles.sectionTitle}>Connection</div>
 
-									<div
-										className={
-											"flex flex-col gap-1.5 mb-4.5 pb-4.5 [border-bottom:1px_solid_var(--border)] last:mb-0 last:pb-0 last:[border-bottom:none]"
-										}
-									>
-										<span
-											className={
-												"font-sans text-[0.72rem] font-bold text-muted uppercase tracking-[0.03em]"
-											}
-										>
+									<div className={styles.fieldLayout}>
+										<span className={styles.label}>
 											Supported client versions
 										</span>
-										<div className={"flex gap-3 *:flex-1"}>
+										<div className={styles.rowLayout}>
 											<Select
 												value={draft.minClientVersion ?? ""}
 												onChange={(v) =>
@@ -475,14 +370,8 @@ export default function LaSettingsClient() {
 										</div>
 									</div>
 
-									<div className={"flex items-center justify-between mt-4.5"}>
-										<span
-											className={
-												"font-sans text-[0.72rem] font-bold text-muted uppercase tracking-[0.03em]"
-											}
-										>
-											Allow dev clients
-										</span>
+									<div className={styles.toggleRow}>
+										<span className={styles.label}>Allow dev clients</span>
 										<Switch
 											checked={draft.devMode ?? false}
 											onCheckedChange={(devMode) =>
@@ -492,27 +381,19 @@ export default function LaSettingsClient() {
 									</div>
 								</div>
 
-								<div
-									className={
-										"flex items-center gap-3.5 pt-5.5 [border-top:1px_solid_var(--border)]"
-									}
-								>
+								<div className={styles.saveBar}>
 									<Button
-										className={"min-w-45"}
+										className={styles.saveBtn}
 										disabled={saving}
 										onClick={save}
 									>
 										{saving ? "Saving…" : "Save"}
 									</Button>
 									{saveError && (
-										<span className={"font-sans text-[0.75rem] text-muted"}>
-											{saveError}
-										</span>
+										<span className={styles.textStyle}>{saveError}</span>
 									)}
 									{!saveError && savedAt && (
-										<span className={"[composes:status] text-accent font-bold"}>
-											Saved
-										</span>
+										<span className={styles.statusOkLayout}>Saved</span>
 									)}
 								</div>
 							</>

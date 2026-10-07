@@ -2,6 +2,7 @@
 
 import type { HTMLAttributes } from "react";
 import { cx } from "@/lib/cx";
+import styles from "./Divider.module.scss";
 
 export type DividerSpacing = "none" | "sm" | "md" | "lg";
 
@@ -17,18 +18,20 @@ export default function Divider({
 	...rest
 }: Props) {
 	const spacingClasses: Record<DividerSpacing, string> = {
-		none: "m-0",
-		sm: orientation === "horizontal" ? "my-2" : "mx-2",
-		md: orientation === "horizontal" ? "my-4" : "mx-4",
-		lg: orientation === "horizontal" ? "my-6" : "mx-6",
+		none: styles["gap-none"],
+		sm: orientation === "horizontal" ? styles.smStyle : styles.smStyle2,
+		md: orientation === "horizontal" ? styles.mdStyle : styles.mdStyle2,
+		lg: orientation === "horizontal" ? styles.lgStyle : styles.lgStyle2,
 	};
 	return (
 		<div
 			role="separator"
 			aria-orientation={orientation}
 			className={cx(
-				"bg-border",
-				orientation === "horizontal" ? "h-px w-full" : "w-px self-stretch",
+				styles.elementStyle,
+				orientation === "horizontal"
+					? styles.horizontalLayout
+					: styles.verticalLayout,
 				spacingClasses[spacing],
 				className,
 			)}

@@ -2,6 +2,7 @@
 
 import type { ButtonHTMLAttributes, Ref } from "react";
 import { cx } from "@/lib/cx";
+import styles from "./IconButton.module.scss";
 
 export type IconButtonSize = "sm" | "md" | "lg";
 export type IconButtonVariant = "ghost" | "surface" | "danger";
@@ -25,17 +26,14 @@ export default function IconButton({
 	...rest
 }: Props) {
 	const variants: Record<IconButtonVariant, string> = {
-		ghost:
-			"border-transparent bg-transparent text-muted hover:not-disabled:bg-surface-raised hover:not-disabled:text-foreground",
-		surface:
-			"border-border bg-surface text-foreground hover:not-disabled:bg-surface-raised hover:not-disabled:text-foreground",
-		danger:
-			"border-transparent bg-transparent text-danger hover:not-disabled:bg-[var(--danger-surface)] hover:not-disabled:text-danger",
+		ghost: styles.ghostStyle,
+		surface: styles.surfaceLayout,
+		danger: styles.dangerStyle,
 	};
 	const sizes: Record<IconButtonSize, string> = {
-		sm: "size-[var(--icon-btn-sm)]",
-		md: "size-[var(--icon-btn-md)]",
-		lg: "size-[var(--icon-btn-lg)]",
+		sm: styles["size-sm"],
+		md: styles["size-md"],
+		lg: styles["size-lg"],
 	};
 	return (
 		<button
@@ -43,10 +41,8 @@ export default function IconButton({
 			aria-label={label}
 			title={label}
 			className={cx(
-				"inline-flex shrink-0 cursor-pointer items-center justify-center rounded-sm border p-0 font-sans font-bold outline-none transition-[background,border-color,color,opacity] duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50 focus-visible:border-(--accent-border-strong) focus-visible:shadow-[0_0_0_3px_var(--accent-surface)]",
-				active
-					? "border-(--accent-border) bg-(--accent-surface) text-accent hover:not-disabled:bg-(--accent-surface-hover) hover:not-disabled:text-accent"
-					: variants[variant],
+				styles.containerLayout,
+				active ? styles.activeLayout : variants[variant],
 				sizes[size],
 				className,
 			)}

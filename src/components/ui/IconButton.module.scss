@@ -51,3 +51,73 @@
 		color: var(--accent);
 	}
 }
+
+.containerLayout {
+	display: inline-flex;
+	flex-shrink: 0;
+	cursor: pointer;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--radius-sm);
+	border-style: solid;
+	border-width: 1px;
+	padding: 0px;
+	font-family: var(--font-base);
+	font-weight: 700;
+	outline-style: none;
+	transition-property: background, border-color, color, opacity;
+	transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+	transition-duration: 150ms;
+}
+.containerLayout:disabled {
+	cursor: not-allowed;
+	opacity: 50%;
+}
+.containerLayout:focus-visible {
+	border-color: var(--accent-border-strong);
+	box-shadow: 0 0 0 3px var(--accent-surface);
+}
+.activeLayout {
+	border-color: var(--accent-border);
+	background-color: var(--accent-surface);
+	color: var(--accent);
+}
+@media (hover: hover) {
+	.activeLayout:hover:not(:disabled) {
+		background-color: var(--accent-surface-hover);
+		color: var(--accent);
+	}
+}
+.ghostStyle {
+	border-color: transparent;
+	background-color: transparent;
+	color: var(--muted);
+}
+@media (hover: hover) {
+	.ghostStyle:hover:not(:disabled) {
+		background-color: var(--surface2);
+		color: var(--text);
+	}
+}
+.surfaceLayout {
+	border-color: var(--border);
+	background-color: var(--surface);
+	color: var(--text);
+}
+@media (hover: hover) {
+	.surfaceLayout:hover:not(:disabled) {
+		background-color: var(--surface2);
+		color: var(--text);
+	}
+}
+.dangerStyle {
+	border-color: transparent;
+	background-color: transparent;
+	color: var(--danger);
+}
+@media (hover: hover) {
+	.dangerStyle:hover:not(:disabled) {
+		background-color: var(--danger-surface);
+		color: var(--danger);
+	}
+}

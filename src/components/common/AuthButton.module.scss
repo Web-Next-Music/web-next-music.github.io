@@ -85,3 +85,60 @@
 	line-height: 0;
 	pointer-events: none;
 }
+
+.avatarSkeletonLayout {
+	width: 2rem;
+	height: 2rem;
+	border-radius: var(--radius-full);
+	background: var(--accent-mark-bg);
+	border: 1px solid var(--accent-border);
+	animation: nm-pulse 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+.signInBtnLayout {
+	font-family: var(--font-heading-large);
+	font-size: 14px;
+	font-weight: 700;
+	color: var(--muted);
+	padding: 6px 14px;
+	border-radius: var(--radius-xs);
+	border: 1px solid var(--border);
+	background-image: none;
+	cursor: pointer;
+	transition:
+		color 0.15s,
+		border-color 0.15s,
+		background 0.15s;
+	white-space: nowrap;
+}
+@media (hover: hover) {
+	.signInBtnLayout:hover {
+		color: var(--accent);
+		border-color: var(--accent);
+		background: var(--badge-background-color);
+	}
+}
+.avatarBtnLayout {
+	position: relative;
+	width: 2rem;
+	height: 2rem;
+	border-radius: var(--radius-full);
+	background: var(--accent-mark-bg);
+	border: 1px solid var(--accent-border-strong);
+	color: var(--accent);
+	font-family: var(--font-heading-large);
+	font-size: 13px;
+	font-weight: 700;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition:
+		background 0.15s,
+		border-color 0.15s;
+}
+@media (hover: hover) {
+	.avatarBtnLayout:hover {
+		background: var(--accent-surface-hover);
+		border-color: var(--accent-border-strong);
+	}
+}
