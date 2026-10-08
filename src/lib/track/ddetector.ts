@@ -7,136 +7,96 @@ export interface DDetectorTrack {
 	cover: string | null;
 	added_at: string | null;
 }
-
 export interface LyricLine {
 	ts: string | null;
 	text: string;
 }
-
 export interface DDetectorLyricsEntry {
 	track_id: number;
 	lyrics: LyricLine[] | null;
 }
-
+function client() {
+	const sb = getSupabase();
+	if (!sb) throw new Error("Supabase is unavailable");
+	return sb;
+}
 export async function checkDDetectorAccess(userId: string): Promise<boolean> {
-	try {
-		const sb = getSupabase();
-		if (!sb) return false;
-		const { data, error } = await sb
-			.from("ddetector_users")
-			.select("user_id")
-			.eq("user_id", userId)
-			.maybeSingle();
-		if (error) return false;
-		return data !== null;
-	} catch {
-		return false;
+	const { data, error } = await client()
+		.from("ddetector_users")
+		.select("user_id")
+		.eq("user_id", userId)
+		.maybeSingle();
+	if (error) throw error;
+	return data !== null;
+}
+async function rows<T>(
+	table:
+		"ddetector_tracks" | "ddetector_lyrics_cache" | "ddetector_ignored_tracks",
+	columns: string,
+	key: string,
+	byDate = false,
+): Promise<T[]> {
+	const sb = client();
+	const all: T[] = [];
+	const size = 1000;
+	for (let offset = 0; ; offset += size) {
+		let query = sb.from(table).select(columns);
+		if (byDate) query = query.order("added_at", { ascending: false });
+		const { data, error } = await query
+			.order(key, { ascending: true })
+			.range(offset, offset + size - 1);
+		if (error) throw error;
+		all.push(...((data as unknown as T[]) ?? []));
+		if (!data || data.length < size) return all;
 	}
 }
-
-export async function fetchDDetectorTracks(): Promise<DDetectorTrack[]> {
-	try {
-		const sb = getSupabase();
-		if (!sb) return [];
-		const PAGE = 1000;
-		const all: DDetectorTrack[] = [];
-		let offset = 0;
-		while (true) {
-			const { data, error } = await sb
-				.from("ddetector_tracks")
-				.select("id, title, artist, cover, added_at")
-				.order("added_at", { ascending: false })
-				.range(offset, offset + PAGE - 1);
-			if (error) {
-				console.error("fetchDDetectorTracks:", error.message);
-				break;
-			}
-			all.push(...((data ?? []) as DDetectorTrack[]));
-			if ((data ?? []).length < PAGE) break;
-			offset += PAGE;
-		}
-		return all;
-	} catch (e) {
-		console.error("fetchDDetectorTracks:", e);
-		return [];
-	}
+export function fetchDDetectorTracks(): Promise<DDetectorTrack[]> {
+	return rows(
+		"ddetector_tracks",
+		"id, title, artist, cover, added_at",
+		"id",
+		true,
+	);
 }
-
 export async function fetchDDetectorLyrics(): Promise<
 	Map<number, LyricLine[] | null>
 > {
-	try {
-		const sb = getSupabase();
-		if (!sb) return new Map();
-		const PAGE = 1000;
-		const map = new Map<number, LyricLine[] | null>();
-		let offset = 0;
-		while (true) {
-			const { data, error } = await sb
-				.from("ddetector_lyrics_cache")
-				.select("track_id, lyrics")
-				.range(offset, offset + PAGE - 1);
-			if (error) {
-				console.error("fetchDDetectorLyrics:", error.message);
-				break;
-			}
-			for (const row of data ?? []) {
-				map.set(
-					(row as DDetectorLyricsEntry).track_id,
-					(row as DDetectorLyricsEntry).lyrics,
-				);
-			}
-			if ((data ?? []).length < PAGE) break;
-			offset += PAGE;
-		}
-		return map;
-	} catch (e) {
-		console.error("fetchDDetectorLyrics:", e);
-		return new Map();
-	}
+	return new Map(
+		(
+			await rows<DDetectorLyricsEntry>(
+				"ddetector_lyrics_cache",
+				"track_id, lyrics",
+				"track_id",
+			)
+		).map((row) => [row.track_id, row.lyrics]),
+	);
 }
-
 export async function fetchIgnoredTrackIds(): Promise<Set<number>> {
-	try {
-		const sb = getSupabase();
-		if (!sb) return new Set();
-		const { data, error } = await sb
-			.from("ddetector_ignored_tracks")
-			.select("track_id");
-		if (error) return new Set();
-		return new Set((data ?? []).map((r: { track_id: number }) => r.track_id));
-	} catch {
-		return new Set();
-	}
+	return new Set(
+		(
+			await rows<{ track_id: number }>(
+				"ddetector_ignored_tracks",
+				"track_id",
+				"track_id",
+			)
+		).map((row) => row.track_id),
+	);
 }
-
 export async function addIgnoredTrack(trackId: number): Promise<boolean> {
-	try {
-		const sb = getSupabase();
-		if (!sb) return false;
-		const { error } = await sb
-			.from("ddetector_ignored_tracks")
-			.insert({ track_id: trackId });
-		return !error;
-	} catch {
-		return false;
-	}
+	const { error } = await client()
+		.from("ddetector_ignored_tracks")
+		.insert({ track_id: trackId });
+	if (error) throw error;
+	return true;
 }
-
 export async function removeIgnoredTrack(trackId: number): Promise<boolean> {
-	try {
-		const sb = getSupabase();
-		if (!sb) return false;
-		const { error } = await sb
-			.from("ddetector_ignored_tracks")
-			.delete()
-			.eq("track_id", trackId);
-		return !error;
-	} catch {
-		return false;
-	}
+	const { error } = await client()
+		.from("ddetector_ignored_tracks")
+		.delete()
+		.eq("track_id", trackId);
+	if (error) throw error;
+	return true;
 }
-
 export async function triggerDDetectorFetch(accessToken: string): Promise<{
 	ok: boolean;
 	total?: number;
@@ -144,29 +104,17 @@ export async function triggerDDetectorFetch(accessToken: string): Promise<{
 	removed?: number;
 	lyrics_fetched?: number;
 	error?: string;
-	_debug?: unknown;
 }> {
-	try {
-		const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-		if (!supabaseUrl)
-			return { ok: false, error: "NEXT_PUBLIC_SUPABASE_URL not set" };
-
-		const res = await fetch(`${supabaseUrl}/functions/v1/ddetector-fetch`, {
-			method: "POST",
-			headers: {
-				Authorization: `Bearer ${accessToken}`,
-				"Content-Type": "application/json",
-			},
-		});
-
-		const json = await res.json().catch(() => ({}));
-		if (!res.ok)
-			return {
-				ok: false,
-				error: (json as { error?: string }).error ?? `HTTP ${res.status}`,
-			};
-		return { ok: true, ...(json as object) };
-	} catch (e) {
-		return { ok: false, error: String(e) };
-	}
+	const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+	if (!url) throw new Error("NEXT_PUBLIC_SUPABASE_URL not set");
+	const res = await fetch(`${url}/functions/v1/ddetector-fetch`, {
+		method: "POST",
+		headers: {
+			Authorization: `Bearer ${accessToken}`,
+			"Content-Type": "application/json",
+		},
+	});
+	const json = await res.json();
+	if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+	return { ...json, ok: true };
 }

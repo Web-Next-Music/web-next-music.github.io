@@ -3,6 +3,14 @@ import type { NowPlaying } from "./player";
 import type { LegacyTrack } from "./track";
 import type { Playlist } from "@/lib/supabase/playlists";
 
+export interface PopoverOptions {
+	align?: "start" | "end";
+	side?: "top" | "bottom";
+	offset?: number;
+	minWidth?: number;
+	matchAnchorWidth?: boolean;
+}
+
 export interface CardShellProps {
 	delay?: number;
 	live?: boolean;

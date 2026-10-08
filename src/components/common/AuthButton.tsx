@@ -12,7 +12,7 @@ import { checkDDetectorAccess } from "@/lib/track/ddetector";
 import { cx } from "@/lib/cx";
 import Dropdown from "@/components/ui/Dropdown";
 import dropdownStyles from "@/components/ui/Dropdown.module.scss";
-import { useClickOutside } from "@/lib/useClickOutside";
+
 import styles from "./AuthButton.module.scss";
 
 const starredCache = new Map<string, boolean>();
@@ -30,10 +30,8 @@ export default function AuthButton() {
 		user?.id ? (ddetectorCache.get(user.id) ?? false) : false,
 	);
 	const anchorRef = useRef<HTMLButtonElement>(null);
-	const wrapRef = useRef<HTMLDivElement>(null);
-	const closeDropdown = useCallback(() => setDropdownOpen(false), []);
 
-	useClickOutside(wrapRef, dropdownOpen, closeDropdown);
+	const closeDropdown = useCallback(() => setDropdownOpen(false), []);
 
 	useEffect(() => {
 		if (!userId) return;
@@ -75,7 +73,7 @@ export default function AuthButton() {
 		"?")[0].toUpperCase();
 
 	return (
-		<div className={styles.wrap} ref={wrapRef}>
+		<div className={styles.wrap}>
 			<button
 				ref={anchorRef}
 				className={cx(
@@ -84,6 +82,8 @@ export default function AuthButton() {
 				)}
 				onClick={() => setDropdownOpen((v) => !v)}
 				aria-label="Account menu"
+				aria-expanded={dropdownOpen}
+				aria-haspopup="dialog"
 				title={user.user_metadata?.user_name ?? user.email}
 			>
 				{avatarUrl ? (
@@ -106,7 +106,12 @@ export default function AuthButton() {
 				</span>
 			)}
 
-			<Dropdown open={dropdownOpen} align="end">
+			<Dropdown
+				open={dropdownOpen}
+				onClose={closeDropdown}
+				anchorRef={anchorRef}
+				align="end"
+			>
 				<p className={dropdownStyles.header}>
 					{user.user_metadata?.user_name ?? user.email}
 				</p>

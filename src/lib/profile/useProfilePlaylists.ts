@@ -1,4 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+	AuthScopeChangedError,
+	queryKeys,
+	useAuthMutation,
+	usePrivateQuery,
+	useQueryScope,
+} from "@/lib/query";
 import {
 	getPlaylists,
 	createPlaylist,
@@ -7,7 +15,6 @@ import {
 	getPlaylistTracks,
 	addTrackToPlaylist,
 	removeTrackFromPlaylist,
-	type Playlist,
 } from "@/lib/supabase/playlists";
 import {
 	getPinnedPlaylistIds,
@@ -16,125 +23,141 @@ import {
 } from "@/lib/supabase/publicProfile";
 
 export function useProfilePlaylists(userId: string | undefined) {
-	const [playlists, setPlaylists] = useState<Playlist[]>([]);
-	const [playlistsLoading, setPlaylistsLoading] = useState(false);
+	const client = useQueryClient();
+	const auth = useQueryScope();
+	const playlistsQuery = usePrivateQuery(userId, "playlists", () =>
+		getPlaylists(userId!),
+	);
+	const pinsQuery = usePrivateQuery(userId, "pins", () =>
+		getPinnedPlaylistIds(userId!),
+	);
+	const contentsKey = auth.key(queryKeys.private(userId, "playlist-contents"));
+	const contentsQuery = usePrivateQuery(
+		userId,
+		"playlist-contents",
+		async () =>
+			client.getQueryData<Record<string, Set<string>>>(contentsKey) ?? {},
+	);
+	const playlistContents = contentsQuery.data ?? {};
+	const pinnedIds = pinsQuery.data ?? new Set<string>();
 	const [creating, setCreating] = useState(false);
 	const [newName, setNewName] = useState("");
-	const [playlistContents, setPlaylistContents] = useState<
-		Record<string, Set<string>>
-	>({});
-	const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
-
 	useEffect(() => {
-		if (!userId) return;
-		setPlaylistsLoading(true);
-		getPlaylists(userId).then((data) => {
-			setPlaylists(data);
-			setPlaylistsLoading(false);
+		setCreating(false);
+		setNewName("");
+	}, [userId, auth.scope.generation]);
+	const mutation = useAuthMutation({
+		scope: { id: `playlists:${userId}` },
+		mutationFn: (operation: () => Promise<unknown>) => {
+			if (!userId || userId !== auth.scope.viewer)
+				throw new AuthScopeChangedError();
+			return operation();
+		},
+		onSettled: async () => {
+			await Promise.all([
+				client.invalidateQueries({
+					queryKey: queryKeys.private(userId, "playlists"),
+				}),
+				client.invalidateQueries({
+					queryKey: queryKeys.private(userId, "pins"),
+				}),
+				client.invalidateQueries({ queryKey: ["public", userId] }),
+				client.invalidateQueries({
+					queryKey: ["private", userId, "playlist-tracks"],
+				}),
+				client.invalidateQueries({
+					queryKey: ["private", userId],
+					predicate: (query) =>
+						String(query.queryKey[2]).startsWith("playlist:"),
+				}),
+			]);
+		},
+	});
+	const handleContentsLoaded = (playlistId: string, trackIds: string[]) => {
+		if (!auth.isCurrent()) return;
+		client.setQueryData<Record<string, Set<string>>>(
+			contentsKey,
+			(previous) => ({ ...previous, [playlistId]: new Set(trackIds) }),
+		);
+	};
+	const handleEnsurePlaylistLoaded = async (playlistId: string) => {
+		if (!auth.isCurrent()) return;
+		const tracks = await client.fetchQuery({
+			queryKey: auth.key(["private", userId, "playlist-tracks", playlistId]),
+			queryFn: async () => {
+				if (!auth.isCurrent()) throw new AuthScopeChangedError();
+				const tracks = await getPlaylistTracks(playlistId);
+				if (!auth.isCurrent()) throw new AuthScopeChangedError();
+				return tracks;
+			},
 		});
-		getPinnedPlaylistIds(userId).then(setPinnedIds);
-	}, [userId]);
-
-	const handleEnsurePlaylistLoaded = useCallback(
-		async (playlistId: string) => {
-			if (playlistContents[playlistId]) return;
-			const tracks = await getPlaylistTracks(playlistId);
-			setPlaylistContents((prev) => ({
-				...prev,
-				[playlistId]: new Set(tracks.map((t) => t.track_id)),
-			}));
-		},
-		[playlistContents],
-	);
-
-	const handleContentsLoaded = useCallback(
-		(playlistId: string, trackIds: string[]) => {
-			setPlaylistContents((prev) => ({
-				...prev,
-				[playlistId]: new Set(trackIds),
-			}));
-		},
-		[],
-	);
-
-	const handleTrackRemoved = useCallback(
-		(playlistId: string, trackId: string) => {
-			setPlaylistContents((prev) => {
-				const set = new Set(prev[playlistId]);
-				set.delete(trackId);
-				return { ...prev, [playlistId]: set };
-			});
-		},
-		[],
-	);
-
+		handleContentsLoaded(
+			playlistId,
+			tracks.map((track) => track.track_id),
+		);
+	};
+	const handleTrackRemoved = (playlistId: string, trackId: string) => {
+		if (!auth.isCurrent()) return;
+		client.setQueryData<Record<string, Set<string>>>(
+			contentsKey,
+			(previous) => {
+				const ids = new Set(previous?.[playlistId]);
+				ids.delete(trackId);
+				return { ...previous, [playlistId]: ids };
+			},
+		);
+	};
 	const handleCreatePlaylist = async () => {
-		if (!userId) return;
-		const name = newName.trim();
-		if (!name) return;
-		const pl = await createPlaylist(userId, name);
-		if (pl) {
-			setPlaylists((prev) => [pl, ...prev]);
-			setPlaylistContents((prev) => ({ ...prev, [pl.id]: new Set() }));
-		}
+		if (!userId || !newName.trim()) return;
+		await mutation.mutateAsync(() => createPlaylist(userId, newName.trim()));
+		if (!auth.isCurrent()) return;
 		setNewName("");
 		setCreating(false);
 	};
-
-	const handleDeletePlaylist = async (id: string) => {
-		await deletePlaylist(id);
-		setPlaylists((prev) => prev.filter((p) => p.id !== id));
-		setPlaylistContents((prev) => {
-			const n = { ...prev };
-			delete n[id];
-			return n;
-		});
-	};
-
-	const handleRenamePlaylist = async (id: string, name: string) => {
-		await renamePlaylist(id, name);
-		setPlaylists((prev) => prev.map((p) => (p.id === id ? { ...p, name } : p)));
-	};
-
+	const handleDeletePlaylist = (id: string) =>
+		mutation.mutateAsync(() => deletePlaylist(id));
+	const handleRenamePlaylist = (id: string, name: string) =>
+		mutation.mutateAsync(() => renamePlaylist(id, name));
 	const handleAddToPlaylist = async (trackId: string, playlistId: string) => {
-		await addTrackToPlaylist(playlistId, trackId, 0);
-		setPlaylistContents((prev) => {
-			const set = new Set(prev[playlistId] ?? []);
-			set.add(trackId);
-			return { ...prev, [playlistId]: set };
-		});
+		await mutation.mutateAsync(() =>
+			addTrackToPlaylist(playlistId, trackId, 0),
+		);
+		await handleEnsurePlaylistLoaded(playlistId);
 	};
-
 	const handleRemoveFromPlaylist = async (
 		trackId: string,
 		playlistId: string,
 	) => {
-		await removeTrackFromPlaylist(playlistId, trackId);
-		setPlaylistContents((prev) => {
-			const set = new Set(prev[playlistId] ?? []);
-			set.delete(trackId);
-			return { ...prev, [playlistId]: set };
-		});
+		await mutation.mutateAsync(() =>
+			removeTrackFromPlaylist(playlistId, trackId),
+		);
+		handleTrackRemoved(playlistId, trackId);
 	};
-
 	const handleTogglePin = async (playlistId: string) => {
 		if (!userId) return;
-		if (pinnedIds.has(playlistId)) {
-			setPinnedIds((prev) => {
-				const s = new Set(prev);
-				s.delete(playlistId);
-				return s;
-			});
-			await unpinPlaylist(userId, playlistId);
-		} else {
-			setPinnedIds((prev) => new Set(prev).add(playlistId));
-			await pinPlaylist(userId, playlistId, pinnedIds.size);
-		}
+		await mutation.mutateAsync(async () => {
+			const key = pinsQuery.queryKey;
+			await client.cancelQueries({ queryKey: key });
+			if (!auth.isCurrent()) throw new AuthScopeChangedError();
+			const previous =
+				client.getQueryData<Set<string>>(key) ?? new Set<string>();
+			const next = new Set(previous);
+			if (previous.has(playlistId)) next.delete(playlistId);
+			else next.add(playlistId);
+			client.setQueryData(key, next);
+			try {
+				if (previous.has(playlistId)) await unpinPlaylist(userId, playlistId);
+				else await pinPlaylist(userId, playlistId, previous.size);
+			} catch (error) {
+				if (auth.isCurrent()) client.setQueryData(key, previous);
+				throw error;
+			}
+		});
 	};
-
 	return {
-		playlists,
-		playlistsLoading,
+		playlists: playlistsQuery.data ?? [],
+		playlistsLoading: Boolean(userId) && playlistsQuery.isPending,
+		playlistsError: playlistsQuery.error ?? pinsQuery.error ?? mutation.error,
 		creating,
 		setCreating,
 		newName,

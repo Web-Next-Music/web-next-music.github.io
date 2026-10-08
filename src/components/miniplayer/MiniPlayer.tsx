@@ -45,10 +45,17 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 		const audio = audioRef?.current;
 		if (!audio) return;
 		const onTime = () => setProgress(audio.currentTime);
-		const onDur = () => setDuration(audio.duration);
+		const onDur = () =>
+			setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
+		const onEmpty = () => {
+			setProgress(0);
+			setDuration(0);
+		};
+		audio.addEventListener("emptied", onEmpty);
 		audio.addEventListener("timeupdate", onTime);
 		audio.addEventListener("durationchange", onDur);
 		return () => {
+			audio.removeEventListener("emptied", onEmpty);
 			audio.removeEventListener("timeupdate", onTime);
 			audio.removeEventListener("durationchange", onDur);
 		};
@@ -56,7 +63,10 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 
 	const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
 		const rect = e.currentTarget.getBoundingClientRect();
-		const ratio = (e.clientX - rect.left) / rect.width;
+		const ratio = Math.max(
+			0,
+			Math.min(1, (e.clientX - rect.left) / rect.width),
+		);
 		if (duration) player?.seek(ratio * duration);
 	};
 
@@ -98,7 +108,9 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 							pointerEvents: isHiddenMode ? "none" : "auto",
 						}}
 						onClick={() => {
-							if (nowPlaying.directUrl) {
+							if (trackId?.endsWith("-e")) {
+								router.push(`/track?key=${trackId}`);
+							} else if (nowPlaying.directUrl) {
 								const key = encodeTrackKey({
 									url: nowPlaying.directUrl,
 									title: nowPlaying.title,
@@ -113,7 +125,6 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 								!trackId.startsWith("http") &&
 								decodeTrackKey(trackId)?.url
 							) {
-								// trackId is an encoded key - use it directly as ?key=
 								router.push(`/track?key=${trackId}`);
 							} else if (trackId) {
 								router.push(`/track?id=${trackId}`);
@@ -147,7 +158,9 @@ export function MiniPlayerInner({ isHiddenMode }: { isHiddenMode: boolean }) {
 									title: nowPlaying.title,
 									artist: nowPlaying.artist,
 									cover: nowPlaying.cover,
-									mp3_url: nowPlaying.url,
+									mp3_url: nowPlaying.id?.endsWith("-e")
+										? undefined
+										: (nowPlaying.directUrl ?? nowPlaying.url),
 								},
 							}}
 						/>

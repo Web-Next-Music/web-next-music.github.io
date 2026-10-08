@@ -1,8 +1,20 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuthMutation, usePrivateQuery, useQueryScope } from "@/lib/query";
 import { useEffect, useRef, useState } from "react";
 import { getOwnStatus, saveStatus } from "@/lib/supabase/publicProfile";
 
 export function useProfileStatus(userId: string | undefined) {
-	const [status, setStatus] = useState("");
+	const client = useQueryClient();
+	const auth = useQueryScope();
+	const query = usePrivateQuery(userId, "status", () => getOwnStatus(userId!));
+	const status = query.data ?? "";
+	const mutation = useAuthMutation({
+		mutationFn: (value: string) => saveStatus(userId!, value),
+		onSuccess: (value) => {
+			client.setQueryData(query.queryKey, value);
+			void client.invalidateQueries({ queryKey: ["public", userId] });
+		},
+	});
 	const [input, updateInput] = useState("");
 	const setInput = (value: string) => {
 		updateInput(
@@ -12,41 +24,23 @@ export function useProfileStatus(userId: string | undefined) {
 		);
 	};
 	const [editing, setEditing] = useState(false);
-	const [loading, setLoading] = useState(true);
+	const loading = Boolean(userId) && query.isPending;
 	const [saving, setSaving] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const [reload, setReload] = useState(0);
 	const generation = useRef(0);
 	const savePending = useRef(false);
 
 	useEffect(() => {
-		const current = ++generation.current;
-		setStatus("");
+		++generation.current;
 		setInput("");
 		setEditing(false);
 		setSaving(false);
 		savePending.current = false;
 		setError(null);
-		setLoading(Boolean(userId));
-		if (userId) {
-			getOwnStatus(userId)
-				.then((value) => {
-					if (generation.current !== current) return;
-					setStatus(value);
-					updateInput(value);
-				})
-				.catch(() => {
-					if (generation.current === current)
-						setError("Could not load your status. Please retry.");
-				})
-				.finally(() => {
-					if (generation.current === current) setLoading(false);
-				});
-		}
 		return () => {
 			generation.current++;
 		};
-	}, [userId, reload]);
+	}, [userId, auth.scope.generation]);
 
 	const startEditing = () => {
 		updateInput(status);
@@ -62,7 +56,14 @@ export function useProfileStatus(userId: string | undefined) {
 	};
 
 	const save = async () => {
-		if (!userId || loading || savePending.current) return;
+		if (
+			!userId ||
+			userId !== auth.scope.viewer ||
+			!auth.isCurrent() ||
+			loading ||
+			savePending.current
+		)
+			return;
 		if (/[\r\n]/.test(input)) {
 			setError("Status must be a single line.");
 			return;
@@ -80,18 +81,17 @@ export function useProfileStatus(userId: string | undefined) {
 		setSaving(true);
 		setError(null);
 		try {
-			const value = await saveStatus(userId, input.trim());
-			if (generation.current !== current) return;
-			setStatus(value);
+			const value = await mutation.mutateAsync(input.trim());
+			if (!auth.isCurrent() || generation.current !== current) return;
 			updateInput(value);
 			setEditing(false);
 		} catch {
-			if (generation.current === current)
+			if (auth.isCurrent() && generation.current === current)
 				setError(
 					"Could not save your status. Your changes have not been saved.",
 				);
 		} finally {
-			if (generation.current === current) {
+			if (auth.isCurrent() && generation.current === current) {
 				savePending.current = false;
 				setSaving(false);
 			}
@@ -105,10 +105,12 @@ export function useProfileStatus(userId: string | undefined) {
 		editing,
 		loading,
 		saving,
-		error,
+		error:
+			error ??
+			(query.isError ? "Could not load your status. Please retry." : null),
 		startEditing,
 		cancel,
 		save,
-		retry: () => setReload((value) => value + 1),
+		retry: () => void query.refetch(),
 	};
 }

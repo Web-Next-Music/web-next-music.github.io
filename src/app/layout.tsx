@@ -9,6 +9,7 @@ import {
 import { Suspense } from "react";
 import { ThemeProvider } from "@/lib/theme";
 import { PlayerProvider } from "@/lib/miniplayer";
+import { QueryProvider } from "@/lib/query";
 import { AuthProvider } from "@/lib/auth";
 import { LikesProvider } from "@/lib/supabase/likesContext";
 import AuthModal from "@/components/common/AuthModal";
@@ -100,19 +101,21 @@ export default function RootLayout({
 			<body suppressHydrationWarning>
 				<meta httpEquiv="Content-Security-Policy" content={securityPolicy} />
 				<AuthProvider devToken={devAuthToken}>
-					<LikesProvider>
-						<ThemeProvider>
-							<AppWrapper>
-								<BanBanner />
-								<ErrorBoundary>
-									<Suspense fallback={<>{children}</>}>
-										<PlayerProvider>{children}</PlayerProvider>
-									</Suspense>
-								</ErrorBoundary>
-							</AppWrapper>
-						</ThemeProvider>
-						<AuthModal />
-					</LikesProvider>
+					<QueryProvider>
+						<LikesProvider>
+							<ThemeProvider>
+								<AppWrapper>
+									<BanBanner />
+									<ErrorBoundary>
+										<Suspense fallback={<>{children}</>}>
+											<PlayerProvider>{children}</PlayerProvider>
+										</Suspense>
+									</ErrorBoundary>
+								</AppWrapper>
+							</ThemeProvider>
+							<AuthModal />
+						</LikesProvider>
+					</QueryProvider>
 				</AuthProvider>
 			</body>
 		</html>

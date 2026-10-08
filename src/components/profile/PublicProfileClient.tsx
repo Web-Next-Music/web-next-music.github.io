@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { navigateProfile } from "@/lib/profile/navigation";
 import { UserRound, Heart, ListMusic } from "lucide-react";
 
+import { usePublicQuery } from "@/lib/query";
 import { useState, useEffect } from "react";
 import { config } from "@/lib/config";
 import {
@@ -15,9 +16,8 @@ import {
 	getProfileLikesVisibility,
 	getProfilePlaylistsVisibility,
 	syncGithubStarForProfile,
-	type UserProfile,
 } from "@/lib/supabase/publicProfile";
-import { getPlaylists, type Playlist } from "@/lib/supabase/playlists";
+import { getPlaylists } from "@/lib/supabase/playlists";
 import PlaylistCard from "./PlaylistCard";
 import Card from "@/components/ui/Card";
 import PlaylistTracks from "./PlaylistTracks";
@@ -40,31 +40,60 @@ export default function PublicProfileClient({
 	const openTab = (nextTab: "bio" | "likes" | "playlists") => {
 		navigateProfile(`/profile/${encodeURIComponent(userId)}?tab=${nextTab}`);
 	};
-	const [profile, setProfile] = useState<UserProfile | null | "loading">(
-		"loading",
+	const profileQuery = usePublicQuery(userId, "profile", () =>
+		getPublicProfileByUserId(userId),
 	);
-	const [playlists, setPlaylists] = useState<Playlist[]>([]);
-	const [allPlaylists, setAllPlaylists] = useState<{
-		userId: string;
-		items: Playlist[];
-	} | null>(null);
-	const [stats, setStats] = useState<{
-		likes: number;
-		playlists: number;
-	} | null>(null);
-	const [banned, setBanned] = useState(false);
-	const [starred, setStarred] = useState(false);
+	const profile = profileQuery.isPending
+		? "loading"
+		: (profileQuery.data?.profile ?? null);
+	const banned = profileQuery.data?.banned ?? false;
+	const allowed = Boolean(profileQuery.data) && !banned;
+	const details = usePublicQuery(
+		userId,
+		"details",
+		async () => {
+			const [stats, playlists, likes, visible] = await Promise.all([
+				getUserStats(userId),
+				getUserPinnedPlaylists(userId),
+				getProfileLikesVisibility(userId),
+				getProfilePlaylistsVisibility(userId),
+			]);
+			return { stats, playlists, likes, visible };
+		},
+		allowed,
+	);
+	const playlists = details.data?.playlists ?? [];
+	const stats = details.data?.stats ?? null;
+	const likesVisibility = details.data
+		? { userId, enabled: details.data.likes }
+		: null;
+	const playlistsVisibility = details.data
+		? { userId, enabled: details.data.visible }
+		: null;
+	const listQuery = usePublicQuery(
+		userId,
+		"playlists",
+		() => getPlaylists(userId),
+		allowed && details.data?.visible === true,
+	);
+	const allPlaylists = listQuery.data
+		? { userId, items: listQuery.data }
+		: null;
+	const starQuery = usePublicQuery(
+		userId,
+		"star",
+		() => syncGithubStarForProfile(profileQuery.data!.profile.github_id!),
+		allowed && Boolean(profileQuery.data?.profile.github_id),
+	);
+	const starred =
+		starQuery.data ?? profileQuery.data?.profile.github_starred ?? false;
 	const [exactDate, setExactDate] = useState(false);
-	const [profileError, setProfileError] = useState(false);
-	const [reload, setReload] = useState(0);
-	const [likesVisibility, setLikesVisibility] = useState<{
-		userId: string;
-		enabled: boolean;
-	} | null>(null);
-	const [playlistsVisibility, setPlaylistsVisibility] = useState<{
-		userId: string;
-		enabled: boolean;
-	} | null>(null);
+	const profileError = profileQuery.isError;
+	const setReload = (_: unknown) => {
+		void profileQuery.refetch();
+		void details.refetch();
+		void listQuery.refetch();
+	};
 	const [tab, setTab] = useState<"bio" | "likes" | "playlists">("bio");
 	useEffect(() => {
 		setTab(
@@ -87,91 +116,14 @@ export default function PublicProfileClient({
 			: tab;
 
 	useEffect(() => {
-		if (!showPlaylists) return;
-		let active = true;
-		setAllPlaylists(null);
-		void getPlaylists(userId).then((items) => {
-			if (active) setAllPlaylists({ userId, items });
-		});
+		if (profileQuery.data) {
+			const { profile, banned } = profileQuery.data;
+			document.title = `${banned ? userId : (profile.display_name ?? profile.github_login ?? userId)} - Next Music`;
+		}
 		return () => {
-			active = false;
-		};
-	}, [userId, showPlaylists, reload]);
-
-	useEffect(() => {
-		let active = true;
-		setProfile("loading");
-		setProfileError(false);
-		setStats(null);
-		setPlaylists([]);
-		setBanned(false);
-		setStarred(false);
-		setLikesVisibility(null);
-		setPlaylistsVisibility(null);
-
-		getPublicProfileByUserId(userId)
-			.then((result) => {
-				if (!active) return;
-				if (!result) {
-					setProfile(null);
-					return;
-				}
-
-				setProfile(result.profile);
-				setBanned(result.banned);
-
-				const name = result.banned
-					? userId
-					: (result.profile.display_name ??
-						result.profile.github_login ??
-						userId);
-				document.title = `${name} - Next Music`;
-
-				if (!result.banned) {
-					getProfileLikesVisibility(result.profile.user_id)
-						.then((enabled) => {
-							if (active) setLikesVisibility({ userId, enabled });
-						})
-						.catch(() => {
-							if (active) setLikesVisibility(null);
-						});
-					getProfilePlaylistsVisibility(result.profile.user_id)
-						.then((enabled) => {
-							if (active) setPlaylistsVisibility({ userId, enabled });
-						})
-						.catch(() => {
-							if (active) setPlaylistsVisibility(null);
-						});
-					Promise.all([
-						getUserStats(result.profile.user_id),
-						getUserPinnedPlaylists(result.profile.user_id),
-					])
-						.then(([stats, playlists]) => {
-							if (!active) return;
-							setStats(stats);
-							setPlaylists(playlists);
-						})
-						.catch(() => {
-							if (active) setStats(null);
-						});
-
-					if (result.profile.github_id) {
-						syncGithubStarForProfile(result.profile.github_id).then((s) => {
-							if (active && s !== null) setStarred(s);
-						});
-					}
-				}
-			})
-			.catch(() => {
-				if (!active) return;
-				setProfileError(true);
-				setProfile(null);
-			});
-		return () => {
-			active = false;
 			document.title = "Next Music";
 		};
-	}, [userId, reload]);
+	}, [userId, profileQuery.data]);
 
 	if (profile === "loading") {
 		return (
@@ -193,10 +145,7 @@ export default function PublicProfileClient({
 						<p className={styles.statusError} role="alert">
 							Could not load this profile. Please retry.
 						</p>
-						<button
-							type="button"
-							onClick={() => setReload((value) => value + 1)}
-						>
+						<button type="button" onClick={() => setReload(null)}>
 							Retry
 						</button>
 					</>
@@ -349,6 +298,12 @@ export default function PublicProfileClient({
 				</aside>
 
 				<div className={styles.content}>
+					{(details.isError || listQuery.isError) && (
+						<p className={styles.statusError} role="alert">
+							Could not load profile data.{" "}
+							<button onClick={() => setReload(null)}>Retry</button>
+						</p>
+					)}
 					{banned && (
 						<div className={styles.banNotice}>
 							<svg

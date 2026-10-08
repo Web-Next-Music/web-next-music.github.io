@@ -1,5 +1,6 @@
 "use client";
 
+import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import {
 	useEffect,
@@ -8,7 +9,6 @@ import {
 	type HTMLAttributes,
 	type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
 import { cx } from "@/lib/cx";
 import { useIsClient } from "@/lib/useIsClient";
 import IconButton from "./IconButton";
@@ -30,8 +30,24 @@ interface Props {
 	bodyClassName?: string;
 }
 
-function getScrollContainer(): HTMLElement | null {
-	return document.querySelector<HTMLElement>("[data-app-scroll]");
+const scrollLocks = new Map<HTMLElement, { count: number; overflow: string }>();
+
+function lockScroll(container: HTMLElement) {
+	const lock = scrollLocks.get(container);
+	if (lock) lock.count += 1;
+	else {
+		scrollLocks.set(container, {
+			count: 1,
+			overflow: container.style.overflowY,
+		});
+		container.style.overflowY = "hidden";
+	}
+	return () => {
+		const current = scrollLocks.get(container);
+		if (!current || --current.count > 0) return;
+		container.style.overflowY = current.overflow;
+		scrollLocks.delete(container);
+	};
 }
 
 export default function Modal({
@@ -49,6 +65,7 @@ export default function Modal({
 }: Props) {
 	const mounted = useIsClient();
 	const lastFocused = useRef<HTMLElement | null>(null);
+	const dialogRef = useRef<HTMLDivElement>(null);
 	const [retained, setRetained] = useState(open);
 	const contentRef = useRef({ title, children, footer });
 	const visible = open || retained;
@@ -74,77 +91,90 @@ export default function Modal({
 
 	useEffect(() => {
 		if (!visible) return;
-
-		lastFocused.current = document.activeElement as HTMLElement | null;
-		const container = getScrollContainer();
-		const previous = container?.style.overflowY;
-		if (container) container.style.overflowY = "hidden";
-
-		return () => {
-			if (container) container.style.overflowY = previous ?? "";
-			lastFocused.current?.focus?.();
-		};
+		const container = document.querySelector<HTMLElement>("[data-app-scroll]");
+		if (container) return lockScroll(container);
 	}, [visible]);
-
-	useEffect(() => {
-		if (!open || !closeOnEscape) return;
-
-		const onKeyDown = (e: KeyboardEvent) => {
-			if (e.key === "Escape") onClose();
-		};
-		document.addEventListener("keydown", onKeyDown);
-		return () => document.removeEventListener("keydown", onKeyDown);
-	}, [open, closeOnEscape, onClose]);
 
 	if (!mounted || !visible) return null;
 
-	return createPortal(
-		<div
-			className={styles.overlay}
-			data-state={open ? "open" : "closing"}
-			inert={!open}
-			onClick={open && closeOnOverlay ? onClose : undefined}
+	return (
+		<Dialog.Root
+			open={open}
+			onOpenChange={(next) => {
+				if (!next) onClose();
+			}}
 		>
-			<div
-				role="dialog"
-				aria-modal="true"
-				className={cx(styles.box, styles[`size-${size}`], className)}
-				onClick={(e) => e.stopPropagation()}
-			>
-				{(content.title || showClose) && (
-					<div className={styles.head}>
-						{content.title && (
-							<div className={styles.title}>{content.title}</div>
+			<Dialog.Portal forceMount>
+				<div
+					className={styles.overlay}
+					data-state={open ? "open" : "closing"}
+					inert={!open}
+					onClick={(event) => {
+						if (open && closeOnOverlay && event.target === event.currentTarget)
+							onClose();
+					}}
+				>
+					<Dialog.Content
+						ref={dialogRef}
+						style={{ outlineStyle: "none" }}
+						forceMount
+						aria-describedby={undefined}
+						aria-label={content.title ? undefined : "Dialog"}
+						onOpenAutoFocus={(event) => {
+							lastFocused.current =
+								document.activeElement as HTMLElement | null;
+							event.preventDefault();
+							dialogRef.current?.focus({ preventScroll: true });
+						}}
+						onCloseAutoFocus={(event) => {
+							event.preventDefault();
+							lastFocused.current?.focus();
+						}}
+						onEscapeKeyDown={(event) => {
+							if (!open || !closeOnEscape) event.preventDefault();
+						}}
+						onInteractOutside={(event) => event.preventDefault()}
+						className={cx(styles.box, styles[`size-${size}`], className)}
+						onClick={(e) => e.stopPropagation()}
+					>
+						{!content.title && <Dialog.Title hidden>Dialog</Dialog.Title>}
+						{(content.title || showClose) && (
+							<div className={styles.head}>
+								{content.title && (
+									<Dialog.Title asChild>
+										<div className={styles.title}>{content.title}</div>
+									</Dialog.Title>
+								)}
+								{showClose && (
+									<IconButton
+										label="Close"
+										size="sm"
+										className={styles.close}
+										onClick={onClose}
+									>
+										<X size={16} />
+									</IconButton>
+								)}
+							</div>
 						)}
-						{showClose && (
-							<IconButton
-								label="Close"
-								size="sm"
-								className={styles.close}
-								onClick={onClose}
-							>
-								<X size={16} />
-							</IconButton>
+						{content.title || showClose ? (
+							<div className={styles.bodyFrame}>
+								<div className={cx(styles.body, bodyClassName)}>
+									{content.children}
+								</div>
+							</div>
+						) : (
+							<div className={cx(styles.body, bodyClassName)}>
+								{content.children}
+							</div>
 						)}
-					</div>
-				)}
-				{content.title || showClose ? (
-					<div className={styles.bodyFrame}>
-						<div className={cx(styles.body, bodyClassName)}>
-							{content.children}
-						</div>
-					</div>
-				) : (
-					<div className={cx(styles.body, bodyClassName)}>
-						{content.children}
-					</div>
-				)}
-				{content.footer && (
-					<div className={styles.footer}>{content.footer}</div>
-				)}
-			</div>
-		</div>,
-		document.body,
+						{content.footer && (
+							<div className={styles.footer}>{content.footer}</div>
+						)}
+					</Dialog.Content>
+				</div>
+			</Dialog.Portal>
+		</Dialog.Root>
 	);
 }
 

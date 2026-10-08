@@ -1,11 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import useContextMenu from "@/components/ddetector/useContextMenu";
 
 import {
 	useState,
 	useEffect,
-	useLayoutEffect,
 	useRef,
 	useCallback,
 	useMemo,
@@ -26,7 +26,7 @@ import {
 	type DDetectorTrack,
 	type LyricLine,
 } from "@/lib/track/ddetector";
-import { hasDrugWord, escHtml, highlightDrugs } from "@/lib/track/drugDetector";
+import { annotateDrugLine } from "@/lib/track/drugDetector";
 import Select from "@components/ui/Select";
 import NotFoundView from "@/components/ddetector/NotFoundView";
 import TrackRow, {
@@ -88,7 +88,10 @@ export default function DDetectorPage() {
 		x: number;
 		y: number;
 	} | null>(null);
-	const headerCtxMenuRef = useRef<HTMLDivElement>(null);
+	const headerCtxMenuRef = useContextMenu(
+		headerCtxMenu,
+		useCallback(() => setHeaderCtxMenu(null), []),
+	);
 
 	// Hide ignored tracks (persisted)
 	const [hideIgnored, setHideIgnored] = useState(() => {
@@ -111,33 +114,10 @@ export default function DDetectorPage() {
 
 	// Context menu
 	const [ctxMenu, setCtxMenu] = useState<ContextMenuState | null>(null);
-	const ctxMenuRef = useRef<HTMLDivElement>(null);
-
-	useLayoutEffect(() => {
-		if (!ctxMenu || !ctxMenuRef.current) return;
-		const el = ctxMenuRef.current;
-		const rect = el.getBoundingClientRect();
-		let { x, y } = ctxMenu;
-		if (x + rect.width > window.innerWidth)
-			x = window.innerWidth - rect.width - 8;
-		if (y + rect.height > window.innerHeight)
-			y = window.innerHeight - rect.height - 8;
-		el.style.left = `${x}px`;
-		el.style.top = `${y}px`;
-	}, [ctxMenu]);
-
-	useLayoutEffect(() => {
-		if (!headerCtxMenu || !headerCtxMenuRef.current) return;
-		const el = headerCtxMenuRef.current;
-		const rect = el.getBoundingClientRect();
-		let { x, y } = headerCtxMenu;
-		if (x + rect.width > window.innerWidth)
-			x = window.innerWidth - rect.width - 8;
-		if (y + rect.height > window.innerHeight)
-			y = window.innerHeight - rect.height - 8;
-		el.style.left = `${x}px`;
-		el.style.top = `${y}px`;
-	}, [headerCtxMenu]);
+	const ctxMenuRef = useContextMenu(
+		ctxMenu,
+		useCallback(() => setCtxMenu(null), []),
+	);
 
 	// Expanded full-lyrics cards (for unsynced tracks)
 	const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
@@ -150,47 +130,6 @@ export default function DDetectorPage() {
 			return next;
 		});
 	}, []);
-
-	// Close context menu on outside click / scroll / Escape
-	useEffect(() => {
-		if (!ctxMenu) return;
-		const close = (e: MouseEvent) => {
-			if (!ctxMenuRef.current?.contains(e.target as Node)) setCtxMenu(null);
-		};
-		const closeKey = (e: KeyboardEvent) => {
-			if (e.key === "Escape") setCtxMenu(null);
-		};
-		const closeOnScroll = () => setCtxMenu(null);
-		document.addEventListener("mousedown", close);
-		document.addEventListener("scroll", closeOnScroll, true);
-		document.addEventListener("keydown", closeKey);
-		return () => {
-			document.removeEventListener("mousedown", close);
-			document.removeEventListener("scroll", closeOnScroll, true);
-			document.removeEventListener("keydown", closeKey);
-		};
-	}, [ctxMenu]);
-
-	// Close header context menu on outside click / scroll / Escape
-	useEffect(() => {
-		if (!headerCtxMenu) return;
-		const close = (e: MouseEvent) => {
-			if (!headerCtxMenuRef.current?.contains(e.target as Node))
-				setHeaderCtxMenu(null);
-		};
-		const closeKey = (e: KeyboardEvent) => {
-			if (e.key === "Escape") setHeaderCtxMenu(null);
-		};
-		const closeOnScroll = () => setHeaderCtxMenu(null);
-		document.addEventListener("mousedown", close);
-		document.addEventListener("scroll", closeOnScroll, true);
-		document.addEventListener("keydown", closeKey);
-		return () => {
-			document.removeEventListener("mousedown", close);
-			document.removeEventListener("scroll", closeOnScroll, true);
-			document.removeEventListener("keydown", closeKey);
-		};
-	}, [headerCtxMenu]);
 
 	const handleTrackContextMenu = useCallback(
 		(e: React.MouseEvent, track: DDetectorTrack) => {
@@ -208,48 +147,99 @@ export default function DDetectorPage() {
 		[],
 	);
 
+	const identity = `${authLoading}:${user?.id ?? ""}`;
+	const currentIdentity = useRef(identity);
+	currentIdentity.current = identity;
+	const generation = useRef(0);
+	const pendingIgnore = useRef(new Set<number>());
+	const [accessIdentity, setAccessIdentity] = useState("");
+	const [loadError, setLoadError] = useState("");
+
 	const handleToggleIgnore = useCallback(
 		async (track: DDetectorTrack) => {
 			setCtxMenu(null);
-			const isIgnored = ignoredIds.has(track.id);
-			if (isIgnored) {
+			if (pendingIgnore.current.has(track.id)) return;
+			const owner = currentIdentity.current;
+			const epoch = generation.current;
+			const wasIgnored = ignoredIds.has(track.id);
+			pendingIgnore.current.add(track.id);
+			const update = (ignored: boolean) =>
 				setIgnoredIds((prev) => {
 					const next = new Set(prev);
-					next.delete(track.id);
+					if (ignored) next.add(track.id);
+					else next.delete(track.id);
 					return next;
 				});
-				await removeIgnoredTrack(track.id);
-			} else {
-				setIgnoredIds((prev) => new Set(prev).add(track.id));
-				await addIgnoredTrack(track.id);
+			update(!wasIgnored);
+			try {
+				await (wasIgnored
+					? removeIgnoredTrack(track.id)
+					: addIgnoredTrack(track.id));
+			} catch {
+				if (currentIdentity.current === owner && generation.current === epoch) {
+					update(wasIgnored);
+					setToast("Error: failed to update ignored track");
+					setToastVisible(true);
+					if (toastTimer.current) clearTimeout(toastTimer.current);
+					toastTimer.current = setTimeout(() => setToastVisible(false), 3500);
+				}
+			} finally {
+				if (generation.current === epoch)
+					pendingIgnore.current.delete(track.id);
 			}
 		},
 		[ignoredIds],
 	);
 
-	// Check access
 	useEffect(() => {
-		if (authLoading) return;
-		if (!user) {
-			setAccessChecked(true);
-			setHasAccess(false);
-			return;
+		let cancelled = false;
+		generation.current++;
+		setAccessChecked(false);
+		setHasAccess(false);
+		setAccessIdentity("");
+		setTracks([]);
+		setLyricsMap(new Map());
+		setIgnoredIds(new Set());
+		setTrackStatus(new Map());
+		setDrugCards([]);
+		setProcessed(0);
+		setFoundCount(0);
+		setActiveId(null);
+		setExpandedCards(new Set());
+		setCtxMenu(null);
+		setHeaderCtxMenu(null);
+		setFetching(false);
+		setToastVisible(false);
+		setLoadError("");
+		setDataLoading(false);
+		pendingIgnore.current.clear();
+		if (toastTimer.current) clearTimeout(toastTimer.current);
+		if (!authLoading) {
+			if (!user) setAccessChecked(true);
+			else
+				checkDDetectorAccess(user.id)
+					.then((ok) => {
+						if (cancelled || currentIdentity.current !== identity) return;
+						setHasAccess(ok);
+						setAccessIdentity(identity);
+						setAccessChecked(true);
+						if (ok) document.title = "DDetector";
+					})
+					.catch(() => {
+						if (cancelled || currentIdentity.current !== identity) return;
+						setLoadError("Unable to check DDetector access");
+						setAccessChecked(true);
+					});
 		}
-		checkDDetectorAccess(user.id)
-			.then((ok) => {
-				setHasAccess(ok);
-				setAccessChecked(true);
-				if (ok) document.title = "DDetector";
-			})
-			.catch(() => {
-				setHasAccess(false);
-				setAccessChecked(true);
-			});
-	}, [authLoading, user]);
+		return () => {
+			cancelled = true;
+			generation.current++;
+		};
+	}, [authLoading, user?.id, identity]);
 
-	// Load data when access granted
 	useEffect(() => {
-		if (!hasAccess) return;
+		if (!hasAccess || accessIdentity !== identity) return;
+		let cancelled = false;
 		setDataLoading(true);
 		Promise.all([
 			fetchDDetectorTracks(),
@@ -257,20 +247,37 @@ export default function DDetectorPage() {
 			fetchIgnoredTrackIds(),
 		])
 			.then(([t, l, ignored]) => {
+				if (cancelled || currentIdentity.current !== identity) return;
 				setTracks(t);
 				setLyricsMap(l);
 				setIgnoredIds(ignored);
-				setTrackStatus(new Map(t.map((tr) => [tr.id, "pending"])));
 			})
-			.catch((e) => console.error("DDetector data load:", e))
-			.finally(() => setDataLoading(false));
-	}, [hasAccess]);
+			.catch(() => {
+				if (!cancelled && currentIdentity.current === identity)
+					setLoadError("Unable to load DDetector data");
+			})
+			.finally(() => {
+				if (!cancelled && currentIdentity.current === identity)
+					setDataLoading(false);
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [hasAccess, accessIdentity, identity]);
 
 	// Process tracks against lyrics
 	useEffect(() => {
-		if (!tracks.length || dataLoading) return;
+		if (!tracks.length) {
+			setTrackStatus(new Map());
+			setDrugCards([]);
+			setProcessed(0);
+			setFoundCount(0);
+			return;
+		}
+		if (dataLoading) return;
 
 		let cancelled = false;
+		let yieldTimer: ReturnType<typeof setTimeout> | undefined;
 		setProcessed(0);
 		setFoundCount(0);
 		setDrugCards([]);
@@ -297,22 +304,18 @@ export default function DDetectorPage() {
 				if (lyrics == null) {
 					status = "error";
 				} else {
-					const drugLines = lyrics
-						.filter((l) => hasDrugWord(l.text))
-						.map((l) => ({ ts: l.ts, html: highlightDrugs(l.text) }));
+					const annotated = lyrics.map((l) => ({
+						ts: l.ts,
+						...annotateDrugLine(l.text),
+					}));
+					const drugLines = annotated.filter((l) => l.isDrug);
 					if (drugLines.length > 0) {
 						status = "found";
 						found++;
 						const isUnsynced = lyrics.every((l) => l.ts === null);
 						const card: DrugCard = { track, lines: drugLines };
 						if (isUnsynced) {
-							card.allLines = lyrics.map((l) => ({
-								ts: l.ts,
-								html: hasDrugWord(l.text)
-									? highlightDrugs(l.text)
-									: escHtml(l.text),
-								isDrug: hasDrugWord(l.text),
-							}));
+							card.allLines = annotated;
 						}
 						accumCards.push(card);
 					} else {
@@ -328,13 +331,16 @@ export default function DDetectorPage() {
 					setProcessed(proc);
 					setFoundCount(found);
 					setDrugCards(accumCards.slice());
-					await new Promise((r) => setTimeout(r, 0));
+					await new Promise<void>((r) => {
+						yieldTimer = setTimeout(r, 0);
+					});
 				}
 			}
 		})();
 
 		return () => {
 			cancelled = true;
+			clearTimeout(yieldTimer);
 		};
 	}, [tracks, lyricsMap, dataLoading]);
 
@@ -345,6 +351,13 @@ export default function DDetectorPage() {
 		if (toastTimer.current) clearTimeout(toastTimer.current);
 		toastTimer.current = setTimeout(() => setToastVisible(false), 3500);
 	}, []);
+
+	useEffect(
+		() => () => {
+			if (toastTimer.current) clearTimeout(toastTimer.current);
+		},
+		[],
+	);
 
 	// Handlers
 	const handleTrackClick = useCallback(
@@ -365,10 +378,21 @@ export default function DDetectorPage() {
 	);
 
 	async function handleFetch() {
-		if (!session?.access_token) return;
+		if (
+			!session?.access_token ||
+			fetching ||
+			!hasAccess ||
+			accessIdentity !== identity
+		)
+			return;
+		const owner = identity;
+		const epoch = generation.current;
+		const stale = () =>
+			currentIdentity.current !== owner || generation.current !== epoch;
 		setFetching(true);
 		try {
 			const result = await triggerDDetectorFetch(session.access_token);
+			if (stale()) return;
 			if (result.ok) {
 				showToast(
 					`Done: ${result.total} tracks, +${result.added} added, −${result.removed} removed, ${result.lyrics_fetched ?? 0} lyrics fetched`,
@@ -377,15 +401,16 @@ export default function DDetectorPage() {
 					fetchDDetectorTracks(),
 					fetchDDetectorLyrics(),
 				]);
+				if (stale()) return;
 				setTracks(t);
 				setLyricsMap(l);
 			} else {
 				showToast(`Error: ${result.error}`);
 			}
 		} catch (err) {
-			showToast(`Error: ${String(err)}`);
+			if (!stale()) showToast(`Error: ${String(err)}`);
 		} finally {
-			setFetching(false);
+			if (!stale()) setFetching(false);
 		}
 	}
 
@@ -440,7 +465,11 @@ export default function DDetectorPage() {
 
 	// Render states
 
-	if (authLoading || !accessChecked) {
+	if (
+		authLoading ||
+		!accessChecked ||
+		(hasAccess && accessIdentity !== identity)
+	) {
 		return (
 			<>
 				<Header />
@@ -455,6 +484,17 @@ export default function DDetectorPage() {
 			</>
 		);
 	}
+
+	if (loadError)
+		return (
+			<>
+				<Header />
+				<div className={styles.fullPageCenter} role="alert">
+					{loadError}
+				</div>
+				<Footer />
+			</>
+		);
 
 	// Not privileged → 404
 	if (!hasAccess) {
@@ -703,10 +743,17 @@ export default function DDetectorPage() {
 															<span className={styles.drugTsLayout}>
 																{line.ts ?? "—:——"}
 															</span>
-															<span
-																className={styles.drugText}
-																dangerouslySetInnerHTML={{ __html: line.html }}
-															/>
+															<span className={styles.drugText}>
+																{line.parts.map((part, index) =>
+																	part.marked ? (
+																		<mark key={index} className="drugMark">
+																			{part.text}
+																		</mark>
+																	) : (
+																		part.text
+																	),
+																)}
+															</span>
 														</div>
 													);
 												})}

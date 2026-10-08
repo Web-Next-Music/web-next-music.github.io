@@ -32,3 +32,29 @@ export function escHtml(s: string): string {
 export function highlightDrugs(rawText: string): string {
 	return escHtml(rawText).replace(DRUG_HIGHLIGHT_RE, MARK);
 }
+
+export interface DrugTextPart {
+	text: string;
+	marked: boolean;
+}
+export function annotateDrugLine(text: string): {
+	isDrug: boolean;
+	parts: DrugTextPart[];
+} {
+	const isDrug = hasDrugWord(text);
+	if (!isDrug) return { isDrug, parts: [{ text, marked: false }] };
+	const parts: DrugTextPart[] = [];
+	let offset = 0;
+	for (const match of text.matchAll(
+		new RegExp(DRUG_HIGHLIGHT_RE.source, "gi"),
+	)) {
+		const index = match.index;
+		if (index > offset)
+			parts.push({ text: text.slice(offset, index), marked: false });
+		parts.push({ text: match[0], marked: true });
+		offset = index + match[0].length;
+	}
+	if (offset < text.length)
+		parts.push({ text: text.slice(offset), marked: false });
+	return { isDrug, parts };
+}

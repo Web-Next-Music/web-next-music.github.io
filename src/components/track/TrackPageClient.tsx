@@ -15,7 +15,6 @@ import {
 	subscribeStore,
 	getStoreSnapshot,
 	findTrackById,
-	type CachedTrack,
 } from "@/lib/track/trackStore";
 import {
 	decodeTrackKey,
@@ -23,7 +22,6 @@ import {
 	stableTrackKey,
 } from "@/lib/track/trackKey";
 import { fetchLyrics, type LrcResult } from "@/lib/track/lyrics";
-import { ID3Writer } from "browser-id3-writer";
 import {
 	ArrowLeft as ArrowLeftIcon,
 	Music as MusicNoteIcon,
@@ -50,12 +48,15 @@ async function handleDownload(
 	const audioRes = await fetch(
 		`https://proxy.nm.diram1x.ru/?url=${encodeURIComponent(audioUrl)}`,
 	);
+	if (!audioRes.ok) throw new Error(`Audio HTTP ${audioRes.status}`);
 	const arrayBuffer = await audioRes.arrayBuffer();
+	const { ID3Writer } = await import("browser-id3-writer");
 
 	const writer = new ID3Writer(arrayBuffer);
 
 	if (cover) {
 		const coverRes = await fetch(cover);
+		if (!coverRes.ok) throw new Error(`Cover HTTP ${coverRes.status}`);
 		const coverBuffer = await coverRes.arrayBuffer();
 
 		writer.setFrame("APIC", {
@@ -97,17 +98,7 @@ function TrackPageContent({
 		searchParams.get("id") ??
 		pathname?.match(/^\/track\/([^/]+)\/?$/)?.[1] ??
 		"";
-	const [id, setId] = useState(resolvedId);
-	const hasOtherSource = !!(searchParams.get("key") || searchParams.get("url"));
-	useEffect(() => {
-		if (resolvedId) {
-			if (resolvedId !== id) setId(resolvedId);
-		} else if (hasOtherSource && id) {
-			setId("");
-		}
-	}, [resolvedId, hasOtherSource, id]);
-
-	// Single encoded key. A "-e" suffix marks exclusive (no-download) mode.
+	const id = resolvedId;
 	const rawKey = searchParams.get("key") ?? "";
 	const isExclusive = rawKey.endsWith("-e");
 	const keyParam = isExclusive ? rawKey.slice(0, -2) : rawKey;
@@ -130,9 +121,8 @@ function TrackPageContent({
 	}, [directUrl, id, idOverride, pathname, rawKey, router]);
 
 	const [storeReady, setStoreReady] = useState(() => getStoreSnapshot().loaded);
-	const [track, setTrack] = useState<CachedTrack | null>(null);
+	const track = storeReady && id ? findTrackById(id) : null;
 
-	// Create virtual track for direct URL mode
 	const urlTrack =
 		directUrl && !id
 			? {
@@ -145,9 +135,8 @@ function TrackPageContent({
 				}
 			: null;
 
-	// Use store track or virtual URL track
 	const displayTrack = track ?? urlTrack;
-	const [notFound, setNotFound] = useState(false);
+	const notFound = storeReady && !displayTrack;
 
 	const [lyrics, setLyrics] = useState<LrcResult | null>(null);
 	const [lyricsLoading, setLyricsLoading] = useState(false);
@@ -159,6 +148,17 @@ function TrackPageContent({
 	const [exclusiveBlobUrl, setExclusiveBlobUrl] = useState<string | null>(null);
 	const [exclusiveLoading, setExclusiveLoading] = useState(false);
 	const blobUrlRef = useRef<string | null>(null);
+	const requestRef = useRef<{
+		source: string;
+		controller: AbortController;
+		promise: Promise<string>;
+	} | null>(null);
+	const sourceRef = useRef(directUrl);
+	sourceRef.current = directUrl;
+	const playerRef = useRef(player);
+	playerRef.current = player;
+	const seekCleanup = useRef<(() => void) | null>(null);
+	const copyTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	const [showDownloadError, setShowDownloadError] = useState(false);
 	const [isDownloading, setIsDownloading] = useState(false);
@@ -186,52 +186,69 @@ function TrackPageContent({
 		return unsub;
 	}, []);
 
+	const getExclusivePlaybackUrl = useCallback(() => {
+		if (!isExclusive) return Promise.resolve(directUrl);
+		if (requestRef.current?.source === directUrl) {
+			if (
+				!blobUrlRef.current ||
+				playerRef.current?.nowPlaying?.url === blobUrlRef.current
+			)
+				return requestRef.current.promise;
+			URL.revokeObjectURL(blobUrlRef.current);
+			blobUrlRef.current = null;
+			requestRef.current = null;
+		}
+		const controller = new AbortController();
+		setExclusiveLoading(true);
+		const promise = (async () => {
+			try {
+				const res = await fetch(
+					`https://proxy.nm.diram1x.ru/?url=${encodeURIComponent(directUrl)}`,
+					{ signal: controller.signal },
+				);
+				if (!res.ok) throw new Error(`Audio HTTP ${res.status}`);
+				const blob = await res.blob();
+				if (controller.signal.aborted || sourceRef.current !== directUrl)
+					throw new DOMException("Aborted", "AbortError");
+				const url = URL.createObjectURL(blob);
+				blobUrlRef.current = url;
+				setExclusiveBlobUrl(url);
+				return url;
+			} catch (error) {
+				if (requestRef.current?.controller === controller)
+					requestRef.current = null;
+				throw error;
+			} finally {
+				if (!controller.signal.aborted && sourceRef.current === directUrl)
+					setExclusiveLoading(false);
+			}
+		})();
+		requestRef.current = { source: directUrl, controller, promise };
+		return promise;
+	}, [directUrl, isExclusive]);
 	useEffect(() => {
-		if (!storeReady) return;
-		// Only check for notFound when using id (not for url mode)
-		if (!id && !directUrl) {
-			setNotFound(true);
+		setExclusiveBlobUrl(null);
+		setExclusiveLoading(false);
+		return () => {
+			requestRef.current?.controller.abort();
+			requestRef.current = null;
+			const url = blobUrlRef.current;
+			if (url && playerRef.current?.nowPlaying?.url !== url)
+				URL.revokeObjectURL(url);
+			blobUrlRef.current = null;
+			seekCleanup.current?.();
+			if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+			if (copyTimeout.current) clearTimeout(copyTimeout.current);
+		};
+	}, [directUrl, isExclusive, id]);
+
+	useEffect(() => {
+		const controller = new AbortController();
+		if (!displayTrack?.title) {
+			setLyrics(null);
+			setLyricsLoading(false);
 			return;
 		}
-		if (id) {
-			const found = findTrackById(id);
-			if (found) setTrack(found);
-			else setNotFound(true);
-		}
-		// For url mode, displayTrack will be used from the virtual track
-	}, [storeReady, id, directUrl]);
-
-	const getExclusivePlaybackUrl = useCallback(async () => {
-		if (!isExclusive) return directUrl;
-		if (blobUrlRef.current) return blobUrlRef.current;
-
-		setExclusiveLoading(true);
-		try {
-			const res = await fetch(
-				`https://proxy.nm.diram1x.ru/?url=${encodeURIComponent(directUrl)}`,
-			);
-			if (!res.ok) throw new Error("Failed to load exclusive audio");
-			const blob = await res.blob();
-			const objectUrl = URL.createObjectURL(blob);
-			blobUrlRef.current = objectUrl;
-			setExclusiveBlobUrl(objectUrl);
-			return objectUrl;
-		} finally {
-			setExclusiveLoading(false);
-		}
-	}, [directUrl, isExclusive]);
-
-	useEffect(() => {
-		return () => {
-			if (blobUrlRef.current) {
-				URL.revokeObjectURL(blobUrlRef.current);
-				blobUrlRef.current = null;
-			}
-		};
-	}, []);
-
-	useEffect(() => {
-		if (!displayTrack?.title) return;
 		setLyrics(null);
 		setLyricsLoading(true);
 		setShowLyrics(true);
@@ -239,12 +256,18 @@ function TrackPageContent({
 		if (lyricsContainerRef.current) {
 			lyricsContainerRef.current.scrollTop = 0;
 		}
-		fetchLyrics(displayTrack?.title, displayTrack?.artist).then((res) => {
+		fetchLyrics(
+			displayTrack.title,
+			displayTrack.artist,
+			controller.signal,
+		).then((res) => {
+			if (controller.signal.aborted) return;
 			setLyrics(res);
 			setLyricsLoading(false);
 			if (!res.found) setShowLyrics(false);
 		});
-	}, [displayTrack?.title, displayTrack?.artist]);
+		return () => controller.abort();
+	}, [displayTrack?.title, displayTrack?.artist, directUrl, id]);
 
 	const isThisLoaded = id
 		? player?.nowPlaying?.id === id
@@ -261,7 +284,7 @@ function TrackPageContent({
 		}
 
 		const lines = lyrics.synced;
-		let rafId: number;
+		let rafId = 0;
 		let lastIdx = -1;
 
 		const tick = () => {
@@ -278,12 +301,21 @@ function TrackPageContent({
 				setActiveLine(idx);
 			}
 
-			rafId = requestAnimationFrame(tick);
+			if (player?.isPlaying) rafId = requestAnimationFrame(tick);
 		};
 
-		rafId = requestAnimationFrame(tick);
-		return () => cancelAnimationFrame(rafId);
-	}, [lyrics?.synced, isThisLoaded, player?.audioRef]);
+		tick();
+		const audio = player?.audioRef.current;
+		const onSeek = () => {
+			cancelAnimationFrame(rafId);
+			tick();
+		};
+		audio?.addEventListener("seeked", onSeek);
+		return () => {
+			cancelAnimationFrame(rafId);
+			audio?.removeEventListener("seeked", onSeek);
+		};
+	}, [lyrics?.synced, isThisLoaded, player?.audioRef, player?.isPlaying]);
 
 	useEffect(() => {
 		if (!isThisLoaded) {
@@ -319,35 +351,75 @@ function TrackPageContent({
 		}, 3000);
 	}, []);
 
-	const handlePlay = useCallback(async () => {
-		if (!displayTrack || !player) return;
-		let playbackUrl = displayTrack.url;
-		if (isExclusive) {
-			try {
-				playbackUrl = await getExclusivePlaybackUrl();
-			} catch (error) {
-				console.error("Failed to prepare playback:", error);
-				return;
+	const handlePlay = useCallback(
+		async (seekTime?: number) => {
+			if (!displayTrack || !player) return;
+			let playbackUrl = displayTrack.url;
+			if (isExclusive) {
+				try {
+					playbackUrl = await getExclusivePlaybackUrl();
+				} catch (error) {
+					console.error("Failed to prepare playback:", error);
+					return;
+				}
 			}
-		}
 
-		player.play({
-			id: isExclusive ? rawKey : displayTrack.id,
-			url: playbackUrl,
-			directUrl: directUrl && !isExclusive ? displayTrack.url : undefined,
-			title: displayTrack.title,
-			artist: displayTrack.artist,
-			cover: displayTrack.cover,
-			yandexUrl: displayTrack.yandexUrl,
-		});
-	}, [
-		displayTrack,
-		player,
-		getExclusivePlaybackUrl,
-		isExclusive,
-		rawKey,
-		directUrl,
-	]);
+			if (directUrl && sourceRef.current !== directUrl) return;
+			seekCleanup.current?.();
+			if (seekTime !== undefined) {
+				const audio = player.audioRef.current;
+				if (audio) {
+					const cleanup = () => {
+						audio.removeEventListener("loadedmetadata", ready);
+						audio.removeEventListener("error", cleanup);
+						audio.removeEventListener("emptied", onEmpty);
+					};
+					const ready = () => {
+						if (
+							audio.getAttribute("src") !== playbackUrl ||
+							audio.readyState < 1
+						)
+							return;
+						player.seek(seekTime);
+						cleanup();
+					};
+					const onEmpty = () => {
+						if (audio.getAttribute("src") !== playbackUrl) cleanup();
+					};
+					seekCleanup.current = cleanup;
+					audio.addEventListener("loadedmetadata", ready);
+					audio.addEventListener("error", cleanup);
+					audio.addEventListener("emptied", onEmpty);
+					ready();
+				}
+			}
+			player.play({
+				id: isExclusive
+					? rawKey
+					: displayTrack.id ||
+						stableTrackKey(
+							displayTrack.url,
+							displayTrack.title,
+							displayTrack.artist,
+							displayTrack.cover,
+						),
+				url: playbackUrl,
+				directUrl: directUrl ? displayTrack.url : undefined,
+				title: displayTrack.title,
+				artist: displayTrack.artist,
+				cover: displayTrack.cover,
+				yandexUrl: displayTrack.yandexUrl,
+			});
+		},
+		[
+			displayTrack,
+			player,
+			getExclusivePlaybackUrl,
+			isExclusive,
+			rawKey,
+			directUrl,
+		],
+	);
 
 	const handleCopyKey = useCallback(async () => {
 		if (!displayTrack) return;
@@ -362,15 +434,14 @@ function TrackPageContent({
 		try {
 			await navigator.clipboard.writeText(copiedKey);
 			setCopyKeyFeedback("copied");
-			setTimeout(() => setCopyKeyFeedback("idle"), 2000);
+			if (copyTimeout.current) clearTimeout(copyTimeout.current);
+			copyTimeout.current = setTimeout(() => setCopyKeyFeedback("idle"), 2000);
 		} catch (error) {
 			console.error("Failed to copy key:", error);
 		}
 	}, [displayTrack, isExclusive, paramToken]);
 
 	const isThisPlaying = isThisLoaded && player?.isPlaying;
-
-	// No fallback needed - displayTrack handles all cases
 
 	if (!storeReady) {
 		return (
@@ -461,7 +532,7 @@ function TrackPageContent({
 										? player?.pause
 										: isThisLoaded
 											? player?.resume
-											: handlePlay
+											: () => void handlePlay()
 								}
 								disabled={exclusiveLoading}
 								aria-label={isThisPlaying ? "Pause" : "Play"}
@@ -652,17 +723,7 @@ function TrackPageContent({
 											onClick={() => {
 												const audio = player?.audioRef.current;
 												if (!isThisLoaded) {
-													handlePlay();
-													const trySeek = () => {
-														const a = player?.audioRef.current;
-														if (a && a.readyState >= 1) {
-															a.currentTime = line.time;
-															a.play().catch(console.error);
-														} else {
-															setTimeout(trySeek, 50);
-														}
-													};
-													setTimeout(trySeek, 50);
+													void handlePlay(line.time);
 													return;
 												}
 												if (!audio) return;
@@ -740,7 +801,7 @@ export default function TrackPage({
 	idOverride,
 }: { idOverride?: string } = {}) {
 	const searchParams = useSearchParams();
-	// Token can come from the encoded key OR as a plain ?token= param (old clients)
+
 	const keyToken = (() => {
 		const k = searchParams.get("key");
 		if (!k) return "";

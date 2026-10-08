@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { queryKeys, usePrivateQuery } from "@/lib/query";
 import { Heart, ListMusic, Link, Shield } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -21,60 +22,51 @@ export default function ProfileSettings({
 	userId: string;
 	disabled: boolean;
 }) {
-	const [enabled, setEnabled] = useState(true);
-	const [playlistsEnabled, setPlaylistsEnabled] = useState(true);
-	const [accountsEnabled, setAccountsEnabled] = useState(true);
-	const [loading, setLoading] = useState(true);
-	const [saving, setSaving] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const [reload, setReload] = useState(0);
-
-	useEffect(() => {
-		let active = true;
-		setLoading(true);
-		setError(null);
-		getProfileVisibility(userId)
-			.then((settings) => {
-				if (active) {
-					setEnabled(settings.public_liked_tracks);
-					setPlaylistsEnabled(settings.public_playlists);
-					setAccountsEnabled(settings.show_account_links);
-				}
-			})
-			.catch(() => {
-				if (active) setError("Could not load profile settings.");
-			})
-			.finally(() => {
-				if (active) setLoading(false);
-			});
-		return () => {
-			active = false;
-		};
-	}, [userId, reload]);
-
-	const save = async (
+	const client = useQueryClient();
+	const query = usePrivateQuery(userId, "visibility", () =>
+		getProfileVisibility(userId),
+	);
+	const mutation = useMutation({
+		scope: { id: `visibility:${userId}` },
+		mutationFn: async ({
+			value,
+			setting,
+		}: {
+			value: boolean;
+			setting: "likes" | "playlists" | "accounts";
+		}) => {
+			const save =
+				setting === "likes"
+					? saveProfileLikesVisibility
+					: setting === "playlists"
+						? saveProfilePlaylistsVisibility
+						: saveProfileAccountLinksVisibility;
+			await save(userId, value);
+		},
+		onSettled: async () => {
+			await Promise.all([
+				client.invalidateQueries({
+					queryKey: queryKeys.private(userId, "visibility"),
+				}),
+				client.invalidateQueries({ queryKey: ["public", userId] }),
+			]);
+		},
+	});
+	const enabled = query.data?.public_liked_tracks ?? true;
+	const playlistsEnabled = query.data?.public_playlists ?? true;
+	const accountsEnabled = query.data?.show_account_links ?? true;
+	const loading = query.isPending;
+	const saving = mutation.isPending;
+	const error = query.isError
+		? "Could not load profile settings."
+		: mutation.isError
+			? "Could not save profile settings. Please try again."
+			: null;
+	const save = (
 		value: boolean,
 		setting: "likes" | "playlists" | "accounts",
 	) => {
-		if (disabled || loading || saving) return;
-		setSaving(true);
-		setError(null);
-		try {
-			if (setting === "likes") {
-				await saveProfileLikesVisibility(userId, value);
-				setEnabled(value);
-			} else if (setting === "playlists") {
-				await saveProfilePlaylistsVisibility(userId, value);
-				setPlaylistsEnabled(value);
-			} else {
-				await saveProfileAccountLinksVisibility(userId, value);
-				setAccountsEnabled(value);
-			}
-		} catch {
-			setError("Could not save profile settings. Please try again.");
-		} finally {
-			setSaving(false);
-		}
+		if (!disabled && !loading && !saving) mutation.mutate({ value, setting });
 	};
 
 	return (
@@ -148,10 +140,7 @@ export default function ProfileSettings({
 				{error && (
 					<div role="alert">
 						<p className={styles.statusError}>{error}</p>
-						<Button
-							variant="secondary"
-							onClick={() => setReload((value) => value + 1)}
-						>
+						<Button variant="secondary" onClick={() => void query.refetch()}>
 							Retry
 						</Button>
 					</div>

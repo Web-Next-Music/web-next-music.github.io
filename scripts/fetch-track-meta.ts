@@ -1,28 +1,13 @@
-import { writeFileSync, readFileSync, existsSync, mkdirSync } from "fs";
-import { execSync } from "child_process";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
-
-// Read .env.local / .env
-const __dir = dirname(fileURLToPath(import.meta.url));
-
-function loadEnvFile(path: string) {
-	if (!existsSync(path)) return;
-	const lines = readFileSync(path, "utf8").split(/\r?\n/);
-	for (const line of lines) {
-		const trimmed = line.trim();
-		if (!trimmed || trimmed.startsWith("#")) continue;
-		const eqIdx = trimmed.indexOf("=");
-		if (eqIdx === -1) continue;
-		const key = trimmed.slice(0, eqIdx).trim();
-		const val = trimmed.slice(eqIdx + 1).trim();
-		if (key && !(key in process.env)) process.env[key] = val;
-	}
-}
-
-// .env.local takes priority over .env
-loadEnvFile(join(__dir, "../.env.local"));
-loadEnvFile(join(__dir, "../.env"));
+import { readFileSync, existsSync } from "fs";
+import { join } from "path";
+import {
+	root,
+	yandexRequest,
+	reportFailure,
+	isMetaCache,
+	writeJson,
+} from "./runtime";
+const __dir = join(root, "scripts");
 
 // Config
 const LEGACY_URL =
@@ -35,20 +20,6 @@ const OUTPUT_PATH = join(__dir, "../src/data/track-meta.json");
 
 const BATCH_SIZE = 50;
 const DELAY_MS = 350;
-
-// Token check
-if (!YANDEX_TOKEN) {
-	console.error("[ERROR] YANDEX_TOKEN is not set.");
-	console.error("        Add to .env.local: YANDEX_TOKEN=y0_...");
-	console.error(
-		"        Get token: https://github.com/MarshalX/yandex-music-token",
-	);
-	process.exit(1);
-}
-
-console.log(
-	`[KEY] Token: ${YANDEX_TOKEN.slice(0, 8)}... (length: ${YANDEX_TOKEN.length})`,
-);
 
 // Types
 export interface TrackMeta {
@@ -80,7 +51,8 @@ function coverUrl(raw?: string): string | undefined {
 function loadExisting(): MetaMap {
 	if (!existsSync(OUTPUT_PATH)) return {};
 	try {
-		return JSON.parse(readFileSync(OUTPUT_PATH, "utf8")) as MetaMap;
+		const value: unknown = JSON.parse(readFileSync(OUTPUT_PATH, "utf8"));
+		return isMetaCache(value) ? (value as MetaMap) : {};
 	} catch {
 		console.warn("[WARN] Failed to read existing file - starting fresh");
 		return {};
@@ -88,23 +60,23 @@ function loadExisting(): MetaMap {
 }
 
 function save(meta: MetaMap) {
-	const dir = dirname(OUTPUT_PATH);
-	if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-	writeFileSync(OUTPUT_PATH, JSON.stringify(meta, null, 2) + "\n", "utf8");
+	writeJson(OUTPUT_PATH, meta);
 }
 
 // Using curl instead of Node fetch - Yandex blocks Node by TLS fingerprint
 function fetchBatch(ids: string[]): MetaMap {
-	const output = execSync(
-		`curl -s -X POST "${YANDEX_API}"` +
-			` -H "Authorization: OAuth ${YANDEX_TOKEN}"` +
-			` -H "Content-Type: application/x-www-form-urlencoded"` +
-			` -d "track-ids=${ids.join(",")}"`,
-		{ encoding: "utf8", timeout: 30000 },
-	);
+	const output = yandexRequest(YANDEX_API, YANDEX_TOKEN, [
+		"-X",
+		"POST",
+		"-H",
+		"Content-Type: application/x-www-form-urlencoded",
+		"--data-urlencode",
+		`track-ids=${ids.join(",")}`,
+	]);
 
 	const data = JSON.parse(output) as { result?: YandexTrack[] };
-	const tracks = data.result ?? [];
+	if (!Array.isArray(data.result)) throw new Error("Invalid tracks response");
+	const tracks = data.result;
 
 	const result: MetaMap = {};
 	for (const t of tracks) {
@@ -128,13 +100,21 @@ function fetchBatch(ids: string[]): MetaMap {
 async function main() {
 	// 1. Download legacy list
 	console.log("[DOWNLOAD] Loading legacy JSON...");
-	const legacyResp = await fetch(LEGACY_URL);
+	const legacyResp = await fetch(LEGACY_URL, {
+		signal: AbortSignal.timeout(30000),
+	});
 	if (!legacyResp.ok)
 		throw new Error(`Failed to load legacy JSON: ${legacyResp.status}`);
 
 	const legacyData = (await legacyResp.json()) as {
 		tracks: Record<string, string>;
 	};
+	if (
+		!legacyData.tracks ||
+		typeof legacyData.tracks !== "object" ||
+		Array.isArray(legacyData.tracks)
+	)
+		throw new Error("Invalid legacy list");
 	const allIds = Object.keys(legacyData.tracks);
 	console.log(`   Tracks in list: ${allIds.length}`);
 
@@ -187,18 +167,18 @@ async function main() {
 					` received ${String(found).padStart(2)}/${batch.length}` +
 					`  (${percent}%)`,
 			);
-		} catch (err) {
+		} catch {
 			failed += batch.length;
 			processed += batch.length;
-			console.error(
-				`   [ERROR] Batch ${batchNum} failed: ${(err as Error).message}`,
-			);
+			console.error(`   [ERROR] Batch ${batchNum} failed`);
 		}
 
 		if (i + BATCH_SIZE < toFetch.length) {
 			await sleep(DELAY_MS);
 		}
 	}
+
+	if (failed > 0) throw new Error("Incomplete metadata refresh");
 
 	// 5. Save
 	console.log(`\n[SAVE] Writing → ${OUTPUT_PATH}`);
@@ -213,7 +193,4 @@ async function main() {
 	if (failed > 0) console.warn(`   Failed batches         : ${failed} tracks`);
 }
 
-main().catch((err) => {
-	console.error("\n[FATAL] Fatal error:", err);
-	process.exit(1);
-});
+main().catch(() => reportFailure(OUTPUT_PATH, isMetaCache));

@@ -1,5 +1,7 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
+
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, ShieldCheck, Link } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -41,6 +43,7 @@ export default function AccountConnections({
 }: {
 	disabled?: boolean;
 }) {
+	const queryClient = useQueryClient();
 	const { user, refreshUser, isBanned, banChecking } = useAuth();
 	const [dialog, setDialog] = useState<TransferDialog | null>(null);
 	const [busy, setBusy] = useState<string | null>(null);
@@ -170,6 +173,7 @@ export default function AccountConnections({
 		setNeedsRefresh(true);
 		try {
 			await refreshUser();
+			await queryClient.invalidateQueries({ queryKey: ["public"] });
 			setNeedsRefresh(false);
 		} catch {
 			throw new Error(

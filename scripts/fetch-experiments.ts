@@ -1,37 +1,10 @@
-import { writeFile, mkdir } from "fs/promises";
-import { readFileSync, existsSync } from "fs";
-import { execFile } from "child_process";
-import { promisify } from "util";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
-
-const exec = promisify(execFile);
-const __dir = dirname(fileURLToPath(import.meta.url));
-
-// .env
-const envPath = join(__dir, "../.env");
-if (existsSync(envPath)) {
-	const lines = readFileSync(envPath, "utf8").split(/\r?\n/);
-	for (const line of lines) {
-		const trimmed = line.trim();
-		if (!trimmed || trimmed.startsWith("#")) continue;
-		const eqIdx = trimmed.indexOf("=");
-		if (eqIdx === -1) continue;
-		const key = trimmed.slice(0, eqIdx).trim();
-		const val = trimmed.slice(eqIdx + 1).trim();
-		if (key && !(key in process.env)) process.env[key] = val;
-	}
-}
+import { join } from "path";
+import { root, yandexRequest, reportFailure, writeJson } from "./runtime";
+const __dir = join(root, "scripts");
 
 // Config
 const TOKEN = process.env.YANDEX_TOKEN ?? "";
 const OUTPUT_PATH = join(__dir, "../src/data/experiments.json");
-
-if (!TOKEN) {
-	console.error("[ERROR] YANDEX_TOKEN is not set.");
-	console.error("        Add to .env:  YANDEX_TOKEN=y0_...");
-	process.exit(1);
-}
 
 // Logging helpers
 const ok = (m: string) => console.log(`\x1b[32m✓\x1b[0m ${m}`);
@@ -39,22 +12,7 @@ const info = (m: string) => console.log(`\x1b[36mℹ\x1b[0m ${m}`);
 
 // HTTP via curl (Yandex blocks Node's TLS fingerprint)
 async function curlGet(url: string): Promise<string> {
-	const { stdout } = await exec(
-		"curl",
-		[
-			"--silent",
-			"--compressed",
-			"--max-time",
-			"30",
-			"-H",
-			`Authorization: OAuth ${TOKEN}`,
-			"-A",
-			"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36",
-			url,
-		],
-		{ maxBuffer: 50 * 1024 * 1024 },
-	);
-	return stdout;
+	return yandexRequest(url, TOKEN);
 }
 
 export interface ExperimentsFile {
@@ -76,7 +34,7 @@ async function main(): Promise<void> {
 	}
 
 	const result = parsed.result;
-	if (!result || typeof result !== "object") {
+	if (!result || typeof result !== "object" || Array.isArray(result)) {
 		throw new Error('"result" missing or not an object in API response');
 	}
 
@@ -88,15 +46,22 @@ async function main(): Promise<void> {
 		experiments,
 	};
 
-	await mkdir(dirname(OUTPUT_PATH), { recursive: true });
-	await writeFile(OUTPUT_PATH, JSON.stringify(output, null, 2) + "\n", "utf8");
+	writeJson(OUTPUT_PATH, output);
 
 	console.log("");
 	ok(`src/data/experiments.json saved (${experiments.length} experiments)`);
 	console.log("");
 }
 
-main().catch((e: Error) => {
-	console.error("\x1b[31m[ERROR]\x1b[0m", e.message);
-	process.exit(1);
-});
+main().catch(() =>
+	reportFailure(OUTPUT_PATH, (value) => {
+		if (!value || typeof value !== "object") return false;
+		const data = value as Partial<ExperimentsFile>;
+		return (
+			typeof data.fetchedAt === "string" &&
+			Number.isFinite(Date.parse(data.fetchedAt)) &&
+			Array.isArray(data.experiments) &&
+			data.experiments.every((item) => typeof item === "string")
+		);
+	}),
+);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { usePublicQuery } from "@/lib/query";
 import type { User } from "@supabase/supabase-js";
 import Button from "@/components/ui/Button";
 import {
@@ -8,7 +8,6 @@ import {
 	getLinkedAccounts,
 	getPublicAccountLinks,
 } from "@/lib/auth/accountLinks";
-import { ACCOUNT_LINKS_VISIBILITY_EVENT } from "@/lib/supabase/publicProfile";
 import ServiceIcon from "./ServiceIcon";
 import styles from "./ProfileConnections.module.scss";
 
@@ -81,69 +80,26 @@ export default function ProfileConnections({
 
 export function PublicProfileConnections({
 	userId,
-	user,
 	className,
 }: {
 	userId: string;
 	user?: User;
 	className?: string;
 }) {
-	const ownUser = user?.id === userId ? user : undefined;
-	const [result, setResult] = useState<{
-		userId: string;
-		accounts: Accounts;
-	} | null>(null);
-	const [failedUserId, setFailedUserId] = useState<string | null>(null);
-	const [retry, setRetry] = useState(0);
-
-	useEffect(() => {
-		const changed = (event: Event) => {
-			const detail = (
-				event as CustomEvent<{ userId: string; enabled: boolean }>
-			).detail;
-			if (detail.userId !== userId) return;
-			setResult({ userId, accounts: [] });
-			setFailedUserId(null);
-			setRetry((value) => value + 1);
-		};
-		window.addEventListener(ACCOUNT_LINKS_VISIBILITY_EVENT, changed);
-		return () =>
-			window.removeEventListener(ACCOUNT_LINKS_VISIBILITY_EVENT, changed);
-	}, [userId]);
-
-	useEffect(() => {
-		let active = true;
-		setResult(null);
-		setFailedUserId(null);
-		getPublicAccountLinks(userId)
-			.then((accounts) => {
-				if (active) setResult({ userId, accounts });
-			})
-			.catch(() => {
-				if (active) setFailedUserId(userId);
-			});
-		return () => {
-			active = false;
-		};
-	}, [userId, ownUser, retry]);
-
-	if (failedUserId === userId) {
+	const query = usePublicQuery(userId, "connections", () =>
+		getPublicAccountLinks(userId),
+	);
+	if (query.isError) {
 		return (
 			<div className={`${styles.unavailable} ${className ?? ""}`}>
 				<span role="status">Connections unavailable</span>
-				<Button
-					variant="ghost"
-					size="sm"
-					onClick={() => setRetry((value) => value + 1)}
-				>
+				<Button variant="ghost" size="sm" onClick={() => void query.refetch()}>
 					Retry
 				</Button>
 			</div>
 		);
 	}
 
-	if (result?.userId !== userId) return null;
-	return (
-		<ProfileConnections accounts={result.accounts} className={className} />
-	);
+	if (!query.data) return null;
+	return <ProfileConnections accounts={query.data} className={className} />;
 }

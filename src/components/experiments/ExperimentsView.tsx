@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useMemo, useEffect, useLayoutEffect, useRef } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import SearchInput from "@/components/ui/SearchInput";
 import Select from "@components/ui/Select";
 import styles from "./ExperimentsView.module.scss";
 
 const ROW_H = 36;
-const ITEM_MIN_W = 280;
-const GAP = 6;
 const OVERSCAN = 4;
 
 type Platform = "all" | "web" | "ios" | "android" | "other";
@@ -95,12 +94,10 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 	const [platform, setPlatform] = useState<Platform>("all");
 	const [localDate, setLocalDate] = useState<string | null>(null);
 
-	// Virtual scroll state - right panel is the scroll container
 	const rightRef = useRef<HTMLDivElement>(null);
 	const wrapRef = useRef<HTMLDivElement>(null);
 	const [cols, setCols] = useState(3);
-	const [scrollY, setScrollY] = useState(0);
-	const [viewH, setViewH] = useState(800);
+	const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
 	const [listTop, setListTop] = useState(0);
 
 	useEffect(() => {
@@ -116,33 +113,35 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 		);
 	}, [fetchedAt]);
 
-	useEffect(() => {
-		const scroller = rightRef.current;
+	useLayoutEffect(() => {
+		const panel = rightRef.current;
 		const el = wrapRef.current;
-		if (!scroller || !el) return;
-
+		if (!panel || !el) return;
 		const measure = () => {
+			const scroller =
+				getComputedStyle(panel).overflowY === "visible"
+					? panel.closest<HTMLElement>("[data-app-scroll]")
+					: panel;
+			if (!scroller) return;
+			setScrollElement(scroller);
+			const grid = el.querySelector("ul");
 			setCols(
-				Math.max(1, Math.floor((el.clientWidth + GAP) / (ITEM_MIN_W + GAP))),
+				grid ? getComputedStyle(grid).gridTemplateColumns.split(" ").length : 1,
 			);
 			setListTop(
 				el.getBoundingClientRect().top -
 					scroller.getBoundingClientRect().top +
 					scroller.scrollTop,
 			);
-			setViewH(scroller.clientHeight);
 		};
-		const onScroll = () => setScrollY(scroller.scrollTop);
-
 		const ro = new ResizeObserver(measure);
 		ro.observe(el);
-		ro.observe(scroller);
+		ro.observe(panel);
 		measure();
-		setScrollY(scroller.scrollTop);
-		scroller.addEventListener("scroll", onScroll, { passive: true });
+		window.addEventListener("resize", measure);
 		return () => {
 			ro.disconnect();
-			scroller.removeEventListener("scroll", onScroll);
+			window.removeEventListener("resize", measure);
 		};
 	}, []);
 
@@ -164,16 +163,24 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 	};
 
 	const rows = Math.ceil(filtered.length / cols);
-	const relY = Math.max(0, scrollY - listTop);
-	const startRow = Math.max(0, Math.floor(relY / ROW_H) - OVERSCAN);
-	const endRow = Math.min(rows, Math.ceil((relY + viewH) / ROW_H) + OVERSCAN);
+	const virtualizer = useVirtualizer({
+		count: rows,
+		getScrollElement: () => scrollElement,
+		estimateSize: () => ROW_H,
+		overscan: OVERSCAN,
+		scrollMargin: listTop,
+	});
+	const virtualRows = virtualizer.getVirtualItems();
+	const startRow = virtualRows[0]?.index ?? 0;
+	const endRow = virtualRows.length
+		? virtualRows[virtualRows.length - 1].index + 1
+		: 0;
 	const visibleItems = filtered.slice(startRow * cols, endRow * cols);
 	const spacerTop = startRow * ROW_H;
-	const spacerBottom = Math.max(0, (rows - endRow) * ROW_H);
+	const spacerBottom = Math.max(0, virtualizer.getTotalSize() - endRow * ROW_H);
 
 	return (
 		<div className={styles.layoutLayout}>
-			{/* Left sidebar */}
 			<aside className={styles.sidebarLayout}>
 				<div className={styles.sidebarBlockLayout}>
 					<div className={styles.heroTitleLayout}>
@@ -213,7 +220,6 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 				</div>
 			</aside>
 
-			{/* Right panel: sticky toolbar + scrollable list */}
 			<div ref={rightRef} className={styles.rightLayout}>
 				<div className={styles.toolbarLayout}>
 					<SearchInput
@@ -241,12 +247,13 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 				</div>
 
 				<main className={styles.mainLayout}>
-					{filtered.length === 0 ? (
-						<p className={styles.empty}>
-							No experiments match &quot;{query}&quot;
-						</p>
-					) : (
-						<div ref={wrapRef}>
+					<div ref={wrapRef}>
+						{filtered.length === 0 && (
+							<p className={styles.empty}>
+								No experiments match &quot;{query}&quot;
+							</p>
+						)}
+						<div>
 							<div style={{ height: spacerTop }} />
 							<ul className={styles.listLayout}>
 								{visibleItems.map((name) => (
@@ -261,7 +268,7 @@ export default function ExperimentsView({ experiments, fetchedAt }: Props) {
 							</ul>
 							<div style={{ height: spacerBottom }} />
 						</div>
-					)}
+					</div>
 				</main>
 			</div>
 		</div>

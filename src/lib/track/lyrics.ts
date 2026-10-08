@@ -36,12 +36,15 @@ function isLyricsResponse(value: unknown): value is LyricsResponse {
 
 function parseLyrics(value: unknown): LrcResult | null {
 	if (!isLyricsResponse(value) || value.statusCode === 404) return null;
-	const synced =
+	const parsed =
 		typeof value.syncedLyrics === "string"
 			? parseLrc(value.syncedLyrics)
 			: null;
+	const synced = parsed?.length ? parsed : null;
 	const plain =
-		typeof value.plainLyrics === "string" ? value.plainLyrics : null;
+		typeof value.plainLyrics === "string"
+			? value.plainLyrics.trim() || null
+			: null;
 	if (!synced && !plain) return null;
 	return { synced, plain, found: true };
 }
@@ -49,6 +52,7 @@ function parseLyrics(value: unknown): LrcResult | null {
 export async function fetchLyrics(
 	title: string,
 	artist: string,
+	signal?: AbortSignal,
 ): Promise<LrcResult> {
 	const empty: LrcResult = { synced: null, plain: null, found: false };
 	try {
@@ -56,19 +60,21 @@ export async function fetchLyrics(
 			track_name: title,
 			artist_name: artist,
 		});
-		const exact = await fetch(`https://lrclib.net/api/get?${query}`);
+		const exact = await fetch(`https://lrclib.net/api/get?${query}`, {
+			signal,
+		});
 		if (exact.ok) {
 			const result = parseLyrics(await exact.json());
 			if (result) return result;
 		}
 
-		const search = await fetch(`https://lrclib.net/api/search?${query}`);
+		const search = await fetch(`https://lrclib.net/api/search?${query}`, {
+			signal,
+		});
 		if (!search.ok) return empty;
 		const results: unknown = await search.json();
 		if (!Array.isArray(results)) return empty;
-		const best = results.find(
-			(item) => isLyricsResponse(item) && typeof item.syncedLyrics === "string",
-		);
+		const best = results.find((item) => !!parseLyrics(item)?.synced);
 		return parseLyrics(best ?? results[0]) ?? empty;
 	} catch {
 		return empty;

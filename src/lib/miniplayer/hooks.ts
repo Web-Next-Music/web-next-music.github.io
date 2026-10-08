@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import type { NowPlaying } from "@/types/player";
 import { encodeTrackKey } from "@/lib/track/trackKey";
 
@@ -24,9 +24,7 @@ export function isDesktopRpcEnabled(): boolean {
 export function setDesktopRpcEnabled(on: boolean): void {
 	try {
 		localStorage.setItem(RPC_STORAGE_KEY, on ? "1" : "0");
-	} catch {
-		/* ignore */
-	}
+	} catch {}
 	rpcSubscribers.forEach((subscriber) => subscriber());
 }
 
@@ -46,161 +44,87 @@ export function useDesktopRpcEnabled(): boolean {
 	return useSyncExternalStore(subscribeRpc, isDesktopRpcEnabled, () => false);
 }
 
-function pushRpc(payload: object) {
+function pushRpc(payload: object, onComplete?: () => void) {
 	try {
 		const url = `nextmusic://rpc?data=${base64url(JSON.stringify(payload))}`;
 		const iframe = document.createElement("iframe");
 		iframe.style.display = "none";
 		iframe.src = url;
 		document.body.appendChild(iframe);
-		setTimeout(() => iframe.remove(), 1000);
-	} catch {
-		/* no client installed — silent no-op */
-	}
+		const timer = setTimeout(() => {
+			iframe.remove();
+			onComplete?.();
+		}, 1000);
+		return () => {
+			clearTimeout(timer);
+			iframe.remove();
+		};
+	} catch {}
 }
 
-export function useRichPresenceWS(
+export function useRichPresence(
 	nowPlaying: NowPlaying | null,
 	isPlaying: boolean,
 	audioRef: React.RefObject<HTMLAudioElement | null>,
 ) {
 	const enabled = useDesktopRpcEnabled();
-	const nowPlayingRef = useRef(nowPlaying);
-	const isPlayingRef = useRef(isPlaying);
-	const lastSentRef = useRef<string | null>(null);
-	const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
+	const wasEnabled = useRef(false);
 	useEffect(() => {
-		nowPlayingRef.current = nowPlaying;
-	}, [nowPlaying]);
-	useEffect(() => {
-		isPlayingRef.current = isPlaying;
-	}, [isPlaying]);
-
-	const buildPayload = useCallback(
-		(state: "playing" | "paused" | "stopped") => {
+		const cleanups = new Set<() => void>();
+		const send = (stopped = false) => {
 			const audio = audioRef.current;
-			const np = nowPlayingRef.current;
-			const positionSec = audio?.currentTime ?? 0;
-			const durationSec =
-				audio?.duration && isFinite(audio.duration) ? audio.duration : 0;
-			const trackId = np?.id ?? np?.url.match(/\/(\d+)\.mp3$/)?.[1] ?? "";
+			const np = stopped ? null : nowPlaying;
+			const trackId = np?.id ?? "";
 			const trackUrl = np?.directUrl ?? np?.url ?? null;
-			const nmUGCPlayerUrl = trackId.includes("-")
-				? (() => {
-						const key = encodeTrackKey({
-							url: trackUrl || "",
-							title: np?.title,
-							artist: np?.artist,
-							cover: np?.cover,
-						});
-						return `${window.location.origin}/track?key=${key}`;
-					})()
-				: null;
-			return {
-				playerState: state,
-				title: np?.title ?? "",
-				artists: np?.artist ?? "",
-				img: np?.cover ?? "icon",
-				albumUrl: "",
-				artistUrl: "",
-				trackId,
-				trackUrl,
-				nmUGCPlayerUrl,
-				positionSec,
-				durationSec,
-			};
-		},
-		[audioRef],
-	);
-
-	const send = useCallback(
-		(state: "playing" | "paused" | "stopped", force = false) => {
-			if (!isDesktopRpcEnabled()) return;
-			const payload = buildPayload(state);
-			const key = `${payload.playerState}|${payload.trackId}|${payload.title}`;
-			if (!force && key === lastSentRef.current) return;
-			lastSentRef.current = key;
-			pushRpc(payload);
-		},
-		[buildPayload],
-	);
-
-	const stopTick = useCallback(() => {
-		if (tickRef.current) {
-			clearInterval(tickRef.current);
-			tickRef.current = null;
-		}
-	}, []);
-
-	const startTick = useCallback(() => {
-		stopTick();
-		tickRef.current = setInterval(() => {
-			if (isPlayingRef.current) send("playing", true);
-		}, RESYNC_MS);
-	}, [send, stopTick]);
-
-	useEffect(() => {
-		if (!enabled) {
-			stopTick();
-			return;
-		}
-		const audio = audioRef.current;
-		stopTick();
-
-		if (!nowPlaying) {
-			send("stopped");
-			return;
-		}
-
-		const onReady = () => {
-			const playing = isPlayingRef.current;
-			send(playing ? "playing" : "paused");
-			if (playing) startTick();
-		};
-
-		if (audio) {
-			if (audio.duration && isFinite(audio.duration)) {
-				onReady();
-			} else {
-				audio.addEventListener("durationchange", onReady, { once: true });
+			let cleanup: (() => void) | undefined;
+			cleanup = pushRpc(
+				{
+					playerState: !np ? "stopped" : isPlaying ? "playing" : "paused",
+					title: np?.title ?? "",
+					artists: np?.artist ?? "",
+					img: np?.cover ?? "icon",
+					albumUrl: "",
+					artistUrl: "",
+					trackId,
+					trackUrl,
+					nmUGCPlayerUrl: trackId.endsWith("-e")
+						? `${window.location.origin}/track?key=${trackId}`
+						: np?.directUrl
+							? `${window.location.origin}/track?key=${encodeTrackKey({ url: np.directUrl, title: np.title, artist: np.artist, cover: np.cover })}`
+							: null,
+					positionSec: np ? (audio?.currentTime ?? 0) : 0,
+					durationSec:
+						np && Number.isFinite(audio?.duration) ? audio?.duration : 0,
+				},
+				() => {
+					if (cleanup) cleanups.delete(cleanup);
+				},
+			);
+			if (cleanup) {
+				cleanups.add(cleanup);
 			}
+		};
+		if (!enabled) {
+			if (wasEnabled.current) send(true);
+			wasEnabled.current = false;
+			return () => cleanups.forEach((cleanup) => cleanup());
 		}
-
-		return () => {
-			audio?.removeEventListener("durationchange", onReady);
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [nowPlaying?.url, enabled]);
-
-	useEffect(() => {
-		if (!enabled) return;
+		wasEnabled.current = true;
+		send();
 		const audio = audioRef.current;
-		if (!audio) return;
-		const onSeeked = () => {
-			if (!nowPlayingRef.current) return;
-			send(isPlayingRef.current ? "playing" : "paused", true);
-		};
-		audio.addEventListener("seeked", onSeeked);
-		return () => audio.removeEventListener("seeked", onSeeked);
-	}, [audioRef, send, enabled]);
-
-	useEffect(() => {
-		if (!enabled) return;
-		if (!nowPlaying) return;
-		const audio = audioRef.current;
-		if (!audio?.duration || !isFinite(audio.duration)) return;
-		send(isPlaying ? "playing" : "paused");
-		if (isPlaying) startTick();
-		else stopTick();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [isPlaying, enabled]);
-
-	useEffect(() => {
+		const onUpdate = () => send();
+		const onExit = () => send(true);
+		window.addEventListener("pagehide", onExit);
+		audio?.addEventListener("loadedmetadata", onUpdate);
+		audio?.addEventListener("seeked", onUpdate);
+		const timer =
+			nowPlaying && isPlaying ? setInterval(onUpdate, RESYNC_MS) : null;
 		return () => {
-			stopTick();
-			send("stopped");
+			if (timer !== null) clearInterval(timer);
+			window.removeEventListener("pagehide", onExit);
+			audio?.removeEventListener("loadedmetadata", onUpdate);
+			audio?.removeEventListener("seeked", onUpdate);
+			cleanups.forEach((cleanup) => cleanup());
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [nowPlaying, isPlaying, enabled, audioRef]);
 }

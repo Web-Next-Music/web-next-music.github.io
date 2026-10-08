@@ -8,7 +8,6 @@ import { useRouter, usePathname } from "next/navigation";
 import AuthButton from "@/components/common/AuthButton";
 import Dropdown from "@/components/ui/Dropdown";
 import dropdownStyles from "@/components/ui/Dropdown.module.scss";
-import { useClickOutside } from "@/lib/useClickOutside";
 
 const JUNE = 5;
 
@@ -54,7 +53,7 @@ export default function Header({
 	const [useCondemnedLogo, setUseCondemnedLogo] = useState(
 		() => seasonalLogoDecided,
 	);
-	const burgerWrapRef = useRef<HTMLDivElement>(null);
+	const burgerRef = useRef<HTMLButtonElement>(null);
 	const router = useRouter();
 
 	useEffect(() => {
@@ -73,8 +72,6 @@ export default function Header({
 		href === "/"
 			? pathname === "/"
 			: pathname === href || pathname.startsWith(`${href}/`);
-
-	useClickOutside(burgerWrapRef, open, closeMenu);
 
 	return (
 		<>
@@ -124,12 +121,14 @@ export default function Header({
 							</div>
 						)}
 
-						<div className={styles.burgerLayout} ref={burgerWrapRef}>
+						<div className={styles.burgerLayout}>
 							<button
+								ref={burgerRef}
 								className={styles.burgerBtnLayout}
 								onClick={() => setOpen((v) => !v)}
 								aria-label="Toggle navigation menu"
 								aria-expanded={open}
+								aria-haspopup="dialog"
 							>
 								<span
 									className={`${styles.burgerIconLayout} ${open ? styles.elementStyle : ""}`}
@@ -141,7 +140,12 @@ export default function Header({
 								</span>
 							</button>
 
-							<Dropdown open={open} align="end">
+							<Dropdown
+								open={open}
+								onClose={closeMenu}
+								anchorRef={burgerRef}
+								align="end"
+							>
 								{NAV_LINKS.map((l) => (
 									<Link
 										key={l.href}
@@ -158,7 +162,6 @@ export default function Header({
 					</div>
 				</div>
 			</header>
-			<div id="mini-player-slot" />
 		</>
 	);
 }

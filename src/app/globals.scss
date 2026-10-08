@@ -343,7 +343,7 @@ textarea,
 }
 
 /* Data-theme attribute (set by ThemeProvider / user preference) */
-[data-theme="light"] {
+@mixin light-palette {
 	--bg: #f9f9f9;
 	--header: #f3f3f4d9;
 	--surface: #fdfdfe;
@@ -360,7 +360,6 @@ textarea,
 	--badge-background-color: #2bfef514;
 	--badge-border-color: #00c9c050;
 	--active-lyrics-line-background-color: #f4f4f880;
-	/* Accent alpha variants (accent = #00c9c0 = rgb(0, 201, 192)) */
 	--accent-bg-hover: rgba(0, 201, 192, 0.04);
 	--accent-bg-active: rgba(0, 201, 192, 0.05);
 	--accent-btn-hover: rgba(0, 201, 192, 0.06);
@@ -369,7 +368,6 @@ textarea,
 	--accent-surface-hover: rgba(0, 201, 192, 0.14);
 	--accent-border: rgba(0, 201, 192, 0.2);
 	--accent-border-strong: rgba(0, 201, 192, 0.3);
-	/* Status tones */
 	--danger: #dc2626;
 	--danger-surface: rgba(239, 68, 68, 0.06);
 	--danger-hover: rgba(239, 68, 68, 0.1);
@@ -390,7 +388,11 @@ textarea,
 	--success-border-strong: rgba(34, 197, 94, 0.4);
 }
 
-[data-theme="dark"] {
+[data-theme="light"] {
+	@include light-palette;
+}
+
+@mixin dark-palette {
 	--bg: #000000;
 	--header: #000000d9;
 	--surface: #0c0c0e;
@@ -407,7 +409,6 @@ textarea,
 	--badge-background-color: #2bfef514;
 	--badge-border-color: #2bfef533;
 	--active-lyrics-line-background-color: #2bfef50d;
-	/* Accent alpha variants (accent = #2bfef5 = rgb(43, 254, 245)) */
 	--accent-bg-hover: rgba(43, 254, 245, 0.04);
 	--accent-bg-active: rgba(43, 254, 245, 0.05);
 	--accent-btn-hover: rgba(43, 254, 245, 0.06);
@@ -416,7 +417,6 @@ textarea,
 	--accent-surface-hover: rgba(43, 254, 245, 0.14);
 	--accent-border: rgba(43, 254, 245, 0.2);
 	--accent-border-strong: rgba(43, 254, 245, 0.3);
-	/* Status tones */
 	--danger: #ef4444;
 	--danger-surface: rgba(239, 68, 68, 0.06);
 	--danger-hover: rgba(239, 68, 68, 0.1);
@@ -437,102 +437,20 @@ textarea,
 	--success-border-strong: rgba(34, 197, 94, 0.4);
 }
 
+[data-theme="dark"] {
+	@include dark-palette;
+}
+
 /* CSS-level fallback: auto-switch when no explicit data-theme is set */
 @media (prefers-color-scheme: light) {
 	:root:not([data-theme="dark"]) {
-		--bg: #f9f9f9;
-		--header: #f3f3f4d9;
-		--surface: #fdfdfe;
-		--surface2: #f1f1f3;
-		--border: color-mix(
-			in oklab,
-			hsl(240 calc(1 * 4%) 60.784%/0.2784313725490196) 100%,
-			hsl(0 0% 0%/0.2784313725490196) 0%
-		);
-		--text: #111116;
-		--muted: #666;
-		--accent: #00c9c0;
-		--accent2: #2bfef5;
-		--badge-background-color: #2bfef514;
-		--badge-border-color: #00c9c050;
-		--active-lyrics-line-background-color: #f4f4f880;
-		/* Accent alpha variants (accent = #00c9c0 = rgb(0, 201, 192)) */
-		--accent-bg-hover: rgba(0, 201, 192, 0.04);
-		--accent-bg-active: rgba(0, 201, 192, 0.05);
-		--accent-btn-hover: rgba(0, 201, 192, 0.06);
-		--accent-surface: rgba(0, 201, 192, 0.08);
-		--accent-mark-bg: rgba(0, 201, 192, 0.12);
-		--accent-surface-hover: rgba(0, 201, 192, 0.14);
-		--accent-border: rgba(0, 201, 192, 0.2);
-		--accent-border-strong: rgba(0, 201, 192, 0.3);
-		/* Status tones */
-		--danger: #dc2626;
-		--danger-surface: rgba(239, 68, 68, 0.06);
-		--danger-hover: rgba(239, 68, 68, 0.1);
-		--danger-surface-strong: rgba(239, 68, 68, 0.12);
-		--danger-border: rgba(239, 68, 68, 0.22);
-		--danger-border-strong: rgba(239, 68, 68, 0.4);
-		--warning: #eab308;
-		--warning-surface: rgba(234, 179, 8, 0.06);
-		--warning-hover: rgba(234, 179, 8, 0.1);
-		--warning-surface-strong: rgba(234, 179, 8, 0.12);
-		--warning-border: rgba(234, 179, 8, 0.22);
-		--warning-border-strong: rgba(234, 179, 8, 0.4);
-		--success: #22c55e;
-		--success-surface: rgba(34, 197, 94, 0.06);
-		--success-hover: rgba(34, 197, 94, 0.1);
-		--success-surface-strong: rgba(34, 197, 94, 0.12);
-		--success-border: rgba(34, 197, 94, 0.22);
-		--success-border-strong: rgba(34, 197, 94, 0.4);
+		@include light-palette;
 	}
 }
 
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme="light"]) {
-		--bg: #000000;
-		--header: #000000d9;
-		--surface: #0c0c0e;
-		--surface2: #171719;
-		--border: color-mix(
-			in oklab,
-			hsl(240 calc(1 * 4%) 60.784%/0.2) 100%,
-			hsl(0 0% 0%/0.2) 0%
-		);
-		--text: #f0f0f4;
-		--muted: #666666;
-		--accent: #2bfef5;
-		--accent2: #00c9c0;
-		--badge-background-color: #2bfef514;
-		--badge-border-color: #2bfef533;
-		--active-lyrics-line-background-color: #2bfef50d;
-		/* Accent alpha variants (accent = #2bfef5 = rgb(43, 254, 245)) */
-		--accent-bg-hover: rgba(43, 254, 245, 0.04);
-		--accent-bg-active: rgba(43, 254, 245, 0.05);
-		--accent-btn-hover: rgba(43, 254, 245, 0.06);
-		--accent-surface: rgba(43, 254, 245, 0.08);
-		--accent-mark-bg: rgba(43, 254, 245, 0.12);
-		--accent-surface-hover: rgba(43, 254, 245, 0.14);
-		--accent-border: rgba(43, 254, 245, 0.2);
-		--accent-border-strong: rgba(43, 254, 245, 0.3);
-		/* Status tones */
-		--danger: #ef4444;
-		--danger-surface: rgba(239, 68, 68, 0.06);
-		--danger-hover: rgba(239, 68, 68, 0.1);
-		--danger-surface-strong: rgba(239, 68, 68, 0.12);
-		--danger-border: rgba(239, 68, 68, 0.22);
-		--danger-border-strong: rgba(239, 68, 68, 0.4);
-		--warning: #eab308;
-		--warning-surface: rgba(234, 179, 8, 0.06);
-		--warning-hover: rgba(234, 179, 8, 0.1);
-		--warning-surface-strong: rgba(234, 179, 8, 0.12);
-		--warning-border: rgba(234, 179, 8, 0.22);
-		--warning-border-strong: rgba(234, 179, 8, 0.4);
-		--success: #22c55e;
-		--success-surface: rgba(34, 197, 94, 0.06);
-		--success-hover: rgba(34, 197, 94, 0.1);
-		--success-surface-strong: rgba(34, 197, 94, 0.12);
-		--success-border: rgba(34, 197, 94, 0.22);
-		--success-border-strong: rgba(34, 197, 94, 0.4);
+		@include dark-palette;
 	}
 }
 
@@ -600,18 +518,6 @@ a {
 	}
 }
 
-@keyframes dlBtnIn {
-	from {
-		opacity: 0;
-		transform: translateY(8px);
-	}
-
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-
 @keyframes slideDown {
 	from {
 		opacity: 0;
@@ -632,18 +538,6 @@ a {
 
 	50% {
 		transform: scaleY(1);
-	}
-}
-
-@keyframes panelIn {
-	from {
-		opacity: 0;
-		transform: translateY(6px);
-	}
-
-	to {
-		opacity: 1;
-		transform: translateY(0);
 	}
 }
 
@@ -701,18 +595,6 @@ a {
 	to {
 		opacity: 1;
 		transform: translateY(0);
-	}
-}
-
-@keyframes nm-modal-in {
-	from {
-		opacity: 0;
-		transform: translateY(8px) scale(0.98);
-	}
-
-	to {
-		opacity: 1;
-		transform: translateY(0) scale(1);
 	}
 }
 

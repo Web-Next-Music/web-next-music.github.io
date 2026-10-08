@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ListMusic } from "lucide-react";
 import { useLikes } from "@/lib/supabase/likesContext";
 import { useAuth } from "@/lib/auth";
@@ -41,40 +42,37 @@ export default function PlaylistTracks({
 	useEffect(() => {
 		ensureTracksLoaded();
 	}, []);
-	const [detail, setDetail] = useState<Detail>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(false);
+	const client = useQueryClient();
+	const queryKey = [
+		user?.id === userId ? "private" : "public",
+		userId,
+		`playlist:${playlistId}`,
+	];
+	const query = useQuery({
+		queryKey,
+		queryFn: () => getPlaylistDetail(userId, playlistId),
+		enabled: !authLoading,
+	});
+	const detail = query.data ?? null;
+	const loading = query.isPending;
+	const error = query.isError;
+	const setDetail = (update: (current: Detail) => Detail) =>
+		client.setQueryData<Detail>(queryKey, (current) => update(current ?? null));
 	const [removeError, setRemoveError] = useState(false);
 	const [removing, setRemoving] = useState(false);
-	const [reload, setReload] = useState(0);
-
-	useEffect(() => {
-		if (authLoading) return;
-		let active = true;
-		setLoading(true);
-		setError(false);
-		setDetail(null);
-		getPlaylistDetail(userId, playlistId)
-			.then((result) => {
-				if (active) setDetail(result);
-			})
-			.catch(() => {
-				if (active) setError(true);
-			})
-			.finally(() => {
-				if (active) setLoading(false);
-			});
-		return () => {
-			active = false;
-		};
-	}, [userId, playlistId, reload, authLoading, user?.id]);
-
 	const removeTrack = async (trackId: string) => {
 		if (removing || authLoading || isBanned || user?.id !== userId) return;
 		setRemoving(true);
 		setRemoveError(false);
 		try {
+			await client.cancelQueries({ queryKey });
 			await removePlaylistDetailTrack(playlistId, trackId);
+			void client.invalidateQueries({
+				queryKey: ["private", userId, "playlist-tracks", playlistId],
+			});
+			void client.invalidateQueries({
+				queryKey: ["private", userId, "playlist-contents"],
+			});
 			setDetail((current) =>
 				current
 					? {
@@ -133,7 +131,7 @@ export default function PlaylistTracks({
 			) : error ? (
 				<div role="alert">
 					<p className={styles.statusError}>Could not load this playlist.</p>
-					<button type="button" onClick={() => setReload((value) => value + 1)}>
+					<button type="button" onClick={() => void query.refetch()}>
 						Retry
 					</button>
 				</div>

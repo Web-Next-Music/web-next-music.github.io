@@ -88,8 +88,6 @@ export async function saveProfilePlaylistsVisibility(
 	if (error) throw error;
 }
 
-export const ACCOUNT_LINKS_VISIBILITY_EVENT = "account-links-visibility-change";
-
 export async function getProfileAccountLinksVisibility(
 	userId: string,
 ): Promise<boolean> {
@@ -117,11 +115,6 @@ export async function saveProfileAccountLinksVisibility(
 			{ onConflict: "user_id" },
 		);
 	if (error) throw error;
-	window.dispatchEvent(
-		new CustomEvent(ACCOUNT_LINKS_VISIBILITY_EVENT, {
-			detail: { userId, enabled },
-		}),
-	);
 }
 
 export interface PublicLikedTrack extends TrackLikeMeta {
@@ -176,7 +169,7 @@ export async function getOwnProfile(
 	userId: string,
 ): Promise<UserProfile | null> {
 	const sb = getSupabase();
-	if (!sb) return null;
+	if (!sb) throw new Error("Profile service is unavailable");
 	const { data, error } = await sb
 		.from("user_profiles")
 		.select(
@@ -240,12 +233,15 @@ export async function getUserPinnedPlaylists(
 ): Promise<Playlist[]> {
 	const sb = getSupabase();
 	if (!sb) throw new Error("Profile service is unavailable");
-	const { data, error } = await sb
-		.from("pinned_playlists")
-		.select("position, playlists(id, name, created_at)")
-		.eq("user_id", userId)
-		.order("position", { ascending: true });
-	if (error) throw error;
+	const data = await collectPages((offset, limit) =>
+		sb
+			.from("pinned_playlists")
+			.select("position, playlists(id, name, created_at)")
+			.eq("user_id", userId)
+			.order("position", { ascending: true })
+			.order("playlist_id")
+			.range(offset, offset + limit - 1),
+	);
 	return ((data ?? []) as unknown as { playlists: Playlist }[])
 		.map((r) => r.playlists)
 		.filter(Boolean);
@@ -256,11 +252,14 @@ export async function getPinnedPlaylistIds(
 ): Promise<Set<string>> {
 	const sb = getSupabase();
 	if (!sb) throw new Error("Profile service is unavailable");
-	const { data, error } = await sb
-		.from("pinned_playlists")
-		.select("playlist_id")
-		.eq("user_id", userId);
-	if (error) throw error;
+	const data = await collectPages((offset, limit) =>
+		sb
+			.from("pinned_playlists")
+			.select("playlist_id")
+			.eq("user_id", userId)
+			.order("playlist_id")
+			.range(offset, offset + limit - 1),
+	);
 	return new Set(
 		(data ?? []).map((r: { playlist_id: string }) => r.playlist_id),
 	);
@@ -287,7 +286,7 @@ export async function getUserStats(
 	userId: string,
 ): Promise<{ likes: number; playlists: number }> {
 	const sb = getSupabase();
-	if (!sb) return { likes: 0, playlists: 0 };
+	if (!sb) throw new Error("Profile service is unavailable");
 	const { data, error } = await sb.rpc("get_user_stats", { p_user_id: userId });
 	if (error) throw error;
 	return (

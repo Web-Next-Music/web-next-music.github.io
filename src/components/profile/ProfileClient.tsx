@@ -107,6 +107,7 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 	const {
 		playlists,
 		playlistsLoading,
+		playlistsError,
 		creating,
 		setCreating,
 		newName,
@@ -779,6 +780,11 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 								</div>
 							)}
 
+							{playlistsError && (
+								<p className={styles.statusError} role="alert">
+									Could not load or update playlists. Please try again.
+								</p>
+							)}
 							{playlistsLoading ? (
 								<div className={styles.playlistSkeleton}>
 									{[72, 58, 65].map((w, i) => (

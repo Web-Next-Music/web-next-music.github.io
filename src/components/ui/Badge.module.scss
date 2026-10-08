@@ -1,28 +1,3 @@
-.base {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--space-1);
-	border: 1px solid transparent;
-	border-radius: var(--radius-3xl);
-	line-height: 1.4;
-	white-space: nowrap;
-}
-
-.size-xs {
-	padding: 1px 6px;
-	font-size: var(--fs-2xs);
-}
-
-.size-sm {
-	padding: 2px 8px;
-	font-size: var(--fs-xs);
-}
-
-.size-md {
-	padding: 3px 10px;
-	font-size: var(--fs-sm);
-}
-
 .accent {
 	--badge-color: var(--accent);
 	--badge-surface: var(--accent-surface);
@@ -51,23 +26,6 @@
 	--badge-color: var(--success);
 	--badge-surface: var(--success-surface-strong);
 	--badge-border: var(--success-border);
-}
-
-.soft {
-	background: var(--badge-surface);
-	border-color: var(--badge-border);
-	color: var(--badge-color);
-}
-
-.solid {
-	background: var(--badge-color);
-	color: var(--bg);
-}
-
-.outline {
-	background: transparent;
-	border-color: var(--badge-border);
-	color: var(--badge-color);
 }
 
 .softLayout {

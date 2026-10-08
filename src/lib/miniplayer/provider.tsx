@@ -4,7 +4,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import type { NowPlaying } from "@/types/player";
 import { PlayerContext } from "./context";
-import { useRichPresenceWS } from "./hooks";
+import { useRichPresence } from "./hooks";
+import { stableTrackKey } from "@/lib/track/trackKey";
 import { MiniPlayerInner } from "@/components/miniplayer/MiniPlayer";
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
@@ -18,14 +19,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null);
 	const [isPlaying, setIsPlaying] = useState(false);
 
-	useRichPresenceWS(nowPlaying, isPlaying, audioRef);
+	useRichPresence(nowPlaying, isPlaying, audioRef);
 
 	const play = useCallback((track: NowPlaying) => {
+		const source = track.directUrl ?? track.url;
 		const id =
-			track.id && !track.directUrl ? track.id : (track.url ?? undefined);
-		currentTrackUrlRef.current = null;
+			(track.id && !/^https?:\/\//.test(track.id) ? track.id : undefined) ||
+			stableTrackKey(source, track.title, track.artist, track.cover);
 		setNowPlaying({ ...track, id });
-		setIsPlaying(true);
+		if (currentTrackUrlRef.current === track.url) {
+			void audioRef.current?.play().catch(() => setIsPlaying(false));
+		}
 	}, []);
 
 	const pause = useCallback(() => {
@@ -34,8 +38,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	}, []);
 
 	const resume = useCallback(() => {
-		audioRef.current?.play();
-		setIsPlaying(true);
+		void audioRef.current?.play().catch(() => setIsPlaying(false));
 	}, []);
 
 	const close = useCallback(() => {
@@ -45,7 +48,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 	}, []);
 
 	const seek = useCallback((seconds: number) => {
-		if (audioRef.current) audioRef.current.currentTime = seconds;
+		const audio = audioRef.current;
+		if (audio && audio.readyState >= 1 && Number.isFinite(seconds)) {
+			audio.currentTime = Math.max(
+				0,
+				Math.min(
+					seconds,
+					Number.isFinite(audio.duration) ? audio.duration : seconds,
+				),
+			);
+		}
 	}, []);
 
 	const setVolume = useCallback((volume: number) => {
@@ -58,15 +70,35 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
 	useEffect(() => {
 		const audio = audioRef.current;
-		if (!audio || !nowPlaying) return;
-
-		if (currentTrackUrlRef.current !== nowPlaying.url) {
+		if (!audio) return;
+		if (currentTrackUrlRef.current !== (nowPlaying?.url ?? null)) {
+			const previous = currentTrackUrlRef.current;
+			audio.pause();
+			setIsPlaying(false);
+			if (previous?.startsWith("blob:")) URL.revokeObjectURL(previous);
+			if (!nowPlaying) {
+				currentTrackUrlRef.current = null;
+				audio.removeAttribute("src");
+				audio.load();
+				return;
+			}
 			currentTrackUrlRef.current = nowPlaying.url;
 			audio.src = nowPlaying.url;
 			audio.currentTime = 0;
-			audio.play().catch(console.error);
+			const requestedSource = nowPlaying.url;
+			void audio.play().catch(() => {
+				if (currentTrackUrlRef.current === requestedSource) setIsPlaying(false);
+			});
 		}
 	}, [nowPlaying]);
+
+	useEffect(
+		() => () => {
+			const source = currentTrackUrlRef.current;
+			if (source?.startsWith("blob:")) URL.revokeObjectURL(source);
+		},
+		[],
+	);
 
 	return (
 		<PlayerContext.Provider
@@ -83,7 +115,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 				audioRef,
 			}}
 		>
-			<audio ref={audioRef} onEnded={() => setIsPlaying(false)} />
+			<audio
+				ref={audioRef}
+				onPlaying={() => setIsPlaying(true)}
+				onPause={() => setIsPlaying(false)}
+				onEnded={() => setIsPlaying(false)}
+				onError={() => setIsPlaying(false)}
+				onEmptied={() => setIsPlaying(false)}
+			/>
 			{children}
 			<MiniPlayerInner isHiddenMode={isHiddenMode} />
 		</PlayerContext.Provider>
