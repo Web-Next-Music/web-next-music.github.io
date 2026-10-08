@@ -8,12 +8,18 @@ import { TRACK_META } from "@/lib/fckcensor";
 marked.use({ breaks: true, gfm: true } as Parameters<typeof marked.use>[0]);
 
 export function renderBio(text: string): string {
-	return DOMPurify.sanitize(marked.parse(text, { async: false }), {
+	const content = DOMPurify.sanitize(marked.parse(text, { async: false }), {
 		ALLOWED_TAGS: [
 			"p",
 			"br",
 			"strong",
+			"b",
 			"em",
+			"i",
+			"s",
+			"sub",
+			"sup",
+			"kbd",
 			"del",
 			"a",
 			"ul",
@@ -26,14 +32,67 @@ export function renderBio(text: string): string {
 			"h2",
 			"h3",
 			"h4",
+			"h5",
+			"h6",
 			"hr",
+			"img",
+			"picture",
+			"div",
+			"span",
+			"details",
+			"summary",
+			"table",
+			"thead",
+			"tbody",
+			"tfoot",
+			"tr",
+			"th",
+			"td",
+			"caption",
 		],
-		ALLOWED_ATTR: ["href", "title"],
+		ALLOWED_ATTR: [
+			"href",
+			"title",
+			"src",
+			"alt",
+			"width",
+			"height",
+			"align",
+			"colspan",
+			"rowspan",
+			"open",
+			"start",
+			"reversed",
+		],
+		RETURN_DOM: true,
 		ALLOW_DATA_ATTR: false,
 		ALLOW_ARIA_ATTR: false,
 		ALLOWED_URI_REGEXP:
 			/^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i,
-	});
+	}) as HTMLElement;
+
+	for (const element of content.querySelectorAll("a[href], img[src]")) {
+		const attribute = element.tagName === "IMG" ? "src" : "href";
+		const value = element.getAttribute(attribute)!;
+		try {
+			const url = new URL(value, "https://profile.invalid/");
+			const protocols =
+				attribute === "src"
+					? ["https:", "http:"]
+					: ["https:", "http:", "mailto:"];
+			if (!protocols.includes(url.protocol)) element.removeAttribute(attribute);
+		} catch {
+			element.removeAttribute(attribute);
+		}
+	}
+
+	for (const image of content.querySelectorAll("img")) {
+		image.setAttribute("loading", "lazy");
+		image.setAttribute("decoding", "async");
+		image.setAttribute("referrerpolicy", "no-referrer");
+	}
+
+	return content.innerHTML;
 }
 
 export function formatJoinDate(iso: string, exact: boolean): string {
