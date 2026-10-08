@@ -43,3 +43,5 @@ next-env.d.ts
 src/data
 
 /supabase/
+!/src/lib/supabase/
+!/src/lib/supabase/**
