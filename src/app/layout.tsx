@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
 	Montserrat,
 	Nunito,
@@ -30,6 +30,10 @@ export const metadata: Metadata = {
 		images: ["/ui/preview.png"],
 		type: "website",
 	},
+};
+
+export const viewport: Viewport = {
+	themeColor: "#2bfef5",
 };
 
 const securityPolicy = [
