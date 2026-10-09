@@ -325,10 +325,7 @@ export default function PublicProfileClient({
 					{!banned && (
 						<div className={likesStyles.main}>
 							{(showLikes || showPlaylists) && (
-								<div
-									className={`${styles.statsCard} ${likesStyles.tabs}`}
-									aria-label="Profile sections"
-								>
+								<div className={likesStyles.tabs} aria-label="Profile sections">
 									<button
 										type="button"
 										aria-pressed={!visiblePlaylistId && visibleTab === "bio"}
