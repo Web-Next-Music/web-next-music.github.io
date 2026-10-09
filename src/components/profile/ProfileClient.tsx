@@ -16,8 +16,10 @@ import PlaylistActions, {
 	type PlaylistManagementProps,
 } from "./PlaylistActions";
 import Card from "@/components/ui/Card";
+import Modal from "@/components/ui/Modal";
+import Button from "@/components/ui/Button";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { config } from "@/lib/config";
 import { useAuth } from "@/lib/auth";
 import { getPreferredAvatarUrl } from "@/lib/auth/accountLinks";
@@ -65,7 +67,7 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 	const searchParams = useSearchParams();
 	const { user, loading, banChecking, openAuthModal, isBanned } = useAuth();
 	const { likedTrackIds, likedMeta } = useLikes();
-	const newNameRef = useRef<HTMLInputElement>(null);
+
 	const requestedTab = searchParams.get("tab");
 	const initialTab =
 		requestedTab === "likes" || requestedTab === "liked"
@@ -108,6 +110,7 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 		playlists,
 		playlistsLoading,
 		playlistsError,
+		playlistsSaving,
 		creating,
 		setCreating,
 		newName,
@@ -162,10 +165,6 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 			if (starred !== null) setGithubStarred(starred);
 		});
 	}, [userId]);
-
-	useEffect(() => {
-		if (creating) newNameRef.current?.focus();
-	}, [creating]);
 
 	if (loading || banChecking) {
 		return (
@@ -746,39 +745,65 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 								</>
 							}
 						>
-							{creating && (
-								<div className={styles.createRow}>
+							<Modal
+								open={creating}
+								title="New Playlist"
+								size="sm"
+								closeOnEscape={!playlistsSaving}
+								closeOnOverlay={!playlistsSaving}
+								onClose={() => {
+									if (playlistsSaving) return;
+									setCreating(false);
+									setNewName("");
+								}}
+							>
+								<form
+									className={styles.createModalForm}
+									onSubmit={(event) => {
+										event.preventDefault();
+										if (!playlistsSaving && !isBanned)
+											void handleCreatePlaylist().catch(() => {});
+									}}
+								>
 									<input
-										ref={newNameRef}
+										aria-label="Playlist name"
+										disabled={playlistsSaving}
+										required
 										className={styles.createInput}
 										placeholder="Playlist name…"
 										value={newName}
 										onChange={(e) => setNewName(e.target.value)}
-										onKeyDown={(e) => {
-											if (e.key === "Enter") handleCreatePlaylist();
-											if (e.key === "Escape") {
+									/>
+									{playlistsError && (
+										<p className={styles.statusError} role="alert">
+											Could not create playlist. Please try again.
+										</p>
+									)}
+									<div className={styles.createModalActions}>
+										<Button
+											size="lg"
+											variant="secondary"
+											type="button"
+											disabled={playlistsSaving}
+											onClick={() => {
 												setCreating(false);
 												setNewName("");
-											}
-										}}
-									/>
-									<button
-										className={styles.createConfirm}
-										onClick={handleCreatePlaylist}
-									>
-										Create
-									</button>
-									<button
-										className={styles.createCancel}
-										onClick={() => {
-											setCreating(false);
-											setNewName("");
-										}}
-									>
-										Cancel
-									</button>
-								</div>
-							)}
+											}}
+										>
+											Cancel
+										</Button>
+										<Button
+											type="submit"
+											size="lg"
+											variant="danger"
+											loading={playlistsSaving}
+											disabled={isBanned || !newName.trim()}
+										>
+											Create
+										</Button>
+									</div>
+								</form>
+							</Modal>
 
 							{playlistsError && (
 								<p className={styles.statusError} role="alert">
@@ -796,7 +821,7 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 										</div>
 									))}
 								</div>
-							) : playlists.length === 0 && !creating ? (
+							) : playlists.length === 0 ? (
 								<div className={styles.empty}>No playlists yet</div>
 							) : (
 								<div className={styles.playlistGrid}>

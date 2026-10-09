@@ -157,6 +157,7 @@ export function useProfilePlaylists(userId: string | undefined) {
 	return {
 		playlists: playlistsQuery.data ?? [],
 		playlistsLoading: Boolean(userId) && playlistsQuery.isPending,
+		playlistsSaving: mutation.isPending,
 		playlistsError: playlistsQuery.error ?? pinsQuery.error ?? mutation.error,
 		creating,
 		setCreating,
