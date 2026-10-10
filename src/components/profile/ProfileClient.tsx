@@ -18,6 +18,7 @@ import PlaylistActions, {
 import Card from "@/components/ui/Card";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
 
 import { useState, useEffect } from "react";
 import { config } from "@/lib/config";
@@ -749,6 +750,8 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 								open={creating}
 								title="New Playlist"
 								size="sm"
+								bodyClassName={styles.createModalBody}
+								showBodyFades={false}
 								closeOnEscape={!playlistsSaving}
 								closeOnOverlay={!playlistsSaving}
 								onClose={() => {
@@ -765,15 +768,18 @@ export default function ProfileClient({ playlistId }: { playlistId?: string }) {
 											void handleCreatePlaylist().catch(() => {});
 									}}
 								>
-									<input
-										aria-label="Playlist name"
-										disabled={playlistsSaving}
-										required
-										className={styles.createInput}
-										placeholder="Playlist name…"
-										value={newName}
-										onChange={(e) => setNewName(e.target.value)}
-									/>
+									<div className={styles.createInputBlock}>
+										<Input
+											aria-label="Playlist name"
+											disabled={playlistsSaving}
+											required
+											size="lg"
+											radius="lg"
+											placeholder="Playlist name…"
+											value={newName}
+											onChange={(e) => setNewName(e.target.value)}
+										/>
+									</div>
 									{playlistsError && (
 										<p className={styles.statusError} role="alert">
 											Could not create playlist. Please try again.

@@ -794,10 +794,14 @@
 }
 
 // Create playlist row (profile)
+.createModalBody.createModalBody {
+	padding: 0 8px 8px;
+}
+
 .createModalForm {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: 8px;
 }
 
 .createModalActions {
@@ -807,21 +811,11 @@
 	flex-wrap: wrap;
 }
 
-.createInput {
-	flex: 1;
-	min-width: 0;
-	font-size: 13px;
-	color: var(--text);
+.createInputBlock {
+	padding: 10px;
 	background: var(--surface);
 	border: 1px solid var(--border);
-	border-radius: var(--radius-sm);
-	padding: 7px 12px;
-	outline: none;
-	transition: border-color 0.15s;
-
-	&:focus {
-		border-color: var(--accent);
-	}
+	border-radius: var(--radius-lg);
 }
 
 .sectionHeader {

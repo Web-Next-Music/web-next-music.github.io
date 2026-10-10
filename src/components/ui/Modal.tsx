@@ -28,6 +28,7 @@ interface Props {
 	showClose?: boolean;
 	className?: string;
 	bodyClassName?: string;
+	showBodyFades?: boolean;
 }
 
 const scrollLocks = new Map<HTMLElement, { count: number; overflow: string }>();
@@ -62,6 +63,7 @@ export default function Modal({
 	showClose = true,
 	className,
 	bodyClassName,
+	showBodyFades = true,
 }: Props) {
 	const mounted = useIsClient();
 	const lastFocused = useRef<HTMLElement | null>(null);
@@ -158,7 +160,12 @@ export default function Modal({
 							</div>
 						)}
 						{content.title || showClose ? (
-							<div className={styles.bodyFrame}>
+							<div
+								className={cx(
+									styles.bodyFrame,
+									!showBodyFades && styles.bodyFrameWithoutFades,
+								)}
+							>
 								<div className={cx(styles.body, bodyClassName)}>
 									{content.children}
 								</div>

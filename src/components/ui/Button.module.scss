@@ -118,6 +118,35 @@
 	box-shadow: 0 0 0 3px var(--accent-surface);
 }
 
+:global([role="dialog"]) .baseLayout {
+	height: 30px;
+	padding: 0 10px;
+	border-radius: 8px;
+	font-size: 12px;
+}
+
+:global([role="dialog"]) .primaryStyle,
+:global([role="dialog"]) .pillLayout {
+	border-color: var(--accent-border);
+	background-color: var(--accent-surface);
+	color: var(--accent);
+}
+
+@media (hover: hover) {
+	:global([role="dialog"]) .primaryStyle:hover:not(:disabled),
+	:global([role="dialog"]) .pillLayout:hover:not(:disabled) {
+		border-color: var(--accent-border-strong);
+		background-color: var(--accent-surface-hover);
+		opacity: 1;
+	}
+
+	:global([role="dialog"]) .secondaryLayout:hover:not(:disabled) {
+		border-color: var(--accent-border);
+		background-color: var(--accent-surface);
+		color: var(--accent);
+	}
+}
+
 .elementStyle {
 	flex-shrink: 0;
 }

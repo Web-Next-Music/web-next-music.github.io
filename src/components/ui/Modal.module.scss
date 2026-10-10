@@ -132,6 +132,13 @@
 	}
 }
 
+.bodyFrameWithoutFades {
+	&::before,
+	&::after {
+		display: none;
+	}
+}
+
 .body {
 	@include mx.thin-scrollbar;
 	flex: 1 1 auto;
