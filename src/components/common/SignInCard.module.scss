@@ -46,8 +46,11 @@
 }
 
 .copy {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 17px minmax(0, max-content) minmax(
+			0,
+			1fr
+		);
 	gap: 0.625rem;
 }
 
@@ -72,9 +75,10 @@
 }
 
 .githubBtnLayout {
-	display: flex;
+	display: grid;
+	grid-column: 1 / -1;
+	grid-template-columns: subgrid;
 	align-items: center;
-	justify-content: center;
 	gap: 0.625rem;
 	width: 100%;
 	min-height: 2.875rem;
@@ -97,8 +101,15 @@
 	}
 
 	svg {
-		flex-shrink: 0;
+		grid-column: 2;
+		overflow: visible;
 	}
+}
+
+.providerLabel {
+	grid-column: 3;
+	min-width: 0;
+	text-align: center;
 }
 
 .closeBtnLayout:focus-visible,
@@ -120,6 +131,7 @@
 }
 
 .errorLayout {
+	grid-column: 1 / -1;
 	overflow-wrap: anywhere;
 	font-size: 13px;
 	color: var(--danger);
@@ -146,6 +158,10 @@
 
 	.title {
 		font-size: 2.125rem;
+	}
+
+	.copy {
+		column-gap: 0.5rem;
 	}
 
 	.githubBtnLayout {

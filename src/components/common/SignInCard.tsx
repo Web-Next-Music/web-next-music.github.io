@@ -73,7 +73,11 @@ export default function SignInCard({
 									width={17}
 									height={17}
 								/>
-								{redirecting ? "Redirecting…" : `Continue with ${service.name}`}
+								<span className={styles.providerLabel}>
+									{redirecting
+										? "Redirecting…"
+										: `Continue with ${service.name}`}
+								</span>
 							</button>
 						);
 					})}
