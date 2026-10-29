@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import AuthButton from "@/components/common/AuthButton";
 import Dropdown from "@/components/ui/Dropdown";
+import NavItem from "@/components/ui/NavItem";
 import dropdownStyles from "@/components/ui/Dropdown.module.scss";
 
 const JUNE = 5;
@@ -105,13 +106,13 @@ export default function Header({
 					<div className={styles.navWrap}>
 						<nav className={styles.navLayout} aria-label="Main navigation">
 							{NAV_LINKS.map((l) => (
-								<Link
+								<NavItem
 									key={l.href}
 									href={l.href}
-									aria-current={isActiveLink(l.href) ? "page" : undefined}
+									active={isActiveLink(l.href)}
 								>
 									{l.label}
-								</Link>
+								</NavItem>
 							))}
 						</nav>
 

@@ -13,7 +13,7 @@ import {
 	useLayoutEffect,
 	useSyncExternalStore,
 } from "react";
-import { TRACK_META, type TrackMeta } from "@/lib/fckcensor";
+import { TRACK_META, type CatalogEntry, type TrackMeta } from "@/lib/fckcensor";
 import {
 	ensureTracksLoaded,
 	retryTracksLoaded,
@@ -27,6 +27,7 @@ import LikeButton from "@/components/common/LikeButton";
 import Menu from "@/components/ui/Menu";
 import menuStyles from "@/components/ui/Menu.module.scss";
 import SearchInput from "@/components/ui/SearchInput";
+import NavItem from "@/components/ui/NavItem";
 import { cx } from "@/lib/cx";
 import { useAuth } from "@/lib/auth";
 import {
@@ -230,10 +231,10 @@ function SearchBar({ value, onChange }: SearchBarProps) {
 	return (
 		<SearchInput
 			wrapperClassName={styles.searchWrap}
-			size="lg"
+			size="md"
 			iconSize={16}
 			className={styles.textStyle}
-			radius="pill"
+			radius="sm"
 			placeholder="Search by title, artist or ID..."
 			value={value}
 			onChange={(e) => onChange(e.target.value)}
@@ -248,7 +249,7 @@ function LegacyList({ tracks, query, playlists }: LegacyListProps) {
 		() =>
 			tracks.map((t) => ({
 				...t,
-				meta: (TRACK_META[t.id] ?? null) as TrackMeta | null,
+				meta: (t.meta ?? TRACK_META[t.id] ?? null) as TrackMeta | null,
 			})),
 		[tracks],
 	);
@@ -411,6 +412,75 @@ function LegacyList({ tracks, query, playlists }: LegacyListProps) {
 	);
 }
 
+function CatalogList({
+	entries,
+	query,
+	kind,
+}: {
+	entries: CatalogEntry[];
+	query: string;
+	kind: "albums" | "artists";
+}) {
+	const filtered = useMemo(() => {
+		const q = query.trim().toLowerCase();
+		if (!q) return entries;
+		return entries.filter((entry) =>
+			[entry.title, entry.artist ?? "", entry.id, ...entry.trackIds].some(
+				(value) => value.toLowerCase().includes(q),
+			),
+		);
+	}, [entries, query]);
+
+	return (
+		<div className={styles.list}>
+			{filtered.length === 0 && (
+				<div className={styles.empty}>
+					{query.trim() ? "No results found" : `No ${kind} available`}
+				</div>
+			)}
+			{filtered.map((entry) => (
+				<a
+					key={entry.id}
+					href={entry.yandexUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					className={cx(styles.trackRowLayout, styles.catalogRow)}
+				>
+					{entry.cover ? (
+						<Image
+							src={entry.cover}
+							alt=""
+							width={40}
+							height={40}
+							className={styles.coverLayout}
+							loading="lazy"
+						/>
+					) : (
+						<div className={styles.legacyIconLayout}>
+							<Music size={16} color="var(--muted)" aria-hidden="true" />
+						</div>
+					)}
+					<div className={styles.info}>
+						<div className={styles.title}>
+							<Highlight text={entry.title} query={query} />
+						</div>
+						<div className={styles.artist}>
+							{entry.artist && (
+								<>
+									<Highlight text={entry.artist} query={query} /> ·{" "}
+								</>
+							)}
+							{entry.trackIds.length}{" "}
+							{entry.trackIds.length === 1 ? "track" : "tracks"}
+						</div>
+					</div>
+					<span className={styles.catalogLinkLabel}>Yandex Music ↗</span>
+				</a>
+			))}
+		</div>
+	);
+}
+
 function Highlight({ text, query }: { text: string; query: string }) {
 	const q = query.trim();
 	if (!q) return <>{text}</>;
@@ -465,13 +535,16 @@ function Skeleton() {
 
 export default function FckCensorTabs() {
 	const [query, setQuery] = useState("");
+	const [activeTab, setActiveTab] = useState<"tracks" | "albums" | "artists">(
+		"tracks",
+	);
 	const [playlistError, setPlaylistError] = useState<string | null>(null);
 	const [playlistReload, setPlaylistReload] = useState(0);
 	const [playlists, setPlaylists] = useState<Playlist[]>([]);
 	const { user } = useAuth();
 	const userId = user?.id;
 
-	const { legacy, loaded, error } = useSyncExternalStore(
+	const { legacy, albums, artists, loaded, error } = useSyncExternalStore(
 		subscribeStore,
 		getStoreSnapshot,
 		getServerSnapshot,
@@ -503,7 +576,27 @@ export default function FckCensorTabs() {
 
 	return (
 		<div>
-			<SearchBar value={query} onChange={setQuery} />
+			<div className={styles.toolbar}>
+				<nav className={styles.tabs} aria-label="Catalog categories">
+					{(
+						[
+							["tracks", "Tracks", legacy.length],
+							["albums", "Albums", albums.length],
+							["artists", "Artists", artists.length],
+						] as const
+					).map(([tab, label, count]) => (
+						<NavItem
+							key={tab}
+							active={activeTab === tab}
+							count={count}
+							onClick={() => setActiveTab(tab)}
+						>
+							{label}
+						</NavItem>
+					))}
+				</nav>
+				<SearchBar value={query} onChange={setQuery} />
+			</div>
 			{playlistError && (
 				<div role="alert" className={styles.playlistMenuEmpty}>
 					{playlistError}{" "}
@@ -519,8 +612,20 @@ export default function FckCensorTabs() {
 				</div>
 			) : loading ? (
 				<Skeleton />
+			) : activeTab === "tracks" ? (
+				<LegacyList
+					key={activeTab}
+					tracks={legacy}
+					query={query}
+					playlists={playlists}
+				/>
 			) : (
-				<LegacyList tracks={legacy} query={query} playlists={playlists} />
+				<CatalogList
+					key={activeTab}
+					entries={activeTab === "albums" ? albums : artists}
+					query={query}
+					kind={activeTab}
+				/>
 			)}
 		</div>
 	);

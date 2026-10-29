@@ -1,7 +1,8 @@
 import {
 	LEGACY_URL,
 	TRACK_META,
-	parseLegacy,
+	parseCatalog,
+	type CatalogEntry,
 	type LegacyTrack,
 	type TrackMeta,
 } from "@/lib/fckcensor";
@@ -12,11 +13,15 @@ import type {
 
 export type { CachedTrack };
 export type StoreSnapshot = BaseStoreSnapshot & {
+	albums: CatalogEntry[];
+	artists: CatalogEntry[];
 	loading: boolean;
 	error: string | null;
 };
 
 let legacy: LegacyTrack[] = [];
+let albums: CatalogEntry[] = [];
+let artists: CatalogEntry[] = [];
 let loaded = false;
 let loading = false;
 let error: string | null = null;
@@ -24,10 +29,17 @@ let promise: Promise<void> | null = null;
 const tracksById = new Map<string, CachedTrack>();
 const listeners = new Set<() => void>();
 
-let snapshot: StoreSnapshot = { legacy, loaded, loading, error };
+let snapshot: StoreSnapshot = {
+	legacy,
+	albums,
+	artists,
+	loaded,
+	loading,
+	error,
+};
 
 function notify() {
-	snapshot = { legacy, loaded, loading, error };
+	snapshot = { legacy, albums, artists, loaded, loading, error };
 	listeners.forEach((fn) => fn());
 }
 
@@ -42,6 +54,8 @@ export function getStoreSnapshot(): StoreSnapshot {
 
 const SERVER_SNAPSHOT: StoreSnapshot = {
 	legacy: [],
+	albums: [],
+	artists: [],
 	loaded: false,
 	loading: false,
 	error: null,
@@ -63,12 +77,17 @@ export function ensureTracksLoaded(): Promise<void> {
 			}
 			return response.json();
 		})
-		.then(parseLegacy)
-		.then((tracks) => {
-			legacy = tracks;
+		.then((data) => parseCatalog(data, TRACK_META))
+		.then((catalog) => {
+			legacy = catalog.legacy;
+			albums = catalog.albums;
+			artists = catalog.artists;
+			const tracks = legacy;
 			tracksById.clear();
 			for (const track of tracks) {
-				const meta = (TRACK_META[track.id] ?? null) as TrackMeta | null;
+				const meta = (track.meta ??
+					TRACK_META[track.id] ??
+					null) as TrackMeta | null;
 				tracksById.set(track.id, {
 					id: track.id,
 					url: track.url,

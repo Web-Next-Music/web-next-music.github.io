@@ -1,3 +1,4 @@
+import { parseCatalog } from "../src/lib/fckcensor/catalog";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import {
@@ -10,8 +11,8 @@ import {
 const __dir = join(root, "scripts");
 
 // Config
-const LEGACY_URL =
-	"https://raw.githubusercontent.com/Hazzz895/FckCensorData/refs/heads/main/list.json";
+const CATALOG_URL =
+	"https://raw.githubusercontent.com/Hazzz895/FckCensorData/refs/heads/main/list_v2.json";
 
 const YANDEX_API = "https://api.music.yandex.net/tracks";
 const YANDEX_TOKEN = process.env.YANDEX_TOKEN ?? "";
@@ -98,24 +99,20 @@ function fetchBatch(ids: string[]): MetaMap {
 
 // Main flow
 async function main() {
-	// 1. Download legacy list
-	console.log("[DOWNLOAD] Loading legacy JSON...");
-	const legacyResp = await fetch(LEGACY_URL, {
+	console.log("[DOWNLOAD] Loading catalog from list_v2.json...");
+	const catalogResponse = await fetch(CATALOG_URL, {
 		signal: AbortSignal.timeout(30000),
 	});
-	if (!legacyResp.ok)
-		throw new Error(`Failed to load legacy JSON: ${legacyResp.status}`);
+	if (!catalogResponse.ok)
+		throw new Error(`Failed to load list_v2.json: ${catalogResponse.status}`);
 
-	const legacyData = (await legacyResp.json()) as {
-		tracks: Record<string, string>;
-	};
-	if (
-		!legacyData.tracks ||
-		typeof legacyData.tracks !== "object" ||
-		Array.isArray(legacyData.tracks)
-	)
-		throw new Error("Invalid legacy list");
-	const allIds = Object.keys(legacyData.tracks);
+	const catalog = parseCatalog(await catalogResponse.json());
+	const allIds = [
+		...new Set([
+			...catalog.legacy.map((track) => track.id),
+			...catalog.albums.flatMap((album) => album.trackIds),
+		]),
+	];
 	console.log(`   Tracks in list: ${allIds.length}`);
 
 	// 2. Load existing metadata

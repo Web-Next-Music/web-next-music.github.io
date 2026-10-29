@@ -1,4 +1,5 @@
 export interface LegacyTrack {
+	meta?: TrackMeta;
 	id: string;
 	url: string;
 	yandexUrl: string;

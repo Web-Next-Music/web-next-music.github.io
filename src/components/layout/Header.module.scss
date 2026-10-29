@@ -215,24 +215,6 @@
 	display: flex;
 }
 
-.navLayout a {
-	color: var(--muted);
-	font-size: 15px;
-	padding: 6px 14px;
-	border-radius: 0.375rem;
-	border: 1px solid transparent;
-	transition: all 0.2s;
-	font-family: var(--font-heading-large);
-	font-weight: 800;
-	white-space: nowrap;
-}
-
-.navLayout a:hover,
-.navLayout a[aria-current="page"] {
-	color: var(--text);
-	background: var(--header);
-}
-
 @media (max-width: 725px) {
 	.navLayout {
 		display: none;
