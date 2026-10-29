@@ -45,8 +45,12 @@ export async function fetchStargazers(): Promise<Stargazer[]> {
 
 export async function fetchLatestRelease(
 	token?: string,
+	repository: string = REPO,
 ): Promise<RepoRelease | null> {
-	const res = await fetchWithFallback(`/repos/${REPO}/releases/latest`, token);
+	const res = await fetchWithFallback(
+		`/repos/${repository}/releases/latest`,
+		token,
+	);
 	if (!res) return null;
 	return res.json();
 }

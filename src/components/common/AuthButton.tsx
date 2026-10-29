@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { getPreferredAvatarUrl } from "@/lib/auth/accountLinks";
 import { syncGithubStar } from "@/lib/supabase/publicProfile";
-import { checkDDetectorAccess } from "@/lib/track/ddetector";
 import { cx } from "@/lib/cx";
 import Dropdown from "@/components/ui/Dropdown";
 import dropdownStyles from "@/components/ui/Dropdown.module.scss";
@@ -16,7 +15,6 @@ import dropdownStyles from "@/components/ui/Dropdown.module.scss";
 import styles from "./AuthButton.module.scss";
 
 const starredCache = new Map<string, boolean>();
-const ddetectorCache = new Map<string, boolean>();
 
 export default function AuthButton() {
 	const { user, loading, signOut, openAuthModal, isBanned } = useAuth();
@@ -25,9 +23,6 @@ export default function AuthButton() {
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const [githubStarred, setGithubStarred] = useState(() =>
 		user?.id ? (starredCache.get(user.id) ?? false) : false,
-	);
-	const [isDDetector, setIsDDetector] = useState(() =>
-		user?.id ? (ddetectorCache.get(user.id) ?? false) : false,
 	);
 	const anchorRef = useRef<HTMLButtonElement>(null);
 
@@ -40,18 +35,6 @@ export default function AuthButton() {
 				starredCache.set(userId, starred);
 				setGithubStarred(starred);
 			}
-		});
-	}, [userId]);
-
-	useEffect(() => {
-		if (!userId) return;
-		if (ddetectorCache.has(userId)) {
-			setIsDDetector(ddetectorCache.get(userId)!);
-			return;
-		}
-		checkDDetectorAccess(userId).then((ok) => {
-			ddetectorCache.set(userId, ok);
-			setIsDDetector(ok);
 		});
 	}, [userId]);
 
@@ -148,29 +131,27 @@ export default function AuthButton() {
 					</svg>
 					Profile
 				</Link>
-				{isDDetector && (
-					<Link
-						href="/ddetector"
-						className={dropdownStyles.item}
-						onClick={closeDropdown}
+				<Link
+					href="/ddetector"
+					className={dropdownStyles.item}
+					onClick={closeDropdown}
+				>
+					<svg
+						width="16"
+						height="16"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="2"
+						strokeLinecap="round"
+						strokeLinejoin="round"
 					>
-						<svg
-							width="16"
-							height="16"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-						>
-							<circle cx="11" cy="11" r="8" />
-							<path d="M21 21l-4.35-4.35" />
-							<path d="M11 8v6M8 11h6" />
-						</svg>
-						DDetector
-					</Link>
-				)}
+						<circle cx="11" cy="11" r="8" />
+						<path d="M21 21l-4.35-4.35" />
+						<path d="M11 8v6M8 11h6" />
+					</svg>
+					DDetector
+				</Link>
 				<button
 					type="button"
 					className={cx(dropdownStyles.item, dropdownStyles.danger)}
