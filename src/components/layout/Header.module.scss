@@ -44,6 +44,8 @@
 	height: 40px;
 	border-radius: 10px;
 	background-size: cover;
+	background-repeat: no-repeat;
+	background-position: center;
 	border: 1px solid var(--border);
 	flex-shrink: 0;
 	background-color: var(--surface);

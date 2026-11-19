@@ -51,6 +51,7 @@ export default function Header({
 
 	const pathname = usePathname();
 	const [open, setOpen] = useState(false);
+	const [useGtaviLogo, setUseGtaviLogo] = useState(false);
 	const [useCondemnedLogo, setUseCondemnedLogo] = useState(
 		() => seasonalLogoDecided,
 	);
@@ -58,6 +59,10 @@ export default function Header({
 	const router = useRouter();
 
 	useEffect(() => {
+		const now = new Date();
+		setUseGtaviLogo(
+			now.getMonth() === 10 && now.getDate() >= 19 && now.getDate() <= 26,
+		);
 		let cancelled = false;
 		seasonalLogoCheck?.then((decided) => {
 			if (!cancelled && decided) setUseCondemnedLogo(true);
@@ -92,9 +97,11 @@ export default function Header({
 								style={{
 									backgroundImage: isHiddenMode
 										? 'url("/icons/ugcShare.webp")'
-										: useCondemnedLogo
-											? 'url("/icons/icon-256-condemned.png")'
-											: 'url("/icons/icon-256.png")',
+										: useGtaviLogo
+											? 'url("/icons/GTAVI.png")'
+											: useCondemnedLogo
+												? 'url("/icons/icon-256-condemned.png")'
+												: 'url("/icons/icon-256.png")',
 								}}
 							/>
 						</div>
